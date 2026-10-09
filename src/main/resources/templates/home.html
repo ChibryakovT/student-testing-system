@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Главная — ЭСТ</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-1">Здравствуйте, <span th:text="${me.fullName}">пользователь</span>!</h1>
+    <p class="text-muted mb-4" th:text="${me.student} ? 'Выберите тест для прохождения или посмотрите свои результаты'
+        : 'Управляйте тестами, вопросами и анализируйте результаты студентов'">подсказка</p>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <a class="card menu-card h-100" th:href="@{/tests}">
+                <div class="card-body">
+                    <div class="menu-value" th:text="${availableTests}">0</div>
+                    <div class="text-muted" th:text="${me.student} ? 'Доступно тестов' : 'Всего тестов'">Тесты</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <a class="card menu-card h-100" th:href="@{/attempts}">
+                <div class="card-body">
+                    <div class="menu-value" th:text="${me.student} ? ${#lists.size(recentAttempts)} : ${summary.finishedAttempts}">0</div>
+                    <div class="text-muted" th:text="${me.student} ? 'Последних результатов' : 'Завершённых попыток'">Попытки</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
+            <a class="card menu-card h-100" th:href="@{/reports}">
+                <div class="card-body">
+                    <div class="menu-value"><span th:text="${summary.averagePercent}">0</span>%</div>
+                    <div class="text-muted">Средний результат</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
+            <a class="card menu-card h-100" th:href="@{/reports}">
+                <div class="card-body">
+                    <div class="menu-value"><span th:text="${summary.passRate()}">0</span>%</div>
+                    <div class="text-muted">Доля сдавших</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Главное меню</div>
+                <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action" th:href="@{/tests}">Каталог тестов</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/tests/new}" th:if="${me.staff}">Создать тест</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/attempts}">Результаты тестирования</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/subjects}" th:if="${me.staff}">Справочник дисциплин</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/reports}" th:if="${me.staff}">Аналитический отчёт</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/users}" th:if="${me.admin}">Пользователи</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header fw-semibold">Последние результаты</div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead><tr><th>Тест</th><th th:if="${me.staff}">Студент</th><th>Дата</th><th>Балл</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="a : ${recentAttempts}">
+                            <td th:text="${a.test.title}">тест</td>
+                            <td th:if="${me.staff}" th:text="${a.student.fullName}">студент</td>
+                            <td th:text="${#temporals.format(a.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</td>
+                            <td><span class="badge" th:classappend="${a.passed} ? 'text-bg-success' : 'text-bg-danger'"
+                                      th:text="${a.percent} + '%'">0%</span></td>
+                            <td><a th:href="@{/attempts/{id}/result(id=${a.id})}">подробнее</a></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recentAttempts)}"><td colspan="5" class="text-muted">Пока нет результатов</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

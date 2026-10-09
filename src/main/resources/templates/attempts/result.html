@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Результат — ЭСТ</title></head>
+<body>
+<section class="form-narrow">
+    <nav class="small mb-2"><a th:href="@{/attempts}">← Результаты</a></nav>
+    <div class="card mb-4 text-center">
+        <div class="card-body py-4">
+            <div class="text-muted" th:text="${attempt.test.title}">тест</div>
+            <div class="result-percent" th:classappend="${attempt.passed} ? 'text-success' : 'text-danger'"
+                 th:text="${attempt.percent} + '%'">0%</div>
+            <div class="fs-5 mb-2" th:text="${attempt.passed} ? 'Тест сдан' : 'Тест не сдан'">итог</div>
+            <div class="text-muted small">
+                Студент: <span th:text="${attempt.student.fullName}">ФИО</span> ·
+                баллы: <span th:text="${attempt.score} + ' из ' + ${attempt.maxScore}">0 из 0</span> ·
+                проходной: <span th:text="${attempt.test.passingScore}">0</span>% ·
+                время: <span th:text="${attempt.durationMinutes}">0</span> мин ·
+                <span th:text="${#temporals.format(attempt.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</span>
+            </div>
+        </div>
+    </div>
+    <h2 class="h5 mb-3">Разбор по вопросам</h2>
+    <div class="table-responsive card">
+        <table class="table mb-0 align-middle">
+            <thead><tr><th>№</th><th>Вопрос</th><th>Ваш ответ</th><th>Итог</th><th>Баллы</th></tr></thead>
+            <tbody>
+            <tr th:each="ans, st : ${attempt.answers}">
+                <td th:text="${st.count}">1</td>
+                <td th:text="${ans.question.text}">вопрос</td>
+                <td>
+                    <span th:each="o, os : ${ans.selectedOptions}" th:text="${o.text} + (${os.last} ? '' : '; ')">ответ</span>
+                    <span class="text-muted" th:if="${#sets.isEmpty(ans.selectedOptions)}">нет ответа</span>
+                </td>
+                <td><span class="badge" th:classappend="${ans.correct} ? 'text-bg-success' : 'text-bg-danger'"
+                          th:text="${ans.correct} ? 'верно' : 'неверно'">итог</span></td>
+                <td th:text="${ans.pointsEarned} + ' / ' + ${ans.question.points}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted small mt-2">Правильные варианты не раскрываются, чтобы тест можно было использовать повторно.</p>
+</section>
+</body>
+</html>

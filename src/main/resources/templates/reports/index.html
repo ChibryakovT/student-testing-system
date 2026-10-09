@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Аналитический отчёт — ЭСТ</title></head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Аналитический отчёт</h1>
+        <a class="btn btn-outline-success" th:href="@{/reports/export.csv(subjectId=${subjectId})}">Скачать CSV</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.students}">0</div><div class="stat-label">студентов</div></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.tests}">0</div><div class="stat-label">тестов</div></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.publishedTests}">0</div><div class="stat-label">опубликовано</div></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.finishedAttempts}">0</div><div class="stat-label">попыток</div></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.averagePercent} + '%'">0</div><div class="stat-label">средний балл</div></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.passRate()} + '%'">0</div><div class="stat-label">сдали</div></div></div></div>
+    </div>
+
+    <form class="d-flex flex-wrap gap-2 mb-3" method="get" th:action="@{/reports}">
+        <select class="form-select w-auto" name="subjectId">
+            <option value="">Все дисциплины</option>
+            <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}" th:selected="${s.id == subjectId}"></option>
+        </select>
+        <select class="form-select w-auto" name="testId">
+            <option value="">Разбор по вопросам: выберите тест</option>
+            <option th:each="t : ${tests}" th:value="${t.id}" th:text="${t.title}" th:selected="${t.id == testId}"></option>
+        </select>
+        <button class="btn btn-primary" type="submit">Показать</button>
+    </form>
+
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">Успеваемость по тестам</div>
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead><tr><th>Тест</th><th>Дисциплина</th><th>Попыток</th><th class="w-25">Средний результат</th><th>Мин</th><th>Макс</th><th>Сдали</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${rows}">
+                    <td th:text="${r.title}">тест</td>
+                    <td th:text="${r.subject}">дисциплина</td>
+                    <td th:text="${r.attempts}">0</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" role="progressbar">
+                                <div class="progress-bar" th:style="'width:' + ${r.averagePercent} + '%'"
+                                     th:classappend="${r.averagePercent >= 60} ? 'bg-success' : 'bg-warning'"></div>
+                            </div>
+                            <span class="small" th:text="${r.averagePercent} + '%'">0%</span>
+                        </div>
+                    </td>
+                    <td th:text="${r.minPercent} + '%'">0</td>
+                    <td th:text="${r.maxPercent} + '%'">0</td>
+                    <td th:text="${r.passedCount} + ' (' + ${r.passRate()} + '%)'">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" th:if="${selectedTest != null}">
+        <div class="card-header fw-semibold" th:text="'Сложность вопросов: ' + ${selectedTest.title}">вопросы</div>
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead><tr><th>Вопрос</th><th>Ответов</th><th class="w-25">Доля верных</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${questionRows}">
+                    <td th:text="${r.text}">вопрос</td>
+                    <td th:text="${r.answers}">0</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" role="progressbar">
+                                <div class="progress-bar" th:style="'width:' + ${r.correctRate()} + '%'"
+                                     th:classappend="${r.correctRate() >= 50} ? 'bg-success' : 'bg-danger'"></div>
+                            </div>
+                            <span class="small" th:text="${r.correctRate()} + '%'">0%</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(questionRows)}"><td colspan="3" class="text-muted">По этому тесту ещё нет ответов</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+</body>
+</html>

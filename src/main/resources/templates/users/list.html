@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Пользователи — ЭСТ</title></head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Пользователи</h1>
+        <a class="btn btn-primary" th:href="@{/users/new}">+ Добавить</a>
+    </div>
+    <form class="card card-body mb-3 filter-bar" method="get" th:action="@{/users}">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small" for="q">Поиск</label>
+                <input class="form-control" id="q" name="q" th:value="${q}" placeholder="ФИО, логин или группа">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small" for="role">Роль</label>
+                <select class="form-select" id="role" name="role">
+                    <option value="">Все роли</option>
+                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r.title}" th:selected="${r == role}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small" for="sort">Сортировка</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="name" th:selected="${sort == 'name'}">По ФИО</option>
+                    <option value="username" th:selected="${sort == 'username'}">По логину</option>
+                    <option value="role" th:selected="${sort == 'role'}">По роли</option>
+                    <option value="created" th:selected="${sort == 'created'}">Новые</option>
+                </select>
+            </div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Найти</button></div>
+        </div>
+    </form>
+    <div class="table-responsive card">
+        <table class="table table-hover mb-0 align-middle">
+            <thead><tr><th>ФИО</th><th>Логин</th><th>E-mail</th><th>Группа</th><th>Роль и доступ</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="u : ${users}">
+                <td th:text="${u.fullName}">ФИО</td>
+                <td th:text="${u.username}">логин</td>
+                <td th:text="${u.email}">email</td>
+                <td th:text="${u.groupName}">группа</td>
+                <td>
+                    <form class="d-flex gap-2 align-items-center" th:action="@{/users/{id}(id=${u.id})}" method="post">
+                        <select class="form-select form-select-sm" name="role">
+                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r.title}" th:selected="${r == u.role}"></option>
+                        </select>
+                        <div class="form-check form-switch m-0" title="Активен">
+                            <input class="form-check-input" type="checkbox" name="enabled" value="true" th:checked="${u.enabled}">
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" type="submit">OK</button>
+                    </form>
+                </td>
+                <td>
+                    <form th:action="@{/users/{id}/delete(id=${u.id})}" method="post" data-confirm="Удалить пользователя?">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+</body>
+</html>

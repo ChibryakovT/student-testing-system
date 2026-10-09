@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Ошибка — ЭСТ</title></head>
+<body>
+<section class="text-center py-5">
+    <div class="display-4 fw-bold text-primary" th:text="${status} ?: 500">404</div>
+    <p class="lead" th:text="${status == 404} ? 'Страница не найдена' : (${status == 403} ? 'Доступ запрещён' : 'Произошла ошибка')">Ошибка</p>
+    <a class="btn btn-primary" th:href="@{/}">На главную</a>
+</section>
+</body>
+</html>

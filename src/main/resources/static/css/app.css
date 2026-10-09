@@ -1,0 +1,14 @@
+body { background: #f4f6fb; }
+.app-navbar { background: linear-gradient(90deg, #2b4c9b, #3f6fd8) !important; }
+.auth-card { max-width: 440px; margin: 4vh auto; }
+.form-narrow { max-width: 860px; }
+.menu-card { text-decoration: none; color: inherit; transition: transform .15s, box-shadow .15s; }
+.menu-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(43, 76, 155, .12); }
+.menu-value { font-size: 2rem; font-weight: 700; color: #2b4c9b; }
+.test-card { border-top: 3px solid #3f6fd8; }
+.stat .stat-value { font-size: 1.6rem; font-weight: 700; color: #2b4c9b; }
+.stat .stat-label { color: #6c757d; font-size: .85rem; }
+.result-percent { font-size: 4rem; font-weight: 800; line-height: 1.1; }
+.sticky-timer { position: sticky; top: 0; background: #f4f6fb; padding: .5rem 0; z-index: 10; }
+.progress { height: .6rem; }
+.card { border-color: #e3e8f2; }
