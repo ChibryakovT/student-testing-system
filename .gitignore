@@ -1,0 +1,30 @@
+# Секреты и локальные настройки
+.env
+*.env
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# Сборка
+target/
+*.class
+*.jar
+*.log
+logs/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# ОС
+.DS_Store
+Thumbs.db
+
+# Рабочие файлы Claude Code
+.claude/

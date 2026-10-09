@@ -1,0 +1,56 @@
+# Все секреты передаются через переменные окружения или локальный файл .env (не хранится в Git).
+spring:
+  application:
+    name: student-testing-system
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/testing_system}
+    username: ${DB_USERNAME:testing_app}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: true
+  thymeleaf:
+    cache: false
+  mvc:
+    problemdetails:
+      enabled: false
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    whitelabel:
+      enabled: false
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${COOKIE_SECURE:false}
+
+app:
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:}
+  demo:
+    enabled: ${DEMO_DATA:true}
+    password: ${DEMO_PASSWORD:}
+  security:
+    max-login-attempts: 5
+    lock-minutes: 5
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN
