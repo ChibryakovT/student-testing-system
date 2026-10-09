@@ -1,0 +1,1097 @@
+{
+  "info": {
+    "name": "Электронная система тестирования студентов — API",
+    "description": "Проверка REST API. Перед запуском задайте переменные teacherUser и teacherPassword (учётная запись преподавателя). Пароли в коллекции не хранятся.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Регистрация студента",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = Date.now();",
+              "pm.collectionVariables.set(\"newUser\", \"pm_student_\" + suffix);",
+              "pm.collectionVariables.set(\"newPassword\", \"Pm\" + suffix + \"x\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));",
+              "const b = pm.response.json();",
+              "pm.test(\"Создан студент, роль из запроса проигнорирована\", () => pm.expect(b.role).to.eql(\"STUDENT\"));",
+              "pm.test(\"Хеш пароля не возвращается\", () => pm.expect(b).to.not.have.property(\"passwordHash\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{newUser}}\",\n  \"password\": \"{{newPassword}}\",\n  \"fullName\": \"Студент Postman\",\n  \"email\": \"{{newUser}}@example.com\",\n  \"groupName\": \"ПИ-21\",\n  \"role\": \"ADMIN\"\n}"
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "02 Регистрация с некорректными данными",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 400 Bad Request\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Возвращён список ошибок валидации\", () => pm.expect(pm.response.json().details.length).to.be.above(1));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"a\",\n  \"password\": \"123\",\n  \"fullName\": \"\",\n  \"email\": \"bad\"\n}"
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "03 Запрос без авторизации",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 401 Unauthorized\", () => pm.response.to.have.status(401));",
+              "pm.test(\"Ошибка в формате JSON\", () => pm.expect(pm.response.json().status).to.eql(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "04 Авторизация: неверный пароль",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 401 Unauthorized\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{wrongPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "05 Авторизация преподавателя",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Роль TEACHER\", () => pm.expect(pm.response.json().role).to.eql(\"TEACHER\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "06 Добавление дисциплины",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set(\"subjectId\", pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/subjects",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subjects"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman {{$timestamp}}\",\n  \"description\": \"Дисциплина для проверки API\"\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "07 Поиск дисциплин",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Найдена созданная дисциплина\", () => pm.expect(pm.response.json().map(s => s.id)).to.include(Number(pm.collectionVariables.get(\"subjectId\"))));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subjects?q=Postman",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subjects"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "Postman"
+            }
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "08 Редактирование дисциплины",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Описание изменено\", () => pm.expect(pm.response.json().description).to.eql(\"Изменённое описание\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/subjects/{{subjectId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subjects",
+            "{{subjectId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman {{$timestamp}}\",\n  \"description\": \"Изменённое описание\"\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "09 Создание теста",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));",
+              "pm.test(\"Тест создан как черновик\", () => pm.expect(pm.response.json().published).to.eql(false));",
+              "pm.collectionVariables.set(\"testId\", pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"API-тест {{$timestamp}}\",\n  \"description\": \"Создан из Postman\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 10,\n  \"passingScore\": 60,\n  \"published\": false\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "10 Добавление вопроса",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));",
+              "const q = pm.response.json();",
+              "pm.collectionVariables.set(\"questionId\", q.id);",
+              "pm.collectionVariables.set(\"correctOptionId\", q.options.find(o => o.correct).id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests/{{testId}}/questions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests",
+            "{{testId}}",
+            "questions"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Какой оператор выбирает данные в SQL?\",\n  \"type\": \"SINGLE\",\n  \"points\": 2,\n  \"options\": [\n    {\n      \"text\": \"SELECT\",\n      \"correct\": true\n    },\n    {\n      \"text\": \"DELETE\",\n      \"correct\": false\n    },\n    {\n      \"text\": \"UPDATE\",\n      \"correct\": false\n    }\n  ]\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "11 Вопрос без правильного ответа (ошибка)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 400 Bad Request\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Понятное сообщение об ошибке\", () => pm.expect(pm.response.json().message).to.include(\"правильный\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests/{{testId}}/questions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests",
+            "{{testId}}",
+            "questions"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Некорректный вопрос\",\n  \"type\": \"SINGLE\",\n  \"points\": 1,\n  \"options\": [\n    {\n      \"text\": \"A\",\n      \"correct\": false\n    },\n    {\n      \"text\": \"B\",\n      \"correct\": false\n    }\n  ]\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "12 Публикация теста",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Тест опубликован\", () => pm.expect(pm.response.json().published).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests/{{testId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests",
+            "{{testId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"API-тест опубликованный\",\n  \"description\": \"Создан из Postman\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 10,\n  \"passingScore\": 60,\n  \"published\": true\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "13 Студент: поиск и сортировка тестов",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "const list = pm.response.json();",
+              "pm.test(\"Опубликованный тест найден\", () => pm.expect(list.map(t => t.id)).to.include(Number(pm.collectionVariables.get(\"testId\"))));",
+              "pm.test(\"Студент видит только опубликованные тесты\", () => list.forEach(t => pm.expect(t.published).to.eql(true)));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests?q=API&subjectId={{subjectId}}&sort=title",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "API"
+            },
+            {
+              "key": "subjectId",
+              "value": "{{subjectId}}"
+            },
+            {
+              "key": "sort",
+              "value": "title"
+            }
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{newPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "14 Студент: начало прохождения",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));",
+              "const a = pm.response.json();",
+              "pm.collectionVariables.set(\"attemptId\", a.attemptId);",
+              "pm.test(\"Правильные ответы скрыты от студента\", () => a.questions.forEach(q => q.options.forEach(o => pm.expect(o.correct).to.be.null)));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests/{{testId}}/attempts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests",
+            "{{testId}}",
+            "attempts"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{newPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "15 Студент: отправка ответов",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test(\"Результат 100%\", () => pm.expect(r.percent).to.eql(100));",
+              "pm.test(\"Тест сдан\", () => pm.expect(r.passed).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/attempts/{{attemptId}}/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "attempts",
+            "{{attemptId}}",
+            "submit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": [\n    {\n      \"questionId\": {{questionId}},\n      \"optionIds\": [\n        {{correctOptionId}}\n      ]\n    }\n  ]\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{newPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "16 Студент: мои результаты",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Есть одна попытка\", () => pm.expect(pm.response.json().length).to.eql(1));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/attempts?sort=score",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "attempts"
+          ],
+          "query": [
+            {
+              "key": "sort",
+              "value": "score"
+            }
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{newPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "17 Аналитический отчёт по тестам",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "const row = pm.response.json().find(r => r.testId == pm.collectionVariables.get(\"testId\"));",
+              "pm.test(\"В отчёте есть созданный тест с одной попыткой\", () => pm.expect(row.attempts).to.eql(1));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/reports/tests?subjectId={{subjectId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "reports",
+            "tests"
+          ],
+          "query": [
+            {
+              "key": "subjectId",
+              "value": "{{subjectId}}"
+            }
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "18 Студент: доступ к отчёту запрещён",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 403 Forbidden\", () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/reports/summary",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "reports",
+            "summary"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{newPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "19 Студент: создание теста запрещено",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 403 Forbidden\", () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Попытка студента\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 5,\n  \"passingScore\": 50\n}"
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{newPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "20 Удаление теста",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 204 No Content\", () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests/{{testId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests",
+            "{{testId}}"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "21 Удаление дисциплины",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 204 No Content\", () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subjects/{{subjectId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "subjects",
+            "{{subjectId}}"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "teacherUser",
+      "value": "teacher"
+    },
+    {
+      "key": "teacherPassword",
+      "value": ""
+    },
+    {
+      "key": "newUser",
+      "value": ""
+    },
+    {
+      "key": "newPassword",
+      "value": ""
+    },
+    {
+      "key": "subjectId",
+      "value": ""
+    },
+    {
+      "key": "testId",
+      "value": ""
+    },
+    {
+      "key": "questionId",
+      "value": ""
+    },
+    {
+      "key": "correctOptionId",
+      "value": ""
+    },
+    {
+      "key": "attemptId",
+      "value": ""
+    }
+  ]
+}
