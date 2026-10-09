@@ -42,8 +42,10 @@ cp .env.example .env
 
 ### 4. Запуск
 ```bash
-mvn spring-boot:run
+./run.sh
 ```
+Скрипт сам находит Java 17+ и запускает приложение (`mvn spring-boot:run`).
+В VS Code: **Terminal → Run Build Task** (⇧⌘B) → «Запустить приложение».
 Приложение: http://localhost:8080
 
 Демо-учётные записи (при `DEMO_DATA=true`, пароль — значение `DEMO_PASSWORD`):
