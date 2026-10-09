@@ -1,0 +1,89 @@
+@startuml er
+!pragma layout smetana
+skinparam defaultFontName Arial
+hide circle
+skinparam linetype ortho
+title ER-диаграмма базы данных testing_system
+
+entity users {
+  * id : BIGINT <<PK>>
+  --
+  * username : VARCHAR(50) <<UQ>>
+  * password_hash : VARCHAR(100)
+  * full_name : VARCHAR(150)
+  * email : VARCHAR(150) <<UQ>>
+  * role : VARCHAR(20)
+  group_name : VARCHAR(30)
+  * enabled : BOOLEAN
+  * created_at : TIMESTAMP
+}
+entity subjects {
+  * id : BIGINT <<PK>>
+  --
+  * name : VARCHAR(100) <<UQ>>
+  description : VARCHAR(500)
+}
+entity tests {
+  * id : BIGINT <<PK>>
+  --
+  * subject_id : BIGINT <<FK>>
+  * author_id : BIGINT <<FK>>
+  * title : VARCHAR(200)
+  description : VARCHAR(1000)
+  * time_limit_minutes : INTEGER
+  * passing_score : INTEGER
+  * published : BOOLEAN
+  * created_at, updated_at : TIMESTAMP
+}
+entity questions {
+  * id : BIGINT <<PK>>
+  --
+  * test_id : BIGINT <<FK>>
+  * text : VARCHAR(1000)
+  * type : VARCHAR(20)
+  * points : INTEGER
+  * position : INTEGER
+}
+entity answer_options {
+  * id : BIGINT <<PK>>
+  --
+  * question_id : BIGINT <<FK>>
+  * text : VARCHAR(500)
+  * correct : BOOLEAN
+  * position : INTEGER
+}
+entity test_attempts {
+  * id : BIGINT <<PK>>
+  --
+  * test_id : BIGINT <<FK>>
+  * student_id : BIGINT <<FK>>
+  * status : VARCHAR(20)
+  * started_at : TIMESTAMP
+  finished_at : TIMESTAMP
+  * score, max_score, percent : INTEGER
+  * passed : BOOLEAN
+}
+entity attempt_answers {
+  * id : BIGINT <<PK>>
+  --
+  * attempt_id : BIGINT <<FK>>
+  * question_id : BIGINT <<FK>>
+  * correct : BOOLEAN
+  * points_earned : INTEGER
+}
+entity attempt_answer_options {
+  * attempt_answer_id : BIGINT <<PK, FK>>
+  * option_id : BIGINT <<PK, FK>>
+}
+
+subjects ||--o{ tests
+users ||--o{ tests
+tests ||--|{ questions
+questions ||--|{ answer_options
+users ||--o{ test_attempts
+tests ||--o{ test_attempts
+test_attempts ||--o{ attempt_answers
+questions ||--o{ attempt_answers
+attempt_answers ||--o{ attempt_answer_options
+answer_options ||--o{ attempt_answer_options
+@enduml
