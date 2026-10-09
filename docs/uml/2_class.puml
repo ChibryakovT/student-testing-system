@@ -1,0 +1,103 @@
+@startuml class
+!pragma layout smetana
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+title Диаграмма классов (модель предметной области и сервисы)
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+enum QuestionType {
+  SINGLE
+  MULTIPLE
+}
+enum AttemptStatus {
+  IN_PROGRESS
+  FINISHED
+}
+
+class User {
+  -id: Long
+  -username: String
+  -passwordHash: String
+  -fullName: String
+  -email: String
+  -role: Role
+  -groupName: String
+  -enabled: boolean
+}
+class Subject {
+  -id: Long
+  -name: String
+  -description: String
+}
+class Test {
+  -id: Long
+  -title: String
+  -timeLimitMinutes: int
+  -passingScore: int
+  -published: boolean
+  +getMaxScore(): int
+}
+class Question {
+  -id: Long
+  -text: String
+  -type: QuestionType
+  -points: int
+  +addOption(o: AnswerOption)
+}
+class AnswerOption {
+  -id: Long
+  -text: String
+  -correct: boolean
+}
+class TestAttempt {
+  -id: Long
+  -status: AttemptStatus
+  -startedAt: LocalDateTime
+  -finishedAt: LocalDateTime
+  -score: int
+  -percent: int
+  -passed: boolean
+}
+class AttemptAnswer {
+  -id: Long
+  -correct: boolean
+  -pointsEarned: int
+}
+
+class TestService {
+  +search(q, subjectId, sort, user): List<Test>
+  +create(form, user): Test
+  +update(id, form, user): Test
+  +delete(id, user)
+}
+class AttemptService {
+  +start(testId, user): TestAttempt
+  +submit(attemptId, answers, user): TestAttempt
+  +getResult(attemptId, user): TestAttempt
+}
+class ReportService {
+  +summary(): DashboardSummary
+  +testStatistics(subjectId): List<TestStatRow>
+  +testStatisticsCsv(subjectId): String
+}
+
+Subject "1" -- "0..*" Test
+User "1" -- "0..*" Test : автор >
+Test "1" *-- "1..*" Question
+Question "1" *-- "2..*" AnswerOption
+User "1" -- "0..*" TestAttempt : студент >
+Test "1" -- "0..*" TestAttempt
+TestAttempt "1" *-- "0..*" AttemptAnswer
+AttemptAnswer "0..*" -- "1" Question
+AttemptAnswer "0..*" -- "0..*" AnswerOption : выбранные >
+User ..> Role
+Question ..> QuestionType
+TestAttempt ..> AttemptStatus
+TestService ..> Test
+AttemptService ..> TestAttempt
+ReportService ..> TestAttempt
+@enduml

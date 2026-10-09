@@ -1,0 +1,21 @@
+@startuml deployment
+!pragma layout smetana
+skinparam defaultFontName Arial
+title Диаграмма развёртывания
+
+node "Компьютер пользователя" {
+  artifact "Веб-браузер" as BR
+}
+node "Сервер приложения" {
+  node "JVM (Java 17+)" {
+    artifact "student-testing-system.jar\n(встроенный Tomcat, порт 8080)" as JAR
+  }
+  file ".env\n(секреты, вне Git)" as ENV
+}
+node "Сервер БД" {
+  database "PostgreSQL\nБД testing_system" as DB
+}
+BR --> JAR : HTTP(S)
+JAR --> DB : JDBC :5432
+JAR ..> ENV : чтение настроек
+@enduml

@@ -1,0 +1,25 @@
+# Только для автотестов: временная БД H2 в памяти, к реальной системе не относится.
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  mvc:
+    problemdetails:
+      enabled: false
+
+app:
+  admin:
+    username: admin
+    password: Admin-test-1
+  demo:
+    enabled: false
+  security:
+    max-login-attempts: 5
+    lock-minutes: 5

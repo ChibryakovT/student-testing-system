@@ -1,0 +1,50 @@
+@startuml component
+!pragma layout smetana
+skinparam defaultFontName Arial
+title Диаграмма компонентов (архитектура приложения)
+
+package "Клиенты" {
+  [Браузер (HTML, Bootstrap)] as BR
+  [Postman / внешние клиенты] as PM
+}
+package "Spring Boot приложение" {
+  [Spring Security\n(форма входа, HTTP Basic, CSRF, роли)] as SEC
+  package "Слой представления" {
+    [Web-контроллеры\n+ Thymeleaf] as WEB
+    [REST-контроллеры\n(JSON)] as API
+    [Обработчики ошибок] as EH
+  }
+  package "Бизнес-логика" {
+    [TestService / QuestionService] as TS
+    [AttemptService] as AS
+    [ReportService] as RS
+    [UserService / SubjectService] as US
+  }
+  package "Доступ к данным" {
+    [Spring Data JPA\n(репозитории)] as REPO
+    [Flyway миграции] as FW
+  }
+}
+database "PostgreSQL" as DB
+
+BR --> SEC : HTTP
+PM --> SEC : HTTP + Basic
+SEC --> WEB
+SEC --> API
+WEB --> TS
+WEB --> AS
+WEB --> RS
+API --> TS
+API --> AS
+API --> RS
+API --> US
+WEB --> US
+WEB ..> EH
+API ..> EH
+TS --> REPO
+AS --> REPO
+RS --> REPO
+US --> REPO
+REPO --> DB : JDBC
+FW --> DB
+@enduml

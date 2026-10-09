@@ -1,0 +1,42 @@
+@startuml use_case
+!pragma layout smetana
+skinparam defaultFontName Arial
+skinparam actorStyle awesome
+left to right direction
+title Диаграмма вариантов использования
+
+actor "Гость" as G
+actor "Студент" as S
+actor "Преподаватель" as T
+actor "Администратор" as A
+T <|-- A
+
+rectangle "Электронная система тестирования" {
+  usecase "Регистрация" as UC1
+  usecase "Авторизация" as UC2
+  usecase "Просмотр и поиск тестов" as UC3
+  usecase "Прохождение теста" as UC4
+  usecase "Просмотр своих результатов" as UC5
+  usecase "Управление тестами\n(создание, изменение, удаление)" as UC6
+  usecase "Управление вопросами\nи вариантами ответов" as UC7
+  usecase "Ведение справочника дисциплин" as UC8
+  usecase "Просмотр результатов студентов\n(фильтрация, сортировка)" as UC9
+  usecase "Аналитический отчёт\nи выгрузка CSV" as UC10
+  usecase "Управление пользователями" as UC11
+  usecase "Подсчёт баллов" as UC12
+}
+G --> UC1
+G --> UC2
+S --> UC3
+S --> UC4
+S --> UC5
+T --> UC3
+T --> UC6
+T --> UC7
+T --> UC8
+T --> UC9
+T --> UC10
+A --> UC11
+UC4 ..> UC12 : <<include>>
+UC7 ..> UC6 : <<extend>>
+@enduml

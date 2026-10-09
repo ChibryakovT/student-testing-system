@@ -1,0 +1,36 @@
+@startuml sequence
+skinparam defaultFontName Arial
+title Диаграмма последовательности: отправка ответов теста
+
+actor Студент
+participant "Браузер" as B
+participant "Spring Security" as SEC
+participant "AttemptController" as C
+participant "AttemptService" as S
+participant "TestAttemptRepository" as R
+database "PostgreSQL" as DB
+
+Студент -> B : «Завершить тест»
+B -> SEC : POST /attempts/{id}/submit\n(cookie сессии, CSRF-токен)
+SEC -> SEC : проверка сессии и CSRF
+SEC -> C : запрос допущен
+C -> C : parseAnswers(q{id}=optionId)
+C -> S : submit(id, answers, user)
+S -> R : findById(id)
+R -> DB : SELECT ... FROM test_attempts
+DB --> R : попытка
+R --> S : TestAttempt
+S -> S : проверка владельца и статуса
+alt чужая или завершённая попытка
+  S --> C : NotFound / Conflict
+  C --> B : страница ошибки
+else корректно
+  S -> S : подсчёт баллов по каждому вопросу
+  S -> DB : INSERT attempt_answers,\nattempt_answer_options;\nUPDATE test_attempts
+  S --> C : TestAttempt (FINISHED)
+  C --> B : 302 → /attempts/{id}/result
+  B -> C : GET /attempts/{id}/result
+  C --> B : HTML с результатом
+end
+B --> Студент : процент, итог, разбор
+@enduml
