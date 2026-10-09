@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Прохождение теста — ЭСТ</title></head>
+<body>
+<section class="form-narrow">
+    <div class="d-flex justify-content-between align-items-center mb-3 sticky-timer">
+        <h1 class="h4 mb-0" th:text="${attempt.test.title}">тест</h1>
+        <div class="timer badge text-bg-warning fs-6" id="timer" th:attr="data-seconds=${secondsLeft}">--:--</div>
+    </div>
+    <form id="attempt-form" th:action="@{/attempts/{id}/submit(id=${attempt.id})}" method="post">
+        <div class="card mb-3" th:each="q, st : ${attempt.test.questions}">
+            <div class="card-body">
+                <div class="fw-semibold mb-1"><span th:text="${st.count} + '. '"></span><span th:text="${q.text}">вопрос</span></div>
+                <div class="small text-muted mb-2"
+                     th:text="${q.type.name() == 'MULTIPLE'} ? 'Выберите все правильные варианты' : 'Выберите один вариант'">подсказка</div>
+                <div class="form-check" th:each="o : ${q.options}">
+                    <input class="form-check-input" th:type="${q.type.name() == 'MULTIPLE'} ? 'checkbox' : 'radio'"
+                           th:name="'q' + ${q.id}" th:value="${o.id}" th:id="'o' + ${o.id}">
+                    <label class="form-check-label" th:for="'o' + ${o.id}" th:text="${o.text}">вариант</label>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-success btn-lg" type="submit" data-confirm="Завершить тест и отправить ответы?">Завершить тест</button>
+    </form>
+</section>
+</body>
+</html>

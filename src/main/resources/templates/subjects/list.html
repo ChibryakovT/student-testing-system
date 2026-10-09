@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Дисциплины — ЭСТ</title></head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Справочник дисциплин</h1>
+        <a class="btn btn-primary" th:href="@{/subjects/new}">+ Добавить</a>
+    </div>
+    <form class="d-flex gap-2 mb-3" method="get" th:action="@{/subjects}">
+        <input class="form-control" name="q" th:value="${q}" placeholder="Поиск по названию">
+        <button class="btn btn-outline-primary" type="submit">Найти</button>
+    </form>
+    <div class="table-responsive card">
+        <table class="table table-hover mb-0 align-middle">
+            <thead><tr><th>ID</th><th>Название</th><th>Описание</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="s : ${subjects}">
+                <td th:text="${s.id}">1</td>
+                <td class="fw-semibold" th:text="${s.name}">название</td>
+                <td class="text-muted" th:text="${s.description}">описание</td>
+                <td class="text-nowrap">
+                    <a class="btn btn-sm btn-outline-secondary" th:href="@{/subjects/{id}/edit(id=${s.id})}">Изменить</a>
+                    <form class="d-inline" th:action="@{/subjects/{id}/delete(id=${s.id})}" method="post" data-confirm="Удалить дисциплину?">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(subjects)}"><td colspan="4" class="text-muted">Ничего не найдено</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+</body>
+</html>

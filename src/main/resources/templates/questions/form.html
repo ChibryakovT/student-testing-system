@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Вопрос — ЭСТ</title></head>
+<body>
+<section class="form-narrow">
+    <nav class="small mb-2"><a th:href="@{/tests/{id}(id=${test.id})}" th:text="'← ' + ${test.title}">тест</a></nav>
+    <h1 class="h3 mb-3" th:text="${questionId == null} ? 'Новый вопрос' : 'Редактирование вопроса'">Вопрос</h1>
+    <form class="card card-body" th:object="${form}" method="post"
+          th:action="${questionId == null} ? @{/tests/{id}/questions(id=${test.id})} : @{/questions/{id}(id=${questionId})}" novalidate>
+        <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+            <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="text">Текст вопроса</label>
+            <textarea class="form-control" rows="2" th:field="*{text}" th:errorclass="is-invalid" maxlength="1000"></textarea>
+            <div class="invalid-feedback" th:errors="*{text}"></div>
+        </div>
+        <div class="row">
+            <div class="col-md-8 mb-3">
+                <label class="form-label" for="type">Тип вопроса</label>
+                <select class="form-select" th:field="*{type}">
+                    <option th:each="t : ${types}" th:value="${t}" th:text="${t.title}">тип</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label" for="points">Баллы</label>
+                <input class="form-control" type="number" min="1" max="100" th:field="*{points}" th:errorclass="is-invalid">
+                <div class="invalid-feedback" th:errors="*{points}"></div>
+            </div>
+        </div>
+        <label class="form-label">Варианты ответа <span class="text-muted small">(пустые строки не сохраняются; отметьте правильные)</span></label>
+        <div class="input-group mb-2" th:each="o, st : *{options}">
+            <div class="input-group-text">
+                <input class="form-check-input mt-0" type="checkbox" th:field="*{options[__${st.index}__].correct}"
+                       title="Правильный ответ">
+            </div>
+            <input class="form-control" th:field="*{options[__${st.index}__].text}" maxlength="500"
+                   th:placeholder="'Вариант ' + ${st.count}">
+        </div>
+        <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <a class="btn btn-outline-secondary" th:href="@{/tests/{id}(id=${test.id})}">Отмена</a>
+        </div>
+    </form>
+</section>
+</body>
+</html>

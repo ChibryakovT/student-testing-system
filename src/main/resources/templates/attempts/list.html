@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Результаты — ЭСТ</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-3" th:text="${me.student} ? 'Мои результаты' : 'Результаты тестирования'">Результаты</h1>
+    <form class="card card-body mb-3 filter-bar" method="get" th:action="@{/attempts}">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small" for="q">Поиск</label>
+                <input class="form-control" id="q" name="q" th:value="${q}" placeholder="ФИО, группа или тест">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small" for="subjectId">Дисциплина</label>
+                <select class="form-select" id="subjectId" name="subjectId">
+                    <option value="">Все</option>
+                    <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}" th:selected="${s.id == subjectId}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small" for="testId">Тест</label>
+                <select class="form-select" id="testId" name="testId">
+                    <option value="">Все</option>
+                    <option th:each="t : ${tests}" th:value="${t.id}" th:text="${t.title}" th:selected="${t.id == testId}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small" for="passed">Итог</label>
+                <select class="form-select" id="passed" name="passed">
+                    <option value="">Любой</option>
+                    <option value="true" th:selected="${passed == true}">Сдан</option>
+                    <option value="false" th:selected="${passed == false}">Не сдан</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small" for="sort">Сортировка</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="date" th:selected="${sort == 'date'}">По дате</option>
+                    <option value="score" th:selected="${sort == 'score'}">Балл ↓</option>
+                    <option value="score_asc" th:selected="${sort == 'score_asc'}">Балл ↑</option>
+                    <option value="student" th:selected="${sort == 'student'}">По студенту</option>
+                    <option value="test" th:selected="${sort == 'test'}">По тесту</option>
+                </select>
+            </div>
+            <div class="col-md-1"><button class="btn btn-primary w-100" type="submit">ОК</button></div>
+        </div>
+    </form>
+    <div class="table-responsive card">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+            <tr><th>Тест</th><th>Дисциплина</th><th th:if="${me.staff}">Студент</th><th th:if="${me.staff}">Группа</th>
+                <th>Дата</th><th>Баллы</th><th>%</th><th>Итог</th><th></th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="a : ${attempts}">
+                <td th:text="${a.test.title}">тест</td>
+                <td th:text="${a.test.subject.name}">дисциплина</td>
+                <td th:if="${me.staff}" th:text="${a.student.fullName}">студент</td>
+                <td th:if="${me.staff}" th:text="${a.student.groupName}">группа</td>
+                <td th:text="${#temporals.format(a.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</td>
+                <td th:text="${a.score} + ' / ' + ${a.maxScore}">0</td>
+                <td th:text="${a.percent}">0</td>
+                <td><span class="badge" th:classappend="${a.passed} ? 'text-bg-success' : 'text-bg-danger'"
+                          th:text="${a.passed} ? 'сдан' : 'не сдан'">итог</span></td>
+                <td class="text-nowrap">
+                    <a class="btn btn-sm btn-outline-primary" th:href="@{/attempts/{id}/result(id=${a.id})}">Открыть</a>
+                    <form class="d-inline" th:if="${me.staff}" th:action="@{/attempts/{id}/delete(id=${a.id})}" method="post"
+                          data-confirm="Удалить результат?">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">×</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(attempts)}"><td colspan="9" class="text-muted">Результаты не найдены</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted small mt-2" th:text="'Записей: ' + ${#lists.size(attempts)}"></p>
+</section>
+</body>
+</html>

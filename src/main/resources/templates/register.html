@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Регистрация — ЭСТ</title></head>
+<body>
+<section class="auth-card">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h4 mb-4">Регистрация студента</h1>
+            <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
+                <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                    <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="fullName">ФИО</label>
+                    <input class="form-control" th:field="*{fullName}" th:errorclass="is-invalid">
+                    <div class="invalid-feedback" th:errors="*{fullName}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-7 mb-3">
+                        <label class="form-label" for="email">E-mail</label>
+                        <input class="form-control" type="email" th:field="*{email}" th:errorclass="is-invalid">
+                        <div class="invalid-feedback" th:errors="*{email}"></div>
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label" for="groupName">Группа</label>
+                        <input class="form-control" th:field="*{groupName}" placeholder="ПИ-21" th:errorclass="is-invalid">
+                        <div class="invalid-feedback" th:errors="*{groupName}"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="username">Логин</label>
+                    <input class="form-control" th:field="*{username}" th:errorclass="is-invalid" autocomplete="username">
+                    <div class="invalid-feedback" th:errors="*{username}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="password">Пароль</label>
+                    <input class="form-control" type="password" th:field="*{password}" th:errorclass="is-invalid"
+                           autocomplete="new-password">
+                    <div class="form-text">Минимум 8 символов, буквы и цифры</div>
+                    <div class="invalid-feedback" th:errors="*{password}"></div>
+                </div>
+                <button class="btn btn-primary w-100" type="submit">Зарегистрироваться</button>
+            </form>
+            <p class="mt-3 mb-0 text-center small">Уже есть учётная запись? <a th:href="@{/login}">Войти</a></p>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Дисциплина — ЭСТ</title></head>
+<body>
+<section class="form-narrow">
+    <h1 class="h3 mb-3" th:text="${subjectId == null} ? 'Новая дисциплина' : 'Редактирование дисциплины'">Дисциплина</h1>
+    <form class="card card-body" th:object="${form}" method="post"
+          th:action="${subjectId == null} ? @{/subjects} : @{/subjects/{id}(id=${subjectId})}" novalidate>
+        <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+            <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="name">Название</label>
+            <input class="form-control" th:field="*{name}" th:errorclass="is-invalid" maxlength="100">
+            <div class="invalid-feedback" th:errors="*{name}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="description">Описание</label>
+            <textarea class="form-control" rows="3" th:field="*{description}" th:errorclass="is-invalid" maxlength="500"></textarea>
+            <div class="invalid-feedback" th:errors="*{description}"></div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <a class="btn btn-outline-secondary" th:href="@{/subjects}">Отмена</a>
+        </div>
+    </form>
+</section>
+</body>
+</html>
