@@ -28,3 +28,6 @@ Thumbs.db
 
 # Рабочие файлы Claude Code
 .claude/
+
+# Отчёт хранится локально
+docs/report/
