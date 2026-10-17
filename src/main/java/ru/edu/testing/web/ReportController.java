@@ -16,7 +16,7 @@ import ru.edu.testing.service.TestService;
 
 import java.nio.charset.StandardCharsets;
 
-/** Аналитический отчёт: доступ только у преподавателя и администратора (см. SecurityConfig). */
+/** Аналитический отчёт: доступ только у администратора (см. SecurityConfig). */
 @Controller
 @RequestMapping("/reports")
 public class ReportController {

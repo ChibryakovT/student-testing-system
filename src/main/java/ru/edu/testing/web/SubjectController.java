@@ -87,7 +87,7 @@ public class SubjectController {
             subjectService.delete(id);
             redirect.addFlashAttribute("success", "Дисциплина удалена");
         } catch (BusinessException e) {
-            redirect.addFlashAttribute("error", e.getMessage());
+            redirect.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/subjects";
     }

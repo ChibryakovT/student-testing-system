@@ -63,8 +63,14 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public List<User> search(String query, Role role, String sort) {
-        return userRepository.search(Patterns.like(query), role, SORTS.getOrDefault(sort, SORTS.get("name")));
+    public List<User> search(String query, Role role, String groupName, String sort) {
+        return userRepository.search(Patterns.like(query), role, blankToNull(groupName),
+                SORTS.getOrDefault(sort, SORTS.get("name")));
+    }
+
+    /** Список учебных групп для фильтра. */
+    public List<String> groupNames() {
+        return userRepository.findGroupNames();
     }
 
     public User get(Long id) {

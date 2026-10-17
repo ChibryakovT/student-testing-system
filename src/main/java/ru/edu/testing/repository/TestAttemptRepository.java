@@ -21,6 +21,7 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
               and (:testId is null or t.id = :testId)
               and (:subjectId is null or s.id = :subjectId)
               and (:passed is null or a.passed = :passed)
+              and (:groupName is null or u.groupName = :groupName)
               and (lower(u.fullName) like :pattern or lower(t.title) like :pattern
                    or lower(coalesce(u.groupName, '')) like :pattern)
             """)
@@ -28,6 +29,7 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
                              @Param("testId") Long testId,
                              @Param("subjectId") Long subjectId,
                              @Param("passed") Boolean passed,
+                             @Param("groupName") String groupName,
                              @Param("pattern") String pattern,
                              Sort sort);
 

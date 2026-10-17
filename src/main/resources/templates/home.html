@@ -26,7 +26,7 @@
             </a>
         </div>
         <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
-            <a class="card menu-card h-100" th:href="@{/reports}">
+            <a class="card menu-card h-100" th:href="${me.admin} ? @{/reports} : @{/attempts}">
                 <div class="card-body">
                     <div class="menu-value"><span th:text="${summary.averagePercent}">0</span>%</div>
                     <div class="text-muted">Средний результат</div>
@@ -34,7 +34,7 @@
             </a>
         </div>
         <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
-            <a class="card menu-card h-100" th:href="@{/reports}">
+            <a class="card menu-card h-100" th:href="${me.admin} ? @{/reports} : @{/attempts}">
                 <div class="card-body">
                     <div class="menu-value"><span th:text="${summary.passRate()}">0</span>%</div>
                     <div class="text-muted">Доля сдавших</div>
@@ -52,7 +52,7 @@
                     <a class="list-group-item list-group-item-action" th:href="@{/tests/new}" th:if="${me.staff}">Создать тест</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/attempts}">Результаты тестирования</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/subjects}" th:if="${me.staff}">Справочник дисциплин</a>
-                    <a class="list-group-item list-group-item-action" th:href="@{/reports}" th:if="${me.staff}">Аналитический отчёт</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/reports}" th:if="${me.admin}">Аналитический отчёт</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/users}" th:if="${me.admin}">Пользователи</a>
                 </div>
             </div>

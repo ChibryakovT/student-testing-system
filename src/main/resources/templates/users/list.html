@@ -10,9 +10,16 @@
     </div>
     <form class="card card-body mb-3 filter-bar" method="get" th:action="@{/users}">
         <div class="row g-2 align-items-end">
-            <div class="col-md-5">
+            <div class="col-md-3">
                 <label class="form-label small" for="q">Поиск</label>
                 <input class="form-control" id="q" name="q" th:value="${q}" placeholder="ФИО, логин или группа">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small" for="group">Группа</label>
+                <select class="form-select" id="group" name="group">
+                    <option value="">Все группы</option>
+                    <option th:each="g : ${groups}" th:value="${g}" th:text="${g}" th:selected="${g == group}"></option>
+                </select>
             </div>
             <div class="col-md-3">
                 <label class="form-label small" for="role">Роль</label>

@@ -27,7 +27,7 @@ public class HomeController {
         model.addAttribute("summary", reportService.summary());
         model.addAttribute("availableTests", testService.search(null, null, "new", me).size());
         model.addAttribute("recentAttempts",
-                attemptService.search(null, null, null, null, "date", me).stream().limit(5).toList());
+                attemptService.search(null, null, null, null, null, "date", me).stream().limit(5).toList());
         return "home";
     }
 }

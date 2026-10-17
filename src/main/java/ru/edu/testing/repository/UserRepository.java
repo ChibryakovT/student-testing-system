@@ -25,6 +25,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
             where (lower(u.username) like :pattern or lower(u.fullName) like :pattern
                    or lower(coalesce(u.groupName, '')) like :pattern)
               and (:role is null or u.role = :role)
+              and (:groupName is null or u.groupName = :groupName)
             """)
-    List<User> search(@Param("pattern") String pattern, @Param("role") Role role, Sort sort);
+    List<User> search(@Param("pattern") String pattern, @Param("role") Role role,
+                      @Param("groupName") String groupName, Sort sort);
+
+    @Query("select distinct u.groupName from User u where u.groupName is not null order by u.groupName")
+    List<String> findGroupNames();
 }

@@ -12,6 +12,7 @@ import ru.edu.testing.security.AppUserDetails;
 import ru.edu.testing.service.AttemptService;
 import ru.edu.testing.service.SubjectService;
 import ru.edu.testing.service.TestService;
+import ru.edu.testing.service.UserService;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -27,11 +28,14 @@ public class AttemptController {
     private final AttemptService attemptService;
     private final SubjectService subjectService;
     private final TestService testService;
+    private final UserService userService;
 
-    public AttemptController(AttemptService attemptService, SubjectService subjectService, TestService testService) {
+    public AttemptController(AttemptService attemptService, SubjectService subjectService, TestService testService,
+                             UserService userService) {
         this.attemptService = attemptService;
         this.subjectService = subjectService;
         this.testService = testService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -39,9 +43,16 @@ public class AttemptController {
                        @RequestParam(required = false) Long testId,
                        @RequestParam(required = false) Long subjectId,
                        @RequestParam(required = false) Boolean passed,
+                       @RequestParam(required = false) String group,
                        @RequestParam(defaultValue = "date") String sort,
                        @AuthenticationPrincipal AppUserDetails me, Model model) {
-        model.addAttribute("attempts", attemptService.search(q, testId, subjectId, passed, sort, me));
+        // Фильтр по группе доступен администратору
+        String groupFilter = me.isAdmin() ? group : null;
+        model.addAttribute("attempts", attemptService.search(q, testId, subjectId, passed, groupFilter, sort, me));
+        if (me.isAdmin()) {
+            model.addAttribute("groups", userService.groupNames());
+        }
+        model.addAttribute("group", groupFilter);
         model.addAttribute("subjects", subjectService.findAll(null));
         model.addAttribute("tests", testService.search(null, null, "title", me));
         model.addAttribute("q", q);
