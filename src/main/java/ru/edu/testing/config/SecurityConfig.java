@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/reports/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .httpBasic(basic -> basic.authenticationEntryPoint((req, res, ex) ->
                         writeJson(mapper, req, res, HttpStatus.UNAUTHORIZED, "Требуется аутентификация")))
@@ -66,8 +66,8 @@ public class SecurityConfig {
     public SecurityFilterChain webChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/register", "/css/**", "/js/**", "/favicon.ico", "/error").permitAll()
-                        .requestMatchers("/users/**").hasRole("ADMIN")
-                        .requestMatchers("/subjects/**", "/reports/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/users/**", "/reports/**").hasRole("ADMIN")
+                        .requestMatchers("/subjects/**").hasAnyRole("TEACHER", "ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")

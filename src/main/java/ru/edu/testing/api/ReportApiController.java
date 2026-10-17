@@ -8,7 +8,7 @@ import ru.edu.testing.service.ReportService;
 
 import java.util.List;
 
-/** Аналитика. Доступ: преподаватель и администратор (см. SecurityConfig). */
+/** Аналитика. Доступ: только администратор (см. SecurityConfig). */
 @RestController
 @RequestMapping("/api/reports")
 public class ReportApiController {

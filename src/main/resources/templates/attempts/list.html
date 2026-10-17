@@ -7,7 +7,7 @@
     <h1 class="h3 mb-3" th:text="${me.student} ? 'Мои результаты' : 'Результаты тестирования'">Результаты</h1>
     <form class="card card-body mb-3 filter-bar" method="get" th:action="@{/attempts}">
         <div class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div th:class="${me.admin} ? 'col-md-2' : 'col-md-3'">
                 <label class="form-label small" for="q">Поиск</label>
                 <input class="form-control" id="q" name="q" th:value="${q}" placeholder="ФИО, группа или тест">
             </div>
@@ -18,11 +18,18 @@
                     <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}" th:selected="${s.id == subjectId}"></option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div th:class="${me.admin} ? 'col-md-1' : 'col-md-2'">
                 <label class="form-label small" for="testId">Тест</label>
                 <select class="form-select" id="testId" name="testId">
                     <option value="">Все</option>
                     <option th:each="t : ${tests}" th:value="${t.id}" th:text="${t.title}" th:selected="${t.id == testId}"></option>
+                </select>
+            </div>
+            <div class="col-md-2" th:if="${me.admin}">
+                <label class="form-label small" for="group">Группа</label>
+                <select class="form-select" id="group" name="group">
+                    <option value="">Все группы</option>
+                    <option th:each="g : ${groups}" th:value="${g}" th:text="${g}" th:selected="${g == group}"></option>
                 </select>
             </div>
             <div class="col-md-2">

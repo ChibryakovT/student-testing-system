@@ -58,15 +58,16 @@ public class AttemptApiController {
         return AttemptDto.of(attemptService.getResult(id, me));
     }
 
-    /** Студент получает только свои результаты; фильтры: q, testId, subjectId, passed; sort = date|score|score_asc|student|test. */
+    /** Студент получает только свои результаты; фильтры: q, testId, subjectId, passed, group (администратор); sort = date|score|score_asc|student|test. */
     @GetMapping("/attempts")
     public List<AttemptDto> list(@RequestParam(required = false) String q,
                                  @RequestParam(required = false) Long testId,
                                  @RequestParam(required = false) Long subjectId,
                                  @RequestParam(required = false) Boolean passed,
+                                 @RequestParam(required = false) String group,
                                  @RequestParam(defaultValue = "date") String sort,
                                  @AuthenticationPrincipal AppUserDetails me) {
-        return attemptService.search(q, testId, subjectId, passed, sort, me).stream().map(AttemptDto::of).toList();
+        return attemptService.search(q, testId, subjectId, passed, me.isAdmin() ? group : null, sort, me).stream().map(AttemptDto::of).toList();
     }
 
     @DeleteMapping("/attempts/{id}")

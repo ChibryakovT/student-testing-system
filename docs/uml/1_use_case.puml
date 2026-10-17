@@ -35,7 +35,7 @@ T --> UC6
 T --> UC7
 T --> UC8
 T --> UC9
-T --> UC10
+A --> UC10
 A --> UC11
 UC4 ..> UC12 : <<include>>
 UC7 ..> UC6 : <<extend>>

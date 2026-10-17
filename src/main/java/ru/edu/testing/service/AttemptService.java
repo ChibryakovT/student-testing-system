@@ -146,10 +146,11 @@ public class AttemptService {
         return attempt;
     }
 
-    public List<TestAttempt> search(String query, Long testId, Long subjectId, Boolean passed, String sort,
-                                    AppUserDetails user) {
+    public List<TestAttempt> search(String query, Long testId, Long subjectId, Boolean passed, String groupName,
+                                    String sort, AppUserDetails user) {
         Long studentId = user.isStudent() ? user.getId() : null;
-        return attemptRepository.search(studentId, testId, subjectId, passed, Patterns.like(query),
+        String group = groupName == null || groupName.isBlank() ? null : groupName.trim();
+        return attemptRepository.search(studentId, testId, subjectId, passed, group, Patterns.like(query),
                 SORTS.getOrDefault(sort, SORTS.get("date")));
     }
 

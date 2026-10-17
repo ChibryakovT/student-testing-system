@@ -26,8 +26,9 @@ public class UserApiController {
     @GetMapping
     public List<UserDto> list(@RequestParam(required = false) String q,
                               @RequestParam(required = false) Role role,
+                              @RequestParam(required = false) String group,
                               @RequestParam(defaultValue = "name") String sort) {
-        return userService.search(q, role, sort).stream().map(UserDto::of).toList();
+        return userService.search(q, role, group, sort).stream().map(UserDto::of).toList();
     }
 
     @PostMapping

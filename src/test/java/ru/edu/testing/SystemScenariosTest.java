@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -254,17 +255,42 @@ class SystemScenariosTest {
     }
 
     @Test
-    @DisplayName("20. Аналитический отчёт: преподавателю доступен, студенту — 403")
+    @DisplayName("20. Аналитический отчёт: администратору доступен, преподавателю и студенту — 403")
     void analyticsReport() throws Exception {
         long testId = createPublishedTest();
         long attemptId = startAttempt(testId, student).get("attemptId").asLong();
         api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", correctAnswers(testId)))
                 .andExpect(status().isOk());
-        api(get("/api/reports/tests"), teacher, null)
+        api(get("/api/reports/tests"), ADMIN, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.testId == " + testId + ")].attempts").value(contains(1)))
                 .andExpect(jsonPath("$[?(@.testId == " + testId + ")].averagePercent").value(contains(100.0)));
+        api(get("/api/reports/tests"), teacher, null).andExpect(status().isForbidden());
         api(get("/api/reports/tests"), student, null).andExpect(status().isForbidden());
+        mvc.perform(get("/reports").with(user(teacher).roles("TEACHER"))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("21. Администратор: фильтр пользователей и результатов по группе")
+    void adminGroupFilter() throws Exception {
+        String group = "ГР-" + SEQ.incrementAndGet();
+        String login = "grp" + SEQ.incrementAndGet();
+        api(post("/api/users"), ADMIN, Map.of("username", login, "password", PASS, "fullName", "Студент группы",
+                "email", login + "@example.com", "role", "STUDENT", "groupName", group))
+                .andExpect(status().isCreated());
+        api(get("/api/users").param("group", group), ADMIN, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].username").value(login));
+
+        long testId = createPublishedTest();
+        long attemptId = startAttempt(testId, login).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), login, Map.of("answers", List.of()))
+                .andExpect(status().isOk());
+        api(get("/api/attempts").param("group", group), ADMIN, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].groupName").value(group));
     }
 
     // ---------- Вспомогательные методы ----------

@@ -27,8 +27,11 @@ public class UserController {
     @GetMapping
     public String list(@RequestParam(required = false) String q,
                        @RequestParam(required = false) Role role,
+                       @RequestParam(required = false) String group,
                        @RequestParam(defaultValue = "name") String sort, Model model) {
-        model.addAttribute("users", userService.search(q, role, sort));
+        model.addAttribute("users", userService.search(q, role, group, sort));
+        model.addAttribute("groups", userService.groupNames());
+        model.addAttribute("group", group);
         model.addAttribute("roles", Role.values());
         model.addAttribute("q", q);
         model.addAttribute("role", role);
@@ -68,7 +71,7 @@ public class UserController {
             userService.update(id, role, enabled, me.getId());
             redirect.addFlashAttribute("success", "Данные пользователя обновлены");
         } catch (BusinessException e) {
-            redirect.addFlashAttribute("error", e.getMessage());
+            redirect.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/users";
     }
@@ -80,7 +83,7 @@ public class UserController {
             userService.delete(id, me.getId());
             redirect.addFlashAttribute("success", "Пользователь удалён");
         } catch (BusinessException e) {
-            redirect.addFlashAttribute("error", e.getMessage());
+            redirect.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/users";
     }
