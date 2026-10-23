@@ -21,9 +21,9 @@ public final class ApiDtos {
         }
     }
 
-    public record SubjectDto(Long id, String name, String description) {
+    public record SubjectDto(Long id, String name, String description, ControlForm controlForm) {
         public static SubjectDto of(Subject s) {
-            return new SubjectDto(s.getId(), s.getName(), s.getDescription());
+            return new SubjectDto(s.getId(), s.getName(), s.getDescription(), s.getControlForm());
         }
     }
 

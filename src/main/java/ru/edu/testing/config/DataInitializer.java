@@ -82,10 +82,10 @@ public class DataInitializer implements ApplicationRunner {
                 userService.create(form("volkov", password, "Волков Никита Андреевич", "volkov@example.com", "ПИ-22"), Role.STUDENT));
         AppUserDetails author = new AppUserDetails(teacher, false);
 
-        Subject db = subject("Базы данных", "Реляционная модель, SQL, проектирование БД");
-        Subject java = subject("Программирование на Java", "Синтаксис, ООП, коллекции, исключения");
-        Subject net = subject("Компьютерные сети", "Модель OSI, стек TCP/IP, адресация");
-        Subject sec = subject("Информационная безопасность", "Угрозы, криптография, защита веб-приложений");
+        Subject db = subject("Базы данных", "Реляционная модель, SQL, проектирование БД", ControlForm.EXAM);
+        Subject java = subject("Программирование на Java", "Синтаксис, ООП, коллекции, исключения", ControlForm.EXAM);
+        Subject net = subject("Компьютерные сети", "Модель OSI, стек TCP/IP, адресация", ControlForm.CREDIT);
+        Subject sec = subject("Информационная безопасность", "Угрозы, криптография, защита веб-приложений", ControlForm.GRADED_CREDIT);
 
         List<Test> published = new ArrayList<>();
         published.add(test(author, db, "SQL: основы запросов", "Проверка знания базовых конструкций SQL", 15, 60,
@@ -154,10 +154,11 @@ public class DataInitializer implements ApplicationRunner {
         }
     }
 
-    private Subject subject(String name, String description) {
+    private Subject subject(String name, String description, ControlForm controlForm) {
         SubjectForm form = new SubjectForm();
         form.setName(name);
         form.setDescription(description);
+        form.setControlForm(controlForm);
         return subjectService.create(form);
     }
 

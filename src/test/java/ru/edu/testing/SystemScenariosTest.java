@@ -139,9 +139,10 @@ class SystemScenariosTest {
     @DisplayName("9. Добавление дисциплины преподавателем — запись добавлена")
     void addSubject() throws Exception {
         String name = "Дисциплина " + SEQ.incrementAndGet();
-        api(post("/api/subjects"), teacher, Map.of("name", name, "description", "Описание"))
+        api(post("/api/subjects"), teacher, Map.of("name", name, "description", "Описание", "controlForm", "CREDIT"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value(name));
+                .andExpect(jsonPath("$.name").value(name))
+                .andExpect(jsonPath("$.controlForm").value("CREDIT"));
     }
 
     @Test
@@ -294,7 +295,7 @@ class SystemScenariosTest {
     }
 
     @Test
-    @DisplayName("22. Ведомость: CSV и Excel по группе, оценки по шкале, отметка «н/я»; преподавателю — 403")
+    @DisplayName("22. Ведомость: CSV и Excel по группе, оценки по шкале, зачёт, отметка «н/я»; преподавателю — 403")
     void gradeSheetExport() throws Exception {
         String group = "ВД-" + SEQ.incrementAndGet();
         String passed = "sheetA" + SEQ.incrementAndGet();
@@ -319,6 +320,16 @@ class SystemScenariosTest {
         org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Студент " + passed + ";Z-" + passed + ";5;отлично"), csv);
         org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Студент " + absent + ";Z-" + absent + ";н/я;не явился"), csv);
         org.junit.jupiter.api.Assertions.assertTrue(csv.contains("5 (отл.) = 1") && csv.contains("не явились = 1"), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Форма контроля: экзамен"), "форма контроля из дисциплины: " + csv);
+
+        // Зачёт: вместо оценки — «зачтено / не зачтено»
+        String credit = mvc.perform(get("/reports/sheet/export.csv").with(user(ADMIN).roles("ADMIN"))
+                        .param("testId", String.valueOf(testId)).param("group", group).param("controlForm", "зачёт")
+                        .param("columns", "NAME", "GRADE", "GRADE_WORD"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        org.junit.jupiter.api.Assertions.assertTrue(credit.contains("Студент " + passed + ";зач.;зачтено"), credit);
+        org.junit.jupiter.api.Assertions.assertTrue(credit.contains("зачтено = 1, не зачтено = 0, не явились = 1"), credit);
 
         byte[] xlsx = mvc.perform(get("/reports/sheet/export.xlsx").with(user(ADMIN).roles("ADMIN"))
                         .param("testId", String.valueOf(testId)).param("group", group))

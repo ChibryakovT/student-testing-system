@@ -27,7 +27,7 @@ public class SheetForm {
     private String department;
     private String discipline;
     private String teacher;
-    private String controlForm = "экзамен";
+    private String controlForm;               // по умолчанию — из дисциплины теста
     private String date;
 
     // Колонки и параметры файла

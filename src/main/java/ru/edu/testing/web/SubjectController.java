@@ -6,6 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import ru.edu.testing.domain.ControlForm;
 import ru.edu.testing.domain.Subject;
 import ru.edu.testing.dto.SubjectForm;
 import ru.edu.testing.exception.BusinessException;
@@ -23,9 +24,12 @@ public class SubjectController {
     }
 
     @GetMapping
-    public String list(@RequestParam(required = false) String q, Model model) {
-        model.addAttribute("subjects", subjectService.findAll(q));
+    public String list(@RequestParam(required = false) String q,
+                       @RequestParam(required = false) ControlForm controlForm, Model model) {
+        model.addAttribute("subjects", subjectService.findAll(q, controlForm));
         model.addAttribute("q", q);
+        model.addAttribute("controlForm", controlForm);
+        model.addAttribute("controlForms", ControlForm.values());
         return "subjects/list";
     }
 
@@ -33,6 +37,7 @@ public class SubjectController {
     public String createForm(Model model) {
         model.addAttribute("form", new SubjectForm());
         model.addAttribute("subjectId", null);
+        model.addAttribute("controlForms", ControlForm.values());
         return "subjects/form";
     }
 
@@ -40,6 +45,7 @@ public class SubjectController {
     public String create(@Valid @ModelAttribute("form") SubjectForm form, BindingResult result, Model model,
                          RedirectAttributes redirect) {
         model.addAttribute("subjectId", null);
+        model.addAttribute("controlForms", ControlForm.values());
         if (result.hasErrors()) {
             return "subjects/form";
         }
@@ -59,8 +65,10 @@ public class SubjectController {
         SubjectForm form = new SubjectForm();
         form.setName(subject.getName());
         form.setDescription(subject.getDescription());
+        form.setControlForm(subject.getControlForm());
         model.addAttribute("form", form);
         model.addAttribute("subjectId", id);
+        model.addAttribute("controlForms", ControlForm.values());
         return "subjects/form";
     }
 
@@ -68,6 +76,7 @@ public class SubjectController {
     public String update(@PathVariable Long id, @Valid @ModelAttribute("form") SubjectForm form,
                          BindingResult result, Model model, RedirectAttributes redirect) {
         model.addAttribute("subjectId", id);
+        model.addAttribute("controlForms", ControlForm.values());
         if (result.hasErrors()) {
             return "subjects/form";
         }

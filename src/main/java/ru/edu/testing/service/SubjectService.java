@@ -3,6 +3,7 @@ package ru.edu.testing.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.edu.testing.domain.ControlForm;
 import ru.edu.testing.domain.Subject;
 import ru.edu.testing.dto.SubjectForm;
 import ru.edu.testing.exception.BusinessException;
@@ -25,10 +26,15 @@ public class SubjectService {
     }
 
     public List<Subject> findAll(String query) {
-        if (query == null || query.isBlank()) {
-            return subjectRepository.findAllByOrderByNameAsc();
-        }
-        return subjectRepository.findByNameContainingIgnoreCaseOrderByNameAsc(query.trim());
+        return findAll(query, null);
+    }
+
+    /** Поиск по названию и фильтр по форме контроля. */
+    public List<Subject> findAll(String query, ControlForm controlForm) {
+        List<Subject> list = query == null || query.isBlank()
+                ? subjectRepository.findAllByOrderByNameAsc()
+                : subjectRepository.findByNameContainingIgnoreCaseOrderByNameAsc(query.trim());
+        return controlForm == null ? list : list.stream().filter(s -> s.getControlForm() == controlForm).toList();
     }
 
     public Subject get(Long id) {
@@ -69,5 +75,6 @@ public class SubjectService {
     private static void apply(Subject subject, SubjectForm form) {
         subject.setName(form.getName().trim());
         subject.setDescription(form.getDescription() == null ? null : form.getDescription().trim());
+        subject.setControlForm(form.getControlForm());
     }
 }
