@@ -16,6 +16,14 @@
             <div class="invalid-feedback" th:errors="*{name}"></div>
         </div>
         <div class="mb-3">
+            <label class="form-label" for="controlForm">Форма контроля</label>
+            <select class="form-select" th:field="*{controlForm}" th:errorclass="is-invalid">
+                <option th:each="f : ${controlForms}" th:value="${f}" th:text="${f.title}"></option>
+            </select>
+            <div class="form-text">По форме контроля ведомость выбирает шкалу: «5/4/3/2» или «зачтено / не зачтено».</div>
+            <div class="invalid-feedback" th:errors="*{controlForm}"></div>
+        </div>
+        <div class="mb-3">
             <label class="form-label" for="description">Описание</label>
             <textarea class="form-control" rows="3" th:field="*{description}" th:errorclass="is-invalid" maxlength="500"></textarea>
             <div class="invalid-feedback" th:errors="*{description}"></div>

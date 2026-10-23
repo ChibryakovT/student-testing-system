@@ -6,6 +6,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.edu.testing.domain.ControlForm;
 import ru.edu.testing.domain.Role;
 import ru.edu.testing.domain.Test;
 import ru.edu.testing.domain.TestAttempt;
@@ -39,6 +40,8 @@ public class GradeSheetService {
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final List<String> TOTAL_KEYS = List.of("5", "4", "3", "2", "н/я");
+    private static final List<String> PASS_FAIL_KEYS = List.of("зачтено", "не зачтено", "н/я");
+    private static final String PASS_FAIL = ControlForm.CREDIT.getTitle();
 
     private final TestRepository testRepository;
     private final TestAttemptRepository attemptRepository;
@@ -75,6 +78,9 @@ public class GradeSheetService {
                 if (isBlank(form.getTeacher())) {
                     form.setTeacher(t.getAuthor().getFullName());
                 }
+                if (isBlank(form.getControlForm())) {
+                    form.setControlForm(t.getSubject().getControlForm().getTitle());
+                }
             });
         }
     }
@@ -109,13 +115,28 @@ public class GradeSheetService {
         }
         byStudent.values().forEach(a -> students.putIfAbsent(a.getStudent().getId(), a.getStudent()));
 
+        // Зачёт оценивается как «зачтено / не зачтено» (порог — нижняя граница «3»), остальные формы — по пятибалльной шкале
+        boolean passFail = PASS_FAIL.equalsIgnoreCase(form.getControlForm() == null ? "" : form.getControlForm().trim());
         List<Row> rows = new ArrayList<>();
         for (User u : students.values()) {
             TestAttempt a = byStudent.get(u.getId());
             Integer grade = a == null ? null : grade(a.getPercent(), form);
+            String mark;
+            String word;
+            if (a == null) {
+                mark = "н/я";
+                word = gradeWord(null);
+            } else if (passFail) {
+                boolean ok = a.getPercent() >= form.getGrade3();
+                mark = ok ? "зач." : "незач.";
+                word = ok ? "зачтено" : "не зачтено";
+            } else {
+                mark = String.valueOf(grade);
+                word = gradeWord(grade);
+            }
             rows.add(new Row(0, u.getFullName(), u.getGroupName(), u.getRecordBook(),
                     a == null ? null : a.getScore(), a == null ? null : a.getMaxScore(),
-                    a == null ? null : a.getPercent(), grade, gradeWord(grade), a == null ? null : a.getFinishedAt()));
+                    a == null ? null : a.getPercent(), grade, mark, word, a == null ? null : a.getFinishedAt()));
         }
         Comparator<Row> byName = Comparator.comparing(Row::fullName, String.CASE_INSENSITIVE_ORDER);
         rows.sort(switch (form.getSort()) {
@@ -127,16 +148,17 @@ public class GradeSheetService {
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
             numbered.add(new Row(i + 1, r.fullName(), r.group(), r.recordBook(), r.score(), r.maxScore(), r.percent(),
-                    r.grade(), r.gradeWord(), r.finishedAt()));
+                    r.grade(), r.mark(), r.gradeWord(), r.finishedAt()));
         }
 
         Map<String, Long> totals = new LinkedHashMap<>();
-        TOTAL_KEYS.forEach(k -> totals.put(k, 0L));
-        numbered.forEach(r -> totals.merge(r.absent() ? "н/я" : String.valueOf(r.grade()), 1L, Long::sum));
+        (passFail ? PASS_FAIL_KEYS : TOTAL_KEYS).forEach(k -> totals.put(k, 0L));
+        numbered.forEach(r -> totals.merge(r.absent() ? "н/я" : passFail ? r.gradeWord() : String.valueOf(r.grade()),
+                1L, Long::sum));
 
         List<SheetColumn> columns = form.getColumns() == null || form.getColumns().isEmpty()
                 ? List.of(SheetColumn.NUM, SheetColumn.NAME) : form.getColumns();
-        return new GradeSheet(form, test.getTitle(), columns, numbered, totals);
+        return new GradeSheet(form, test.getTitle(), passFail, columns, numbered, totals);
     }
 
     /** Перевод процента в пятибалльную шкалу по заданным порогам. */
@@ -171,7 +193,7 @@ public class GradeSheetService {
             case BOOK -> nz(r.recordBook());
             case SCORE -> r.absent() ? "" : r.score() + " / " + r.maxScore();
             case PERCENT -> r.absent() ? "" : String.valueOf(r.percent());
-            case GRADE -> r.absent() ? "н/я" : String.valueOf(r.grade());
+            case GRADE -> r.mark();
             case GRADE_WORD -> r.gradeWord();
             case DATE -> r.finishedAt() == null ? "" : r.finishedAt().toLocalDate().format(DATE);
             case SIGN -> "";
@@ -197,6 +219,10 @@ public class GradeSheetService {
     }
 
     public static String totalsLine(GradeSheet s) {
+        if (s.passFail()) {
+            return "Итого: зачтено = " + s.count("зачтено") + ", не зачтено = " + s.count("не зачтено")
+                    + ", не явились = " + s.count("н/я") + ", всего = " + s.rows().size();
+        }
         return "Итого: 5 (отл.) = " + s.count("5") + ", 4 (хор.) = " + s.count("4") + ", 3 (удовл.) = " + s.count("3")
                 + ", 2 (неуд.) = " + s.count("2") + ", не явились = " + s.count("н/я") + ", всего = " + s.rows().size();
     }
@@ -277,7 +303,7 @@ public class GradeSheetService {
                     SheetColumn col = sheet.columns().get(c);
                     String v = cell(row, col);
                     boolean numeric = (col == SheetColumn.NUM || col == SheetColumn.PERCENT
-                            || (col == SheetColumn.GRADE && !row.absent())) && !v.isEmpty();
+                            || (col == SheetColumn.GRADE && v.matches("\\d+"))) && !v.isEmpty();
                     if (numeric) {
                         xr.setNumber(c, Double.parseDouble(v), center);
                     } else {

@@ -10,6 +10,7 @@
             <div class="d-flex flex-wrap justify-content-between gap-2">
                 <div>
                     <span class="badge text-bg-light mb-2" th:text="${test.subject.name}">дисциплина</span>
+                    <span class="badge text-bg-secondary mb-2" th:text="${test.subject.controlForm.title}">форма</span>
                     <span class="badge mb-2" th:if="${me.staff}"
                           th:classappend="${test.published} ? 'text-bg-success' : 'text-bg-secondary'"
                           th:text="${test.published} ? 'Опубликован' : 'Черновик'">статус</span>

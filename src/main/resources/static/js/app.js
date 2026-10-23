@@ -44,7 +44,7 @@ document.addEventListener('submit', function (e) {
     if (!form) return;
     var test = form.querySelector('select[name="testId"]');
     if (test) test.addEventListener('change', function () {
-        ['discipline', 'teacher'].forEach(function (n) {
+        ['discipline', 'teacher', 'controlForm'].forEach(function (n) {
             var el = form.querySelector('[name="' + n + '"]');
             if (el) el.value = '';
         });

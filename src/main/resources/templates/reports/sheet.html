@@ -65,7 +65,7 @@
                             <div class="col-4"><label class="form-label small" for="grade3">«3»</label>
                                 <input class="form-control" type="number" min="0" max="100" th:field="*{grade3}"></div>
                         </div>
-                        <div class="form-text">Ниже порога «3» — оценка «2».</div>
+                        <div class="form-text">Ниже порога «3» — оценка «2». Для зачёта: «зачтено» — от порога «3».</div>
                     </div>
                 </div>
             </div>
@@ -85,6 +85,7 @@
                                 <input class="form-control" th:field="*{semester}" maxlength="20"></div>
                             <div class="col-md-3"><label class="form-label small" for="controlForm">Форма контроля</label>
                                 <select class="form-select" th:field="*{controlForm}">
+                                    <option value="">Из дисциплины</option>
                                     <option value="экзамен">Экзамен</option>
                                     <option value="зачёт">Зачёт</option>
                                     <option value="дифференцированный зачёт">Дифф. зачёт</option>
@@ -102,7 +103,7 @@
                             <div class="col-md-6"><label class="form-label small" for="teacher">Преподаватель</label>
                                 <input class="form-control" th:field="*{teacher}" maxlength="150"></div>
                         </div>
-                        <div class="form-text">Дисциплина и преподаватель подставляются из выбранного теста; их можно изменить.</div>
+                        <div class="form-text">Дисциплина, преподаватель и форма контроля подставляются из выбранного теста; их можно изменить.</div>
                     </div>
                 </div>
 

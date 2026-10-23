@@ -45,7 +45,8 @@
             <div class="card h-100 test-card">
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="badge text-bg-light" th:text="${t.subject.name}">дисциплина</span>
+                        <span><span class="badge text-bg-light" th:text="${t.subject.name}">дисциплина</span>
+                            <span class="badge text-bg-secondary" th:text="${t.subject.controlForm.title}">форма</span></span>
                         <span class="badge" th:classappend="${t.published} ? 'text-bg-success' : 'text-bg-secondary'"
                               th:text="${t.published} ? 'Опубликован' : 'Черновик'" th:if="${me.staff}">статус</span>
                     </div>
