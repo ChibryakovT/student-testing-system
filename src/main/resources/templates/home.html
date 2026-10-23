@@ -53,6 +53,7 @@
                     <a class="list-group-item list-group-item-action" th:href="@{/attempts}">Результаты тестирования</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/subjects}" th:if="${me.staff}">Справочник дисциплин</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/reports}" th:if="${me.admin}">Аналитический отчёт</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/reports/sheet}" th:if="${me.admin}">Ведомость и экспорт (печать, CSV, Excel)</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/users}" th:if="${me.admin}">Пользователи</a>
                 </div>
             </div>

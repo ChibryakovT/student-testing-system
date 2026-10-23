@@ -60,7 +60,13 @@ public class UserService {
         user.setEmail(email);
         user.setGroupName(blankToNull(form.getGroupName()));
         user.setRole(role);
-        return userRepository.save(user);
+        user.setRecordBook(blankToNull(form.getRecordBook()));
+        User saved = userRepository.save(user);
+        if (role == Role.STUDENT && saved.getRecordBook() == null) {
+            // Номер зачётки не указан — формируется автоматически: год поступления + 05 + id
+            saved.setRecordBook(String.format("%d05%04d", java.time.Year.now().getValue(), saved.getId()));
+        }
+        return saved;
     }
 
     public List<User> search(String query, Role role, String groupName, String sort) {

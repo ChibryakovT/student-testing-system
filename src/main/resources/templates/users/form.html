@@ -15,7 +15,7 @@
             <div class="invalid-feedback" th:errors="*{fullName}"></div>
         </div>
         <div class="row">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-3 mb-3">
                 <label class="form-label" for="email">E-mail</label>
                 <input class="form-control" type="email" th:field="*{email}" th:errorclass="is-invalid">
                 <div class="invalid-feedback" th:errors="*{email}"></div>
@@ -23,6 +23,11 @@
             <div class="col-md-3 mb-3">
                 <label class="form-label" for="groupName">Группа</label>
                 <input class="form-control" th:field="*{groupName}" th:errorclass="is-invalid">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label" for="recordBook">№ зачётки</label>
+                <input class="form-control" th:field="*{recordBook}" th:errorclass="is-invalid" maxlength="20">
+                <div class="invalid-feedback" th:errors="*{recordBook}"></div>
             </div>
             <div class="col-md-3 mb-3">
                 <label class="form-label" for="role">Роль</label>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Ведомость — ЭСТ</title></head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Ведомость и экспорт</h1>
+        <a class="btn btn-outline-secondary btn-sm" th:href="@{/reports}">← Аналитический отчёт</a>
+    </div>
+
+    <form id="sheet-form" method="get" th:action="@{/reports/sheet}" th:object="${form}">
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <div class="card mb-3">
+                    <div class="card-header fw-semibold">1. Что выводить</div>
+                    <div class="card-body">
+                        <label class="form-label small" for="testId">Тест</label>
+                        <select class="form-select mb-2" th:field="*{testId}" required>
+                            <option value="">— выберите тест —</option>
+                            <option th:each="t : ${tests}" th:value="${t.id}" th:text="${t.title} + ' (' + ${t.subject.name} + ')'"></option>
+                        </select>
+                        <label class="form-label small" for="group">Группа</label>
+                        <select class="form-select mb-2" th:field="*{group}">
+                            <option value="">Все группы</option>
+                            <option th:each="g : ${groups}" th:value="${g}" th:text="${g}"></option>
+                        </select>
+                        <label class="form-label small" for="attempt">Какую попытку учитывать</label>
+                        <select class="form-select mb-2" th:field="*{attempt}">
+                            <option value="best">Лучшую</option>
+                            <option value="last">Последнюю</option>
+                            <option value="first">Первую</option>
+                        </select>
+                        <label class="form-label small" for="sort">Сортировка</label>
+                        <select class="form-select mb-2" th:field="*{sort}">
+                            <option value="name">По ФИО</option>
+                            <option value="grade">По оценке</option>
+                            <option value="book">По номеру зачётки</option>
+                        </select>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{includeAbsent}">
+                            <label class="form-check-label" th:for="${#ids.prev('includeAbsent')}">Включать не проходивших («н/я»)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header fw-semibold">2. Колонки</div>
+                    <div class="card-body sheet-columns">
+                        <div class="form-check" th:each="c : ${allColumns}">
+                            <input class="form-check-input" type="checkbox" th:field="*{columns}" th:value="${c}">
+                            <label class="form-check-label" th:for="${#ids.prev('columns')}" th:text="${c.title}">колонка</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header fw-semibold">3. Шкала оценок, % (не ниже)</div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-4"><label class="form-label small" for="grade5">«5»</label>
+                                <input class="form-control" type="number" min="0" max="100" th:field="*{grade5}"></div>
+                            <div class="col-4"><label class="form-label small" for="grade4">«4»</label>
+                                <input class="form-control" type="number" min="0" max="100" th:field="*{grade4}"></div>
+                            <div class="col-4"><label class="form-label small" for="grade3">«3»</label>
+                                <input class="form-control" type="number" min="0" max="100" th:field="*{grade3}"></div>
+                        </div>
+                        <div class="form-text">Ниже порога «3» — оценка «2».</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card mb-3">
+                    <div class="card-header fw-semibold">4. Шапка документа</div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-md-8"><label class="form-label small" for="university">Учебное заведение</label>
+                                <input class="form-control" th:field="*{university}" maxlength="200"></div>
+                            <div class="col-md-4"><label class="form-label small" for="title">Название документа</label>
+                                <input class="form-control" th:field="*{title}" maxlength="100"></div>
+                            <div class="col-md-3"><label class="form-label small" for="academicYear">Учебный год</label>
+                                <input class="form-control" th:field="*{academicYear}" maxlength="20"></div>
+                            <div class="col-md-3"><label class="form-label small" for="semester">Семестр</label>
+                                <input class="form-control" th:field="*{semester}" maxlength="20"></div>
+                            <div class="col-md-3"><label class="form-label small" for="controlForm">Форма контроля</label>
+                                <select class="form-select" th:field="*{controlForm}">
+                                    <option value="экзамен">Экзамен</option>
+                                    <option value="зачёт">Зачёт</option>
+                                    <option value="дифференцированный зачёт">Дифф. зачёт</option>
+                                    <option value="контрольная работа">Контрольная работа</option>
+                                    <option value="тестирование">Тестирование</option>
+                                </select></div>
+                            <div class="col-md-3"><label class="form-label small" for="date">Дата</label>
+                                <input class="form-control" th:field="*{date}" maxlength="20" placeholder="дд.мм.гггг"></div>
+                            <div class="col-md-6"><label class="form-label small" for="faculty">Факультет</label>
+                                <input class="form-control" th:field="*{faculty}" maxlength="150" placeholder="Например, Естественнонаучный"></div>
+                            <div class="col-md-6"><label class="form-label small" for="department">Кафедра</label>
+                                <input class="form-control" th:field="*{department}" maxlength="150" placeholder="Например, Информатика и ИТ"></div>
+                            <div class="col-md-6"><label class="form-label small" for="discipline">Дисциплина</label>
+                                <input class="form-control" th:field="*{discipline}" maxlength="200"></div>
+                            <div class="col-md-6"><label class="form-label small" for="teacher">Преподаватель</label>
+                                <input class="form-control" th:field="*{teacher}" maxlength="150"></div>
+                        </div>
+                        <div class="form-text">Дисциплина и преподаватель подставляются из выбранного теста; их можно изменить.</div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header fw-semibold">5. Формат файла и вывод</div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-4"><label class="form-label small" for="delimiter">Разделитель CSV</label>
+                                <select class="form-select" th:field="*{delimiter}">
+                                    <option value="semicolon">Точка с запятой (Excel)</option>
+                                    <option value="comma">Запятая</option>
+                                    <option value="tab">Табуляция</option>
+                                </select></div>
+                            <div class="col-md-4"><label class="form-label small" for="encoding">Кодировка CSV</label>
+                                <select class="form-select" th:field="*{encoding}">
+                                    <option value="UTF-8">UTF-8 (рекомендуется)</option>
+                                    <option value="windows-1251">Windows-1251 (старый Excel)</option>
+                                </select></div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" th:field="*{csvHeader}">
+                                    <label class="form-check-label" th:for="${#ids.prev('csvHeader')}">Шапка и итоги в CSV</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-primary" type="submit">Показать</button>
+                            <button class="btn btn-outline-dark" type="submit" th:formaction="@{/reports/sheet/print}" formtarget="_blank">🖨 Печать / PDF</button>
+                            <button class="btn btn-outline-success" type="submit" th:formaction="@{/reports/sheet/export.csv}">⬇ CSV</button>
+                            <button class="btn btn-success" type="submit" th:formaction="@{/reports/sheet/export.xlsx}">⬇ Excel (.xlsx)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="card" th:if="${sheet != null}">
+        <div class="card-header fw-semibold">Предпросмотр</div>
+        <div class="card-body sheet-preview">
+            <div th:replace="~{reports/sheet-doc :: doc(${sheet})}"></div>
+        </div>
+    </div>
+    <div class="alert alert-light border" th:if="${sheet == null and errorMessage == null}">
+        Выберите тест и нажмите «Показать», чтобы увидеть ведомость.
+    </div>
+</section>
+</body>
+</html>

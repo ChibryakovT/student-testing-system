@@ -1,0 +1,24 @@
+/* Печатная форма ведомости: формат A4, Times New Roman */
+@page { size: A4; margin: 15mm 12mm 15mm 20mm; }
+body { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #000; margin: 0; padding: 16px; background: #fff; }
+.toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; font-family: -apple-system, sans-serif; font-size: 14px; color: #555; }
+.toolbar button { font-size: 15px; padding: 8px 16px; cursor: pointer; }
+@media print { .no-print { display: none !important; } body { padding: 0; } }
+
+/* Ведомость (предпросмотр и печать) */
+.sheet-doc { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #000; }
+.sheet-head { margin-bottom: 10px; }
+.sheet-title { text-align: center; font-weight: bold; text-transform: none; }
+.sheet-title:nth-child(2) { text-transform: uppercase; margin-bottom: 6px; }
+.sheet-line { margin: 1px 0; }
+.sheet-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+.sheet-table th, .sheet-table td { border: 1px solid #000; padding: 3px 6px; }
+.sheet-table th { background: #eee; text-align: center; }
+.sheet-table td { text-align: center; }
+.sheet-table td.col-name { text-align: left; }
+.sheet-table td.col-sign { min-width: 90px; }
+.sheet-table tr.absent td { color: #666; }
+.sheet-totals { margin-top: 10px; }
+.sheet-signs div { margin-top: 18px; }
+.sheet-preview { background: #fff; overflow-x: auto; }
+.sheet-columns { columns: 2; }

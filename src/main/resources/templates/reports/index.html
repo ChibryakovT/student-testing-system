@@ -6,7 +6,10 @@
 <section>
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Аналитический отчёт</h1>
-        <a class="btn btn-outline-success" th:href="@{/reports/export.csv(subjectId=${subjectId})}">Скачать CSV</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-primary" th:href="@{/reports/sheet}">Ведомость и экспорт</a>
+            <a class="btn btn-outline-success" th:href="@{/reports/export.csv(subjectId=${subjectId})}">Скачать CSV</a>
+        </div>
     </div>
 
     <div class="row g-3 mb-4">

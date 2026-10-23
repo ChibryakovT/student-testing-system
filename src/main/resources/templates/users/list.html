@@ -42,13 +42,14 @@
     </form>
     <div class="table-responsive card">
         <table class="table table-hover mb-0 align-middle">
-            <thead><tr><th>ФИО</th><th>Логин</th><th>E-mail</th><th>Группа</th><th>Роль и доступ</th><th></th></tr></thead>
+            <thead><tr><th>ФИО</th><th>Логин</th><th>E-mail</th><th>Группа</th><th>№ зачётки</th><th>Роль и доступ</th><th></th></tr></thead>
             <tbody>
             <tr th:each="u : ${users}">
                 <td th:text="${u.fullName}">ФИО</td>
                 <td th:text="${u.username}">логин</td>
                 <td th:text="${u.email}">email</td>
                 <td th:text="${u.groupName}">группа</td>
+                <td th:text="${u.recordBook}">зачётка</td>
                 <td>
                     <form class="d-flex gap-2 align-items-center" th:action="@{/users/{id}(id=${u.id})}" method="post">
                         <select class="form-select form-select-sm" name="role">

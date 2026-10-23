@@ -14,10 +14,10 @@ public final class ApiDtos {
     }
 
     public record UserDto(Long id, String username, String fullName, String email, Role role,
-                          String groupName, boolean enabled) {
+                          String groupName, String recordBook, boolean enabled) {
         public static UserDto of(User u) {
             return new UserDto(u.getId(), u.getUsername(), u.getFullName(), u.getEmail(), u.getRole(),
-                    u.getGroupName(), u.isEnabled());
+                    u.getGroupName(), u.getRecordBook(), u.isEnabled());
         }
     }
 

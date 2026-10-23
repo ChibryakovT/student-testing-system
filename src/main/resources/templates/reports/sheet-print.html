@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${sheet.form.title} + ' — ' + ${sheet.testTitle}">Ведомость</title>
+    <link rel="stylesheet" th:href="@{/css/sheet-print.css}">
+</head>
+<body data-autoprint="true">
+<div class="no-print toolbar">
+    <button type="button" id="print-btn">🖨 Печать / сохранить в PDF</button>
+    <span>В окне печати выберите принтер или «Сохранить как PDF».</span>
+</div>
+<div th:replace="~{reports/sheet-doc :: doc(${sheet})}"></div>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
