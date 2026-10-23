@@ -30,3 +30,7 @@ body { background: #f4f6fb; }
 .sheet-signs div { margin-top: 18px; }
 .sheet-preview { background: #fff; overflow-x: auto; }
 .sheet-columns { columns: 2; }
+
+/* Аккуратные числа в таблицах отчёта */
+.pct { min-width: 4.2rem; text-align: right; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }

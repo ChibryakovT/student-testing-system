@@ -17,8 +17,8 @@
         <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.tests}">0</div><div class="stat-label">тестов</div></div></div></div>
         <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.publishedTests}">0</div><div class="stat-label">опубликовано</div></div></div></div>
         <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.finishedAttempts}">0</div><div class="stat-label">попыток</div></div></div></div>
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.averagePercent} + '%'">0</div><div class="stat-label">средний балл</div></div></div></div>
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.passRate()} + '%'">0</div><div class="stat-label">сдали</div></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${#numbers.formatDecimal(summary.averagePercent, 1, 1, 'COMMA')} + ' %'">0</div><div class="stat-label">средний балл</div></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.passRate()} + ' %'">0</div><div class="stat-label">сдали</div></div></div></div>
     </div>
 
     <form class="d-flex flex-wrap gap-2 mb-3" method="get" th:action="@{/reports}">
@@ -42,19 +42,20 @@
                 <tr th:each="r : ${rows}">
                     <td th:text="${r.title}">тест</td>
                     <td th:text="${r.subject}">дисциплина</td>
-                    <td th:text="${r.attempts}">0</td>
+                    <td class="num" th:text="${r.attempts}">0</td>
                     <td>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2" th:if="${r.attempts > 0}">
                             <div class="progress flex-grow-1" role="progressbar">
-                                <div class="progress-bar" th:style="'width:' + ${r.averagePercent} + '%'"
-                                     th:classappend="${r.averagePercent >= 60} ? 'bg-success' : 'bg-warning'"></div>
+                                <div class="progress-bar" th:style="'width:' + ${#numbers.formatDecimal(r.averagePercent, 1, 1, 'POINT')} + '%'"
+                                     th:classappend="${r.averagePercent >= 75} ? 'bg-success' : (${r.averagePercent >= 50} ? 'bg-warning' : 'bg-danger')"></div>
                             </div>
-                            <span class="small" th:text="${r.averagePercent} + '%'">0%</span>
+                            <span class="pct" th:text="${#numbers.formatDecimal(r.averagePercent, 1, 1, 'COMMA')} + ' %'">0 %</span>
                         </div>
+                        <span class="text-muted small" th:if="${r.attempts == 0}">нет попыток</span>
                     </td>
-                    <td th:text="${r.minPercent} + '%'">0</td>
-                    <td th:text="${r.maxPercent} + '%'">0</td>
-                    <td th:text="${r.passedCount} + ' (' + ${r.passRate()} + '%)'">0</td>
+                    <td class="num" th:text="${r.attempts > 0} ? ${r.minPercent} + ' %' : '—'">0</td>
+                    <td class="num" th:text="${r.attempts > 0} ? ${r.maxPercent} + ' %' : '—'">0</td>
+                    <td class="num" th:text="${r.attempts > 0} ? ${r.passedCount} + ' из ' + ${r.attempts} + ' (' + ${r.passRate()} + ' %)' : '—'">0</td>
                 </tr>
                 </tbody>
             </table>
@@ -76,7 +77,7 @@
                                 <div class="progress-bar" th:style="'width:' + ${r.correctRate()} + '%'"
                                      th:classappend="${r.correctRate() >= 50} ? 'bg-success' : 'bg-danger'"></div>
                             </div>
-                            <span class="small" th:text="${r.correctRate()} + '%'">0%</span>
+                            <span class="pct" th:text="${r.correctRate()} + ' %'">0 %</span>
                         </div>
                     </td>
                 </tr>

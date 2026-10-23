@@ -17,6 +17,14 @@ class ReportServiceTest {
     }
 
     @Test
+    @DisplayName("Отчёт: средний процент округляется до одного знака")
+    void averageIsRounded() {
+        var row = new ru.edu.testing.dto.TestStatRow(Long.valueOf(1), "Тест", "Дисциплина", 7L, 71.42857142857143, 50, 100, 5L);
+        assertEquals(71.4, row.averagePercent());
+        assertEquals(71, row.passRate());
+    }
+
+    @Test
     @DisplayName("Ведомость: перевод процента в оценку по шкале 85/70/50")
     void gradeScale() {
         ru.edu.testing.dto.SheetForm f = new ru.edu.testing.dto.SheetForm();

@@ -28,7 +28,7 @@
         <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
             <a class="card menu-card h-100" th:href="${me.admin} ? @{/reports} : @{/attempts}">
                 <div class="card-body">
-                    <div class="menu-value"><span th:text="${summary.averagePercent}">0</span>%</div>
+                    <div class="menu-value" th:text="${#numbers.formatDecimal(summary.averagePercent, 1, 1, 'COMMA')} + ' %'">0 %</div>
                     <div class="text-muted">Средний результат</div>
                 </div>
             </a>
@@ -36,7 +36,7 @@
         <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
             <a class="card menu-card h-100" th:href="${me.admin} ? @{/reports} : @{/attempts}">
                 <div class="card-body">
-                    <div class="menu-value"><span th:text="${summary.passRate()}">0</span>%</div>
+                    <div class="menu-value" th:text="${summary.passRate()} + ' %'">0 %</div>
                     <div class="text-muted">Доля сдавших</div>
                 </div>
             </a>
