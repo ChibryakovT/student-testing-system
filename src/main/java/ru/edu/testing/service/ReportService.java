@@ -65,21 +65,8 @@ public class ReportService {
         return sb.toString();
     }
 
-    /**
-     * Экранирование ячейки CSV. Значения, начинающиеся с = + - @, получают апостроф,
-     * чтобы Excel не выполнил их как формулу (защита от CSV-инъекции).
-     */
+    /** Экранирование ячейки CSV с разделителем «;». */
     static String csv(String value) {
-        if (value == null) {
-            return "";
-        }
-        String v = value;
-        if (!v.isEmpty() && "=+-@\t\r".indexOf(v.charAt(0)) >= 0) {
-            v = "'" + v;
-        }
-        if (v.contains(";") || v.contains("\"") || v.contains("\n")) {
-            v = "\"" + v.replace("\"", "\"\"") + "\"";
-        }
-        return v;
+        return CsvUtil.escape(value, ';');
     }
 }

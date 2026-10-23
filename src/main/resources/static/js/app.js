@@ -28,3 +28,25 @@ document.addEventListener('submit', function (e) {
     }
     tick();
 })();
+
+// Страница печати ведомости: кнопка печати и автоматический вызов диалога
+(function () {
+    var btn = document.getElementById('print-btn');
+    if (btn) btn.addEventListener('click', function () { window.print(); });
+    if (document.body && document.body.dataset.autoprint === 'true') {
+        window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });
+    }
+})();
+
+// Панель ведомости: при смене теста дисциплина и преподаватель подставятся заново
+(function () {
+    var form = document.getElementById('sheet-form');
+    if (!form) return;
+    var test = form.querySelector('select[name="testId"]');
+    if (test) test.addEventListener('change', function () {
+        ['discipline', 'teacher'].forEach(function (n) {
+            var el = form.querySelector('[name="' + n + '"]');
+            if (el) el.value = '';
+        });
+    });
+})();

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Документ ведомости: используется в предпросмотре и на странице печати -->
+<div th:fragment="doc(sheet)" class="sheet-doc">
+    <div class="sheet-head">
+        <div th:each="line, st : ${@gradeSheetService.header(sheet)}"
+             th:class="${st.index < 2} ? 'sheet-title' : 'sheet-line'" th:text="${line}">строка</div>
+    </div>
+    <table class="sheet-table">
+        <thead>
+        <tr><th th:each="c : ${sheet.columns}" th:text="${c.title}" th:class="'col-' + ${#strings.toLowerCase(c.name())}">колонка</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${sheet.rows}" th:classappend="${r.absent()} ? 'absent'">
+            <td th:each="c : ${sheet.columns}" th:text="${@gradeSheetService.value(r, c)}"
+                th:class="'col-' + ${#strings.toLowerCase(c.name())}">значение</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(sheet.rows)}"><td th:colspan="${#lists.size(sheet.columns)}">Нет студентов по выбранным условиям</td></tr>
+        </tbody>
+    </table>
+    <p class="sheet-totals" th:text="${@gradeSheetService.totals(sheet)}">Итого</p>
+    <div class="sheet-signs">
+        <div>Преподаватель: ______________________ <span th:text="${sheet.form.teacher}"></span></div>
+        <div>Декан факультета: ______________________</div>
+    </div>
+</div>
+</body>
+</html>

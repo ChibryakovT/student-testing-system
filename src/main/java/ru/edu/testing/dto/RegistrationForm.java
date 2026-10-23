@@ -29,6 +29,10 @@ public class RegistrationForm {
     @Size(max = 30, message = "Название группы не длиннее 30 символов")
     private String groupName;
 
+    @Size(max = 20, message = "Номер зачётки не длиннее 20 символов")
+    @Pattern(regexp = "^[0-9A-Za-zА-Яа-я/-]*$", message = "Номер зачётки: цифры, буквы, «-» и «/»")
+    private String recordBook;
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; }
@@ -39,4 +43,6 @@ public class RegistrationForm {
     public void setEmail(String email) { this.email = email; }
     public String getGroupName() { return groupName; }
     public void setGroupName(String groupName) { this.groupName = groupName; }
+    public String getRecordBook() { return recordBook; }
+    public void setRecordBook(String recordBook) { this.recordBook = recordBook; }
 }

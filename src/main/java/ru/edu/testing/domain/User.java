@@ -31,6 +31,9 @@ public class User {
     @Column(name = "group_name", length = 30)
     private String groupName;
 
+    @Column(name = "record_book", length = 20)
+    private String recordBook;
+
     @Column(nullable = false)
     private boolean enabled = true;
 
@@ -55,6 +58,8 @@ public class User {
     public void setRole(Role role) { this.role = role; }
     public String getGroupName() { return groupName; }
     public void setGroupName(String groupName) { this.groupName = groupName; }
+    public String getRecordBook() { return recordBook; }
+    public void setRecordBook(String recordBook) { this.recordBook = recordBook; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public LocalDateTime getCreatedAt() { return createdAt; }

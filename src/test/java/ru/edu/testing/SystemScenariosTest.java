@@ -293,6 +293,43 @@ class SystemScenariosTest {
                 .andExpect(jsonPath("$[0].groupName").value(group));
     }
 
+    @Test
+    @DisplayName("22. Ведомость: CSV и Excel по группе, оценки по шкале, отметка «н/я»; преподавателю — 403")
+    void gradeSheetExport() throws Exception {
+        String group = "ВД-" + SEQ.incrementAndGet();
+        String passed = "sheetA" + SEQ.incrementAndGet();
+        String absent = "sheetB" + SEQ.incrementAndGet();
+        for (String login : List.of(passed, absent)) {
+            api(post("/api/users"), ADMIN, Map.of("username", login, "password", PASS, "fullName", "Студент " + login,
+                    "email", login + "@example.com", "role", "STUDENT", "groupName", group, "recordBook", "Z-" + login))
+                    .andExpect(status().isCreated());
+        }
+        long testId = createPublishedTest();
+        long attemptId = startAttempt(testId, passed).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), passed, Map.of("answers", correctAnswers(testId)))
+                .andExpect(status().isOk());
+
+        String csv = mvc.perform(get("/reports/sheet/export.csv").with(user(ADMIN).roles("ADMIN"))
+                        .param("testId", String.valueOf(testId)).param("group", group)
+                        .param("columns", "NUM", "NAME", "BOOK", "GRADE", "GRADE_WORD"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString(".csv")))
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Группа: " + group), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Студент " + passed + ";Z-" + passed + ";5;отлично"), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Студент " + absent + ";Z-" + absent + ";н/я;не явился"), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("5 (отл.) = 1") && csv.contains("не явились = 1"), csv);
+
+        byte[] xlsx = mvc.perform(get("/reports/sheet/export.xlsx").with(user(ADMIN).roles("ADMIN"))
+                        .param("testId", String.valueOf(testId)).param("group", group))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        try (var wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(xlsx))) {
+            org.junit.jupiter.api.Assertions.assertEquals("Ведомость", wb.getSheetAt(0).getSheetName());
+        }
+        mvc.perform(get("/reports/sheet").with(user(teacher).roles("TEACHER"))).andExpect(status().isForbidden());
+    }
+
     // ---------- Вспомогательные методы ----------
 
     private ResultActions api(MockHttpServletRequestBuilder request, String user, Object body) throws Exception {

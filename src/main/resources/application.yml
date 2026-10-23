@@ -46,6 +46,9 @@ app:
   demo:
     enabled: ${DEMO_DATA:true}
     password: ${DEMO_PASSWORD:}
+  sheet:
+    # Название вуза в шапке ведомости (можно изменить на панели ведомости)
+    university: ${SHEET_UNIVERSITY:Российско-Таджикский (Славянский) университет}
   security:
     max-login-attempts: 5
     lock-minutes: 5
