@@ -43,17 +43,17 @@ public class AttemptController {
                        @RequestParam(required = false) Long testId,
                        @RequestParam(required = false) Long subjectId,
                        @RequestParam(required = false) Boolean passed,
-                       @RequestParam(required = false) String group,
+                       @RequestParam(required = false) Long groupId,
                        @RequestParam(defaultValue = "date") String sort,
                        @AuthenticationPrincipal AppUserDetails me, Model model) {
         // Фильтр по группе доступен администратору
-        String groupFilter = me.isAdmin() ? group : null;
+        Long groupFilter = me.isAdmin() ? groupId : null;
         model.addAttribute("attempts", attemptService.search(q, testId, subjectId, passed, groupFilter, sort, me));
         if (me.isAdmin()) {
-            model.addAttribute("groups", userService.groupNames());
+            model.addAttribute("groups", userService.groups());
         }
-        model.addAttribute("group", groupFilter);
-        model.addAttribute("subjects", subjectService.findAll(null));
+        model.addAttribute("groupId", groupFilter);
+        model.addAttribute("subjects", testService.subjectsFor(me));
         model.addAttribute("tests", testService.search(null, null, "title", me));
         model.addAttribute("q", q);
         model.addAttribute("testId", testId);

@@ -7,7 +7,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.edu.testing.domain.ControlForm;
-import ru.edu.testing.domain.Role;
+import ru.edu.testing.domain.CurriculumItem;
+import ru.edu.testing.domain.StudyGroup;
 import ru.edu.testing.domain.Test;
 import ru.edu.testing.domain.TestAttempt;
 import ru.edu.testing.domain.User;
@@ -17,6 +18,7 @@ import ru.edu.testing.dto.SheetColumn;
 import ru.edu.testing.dto.SheetForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.exception.NotFoundException;
+import ru.edu.testing.repository.CurriculumRepository;
 import ru.edu.testing.repository.TestAttemptRepository;
 import ru.edu.testing.repository.TestRepository;
 import ru.edu.testing.repository.UserRepository;
@@ -46,46 +48,67 @@ public class GradeSheetService {
     private final TestRepository testRepository;
     private final TestAttemptRepository attemptRepository;
     private final UserRepository userRepository;
+    private final CurriculumRepository curriculumRepository;
 
     public GradeSheetService(TestRepository testRepository, TestAttemptRepository attemptRepository,
-                             UserRepository userRepository) {
+                             UserRepository userRepository, CurriculumRepository curriculumRepository) {
         this.testRepository = testRepository;
         this.attemptRepository = attemptRepository;
         this.userRepository = userRepository;
+        this.curriculumRepository = curriculumRepository;
     }
 
-    /** Заполняет пустые поля шапки значениями по умолчанию (дисциплина, преподаватель, год, дата). */
-    public void fillDefaults(SheetForm form, String university) {
-        if (isBlank(form.getUniversity())) {
-            form.setUniversity(university);
-        }
+    /**
+     * Шапка ведомости заполняется из системы: по группе и дисциплине находится строка учебного плана,
+     * откуда берутся факультет, кафедра, специальность, курс, семестр, преподаватель и форма контроля.
+     * Если у дисциплины один тест, он выбирается автоматически.
+     */
+    public void fillFromPlan(SheetForm form, String university) {
+        form.setUniversity(university);
         LocalDate today = LocalDate.now();
         if (isBlank(form.getAcademicYear())) {
             int start = today.getMonthValue() >= 9 ? today.getYear() : today.getYear() - 1;
             form.setAcademicYear(start + "-" + (start + 1));
         }
-        if (isBlank(form.getSemester())) {
-            form.setSemester(today.getMonthValue() >= 9 || today.getMonthValue() == 1 ? "первый" : "второй");
-        }
         if (isBlank(form.getDate())) {
             form.setDate(today.format(DATE));
         }
-        if (form.getTestId() != null) {
-            testRepository.findById(form.getTestId()).ifPresent(t -> {
-                if (isBlank(form.getDiscipline())) {
-                    form.setDiscipline(t.getSubject().getName());
-                }
-                if (isBlank(form.getTeacher())) {
-                    form.setTeacher(t.getAuthor().getFullName());
-                }
-                if (isBlank(form.getControlForm())) {
-                    form.setControlForm(t.getSubject().getControlForm().getTitle());
-                }
-            });
+        if (form.getGroupId() == null || form.getSubjectId() == null) {
+            return;
+        }
+        Optional<CurriculumItem> plan = curriculumRepository.find(form.getGroupId(), form.getSubjectId());
+        if (plan.isEmpty()) {
+            form.setSubjectId(null);
+            form.setTestId(null);
+            return;
+        }
+        CurriculumItem c = plan.get();
+        StudyGroup g = c.getGroup();
+        form.setGroup(g.getName());
+        form.setCourse(g.getCourse());
+        form.setSpecialty(g.getSpecialty());
+        form.setFaculty(g.getFaculty() == null ? null : g.getFaculty().getName());
+        form.setDepartment(c.getSubject().getDepartment() == null ? null : c.getSubject().getDepartment().getName());
+        form.setDiscipline(c.getSubject().getName());
+        form.setTeacher(c.getTeacher() == null ? null : c.getTeacher().getFullName());
+        form.setControlForm(c.getControlForm().getTitle());
+        form.setSemester(c.getSemester() == null ? null : String.valueOf(c.getSemester()));
+        List<Test> tests = testRepository.findBySubject(form.getSubjectId());
+        boolean testFits = form.getTestId() != null && tests.stream().anyMatch(t -> t.getId().equals(form.getTestId()));
+        if (!testFits) {
+            form.setTestId(tests.size() == 1 ? tests.get(0).getId() : null);
         }
     }
 
+    /** Тесты дисциплины — для выбора на панели ведомости. */
+    public List<Test> testsOf(Long subjectId) {
+        return subjectId == null ? List.of() : testRepository.findBySubject(subjectId);
+    }
+
     public GradeSheet build(SheetForm form) {
+        if (form.getGroupId() == null || form.getSubjectId() == null) {
+            throw new BusinessException("Выберите группу и дисциплину");
+        }
         if (form.getTestId() == null) {
             throw new BusinessException("Выберите тест для ведомости");
         }
@@ -93,12 +116,17 @@ public class GradeSheetService {
                 && form.getGrade3() >= 0 && form.getGrade5() <= 100)) {
             throw new BusinessException("Шкала оценок: должно быть 100 ≥ «5» > «4» > «3» ≥ 0");
         }
+        if (!curriculumRepository.existsByGroupIdAndSubjectId(form.getGroupId(), form.getSubjectId())) {
+            throw new BusinessException("У группы нет этой дисциплины в учебном плане");
+        }
         Test test = testRepository.findById(form.getTestId()).orElseThrow(() -> new NotFoundException("Тест не найден"));
-        String group = isBlank(form.getGroup()) ? null : form.getGroup().trim();
+        if (!test.getSubject().getId().equals(form.getSubjectId())) {
+            throw new BusinessException("Тест не относится к выбранной дисциплине");
+        }
 
         // Одна попытка на студента: лучшая, последняя или первая
-        List<TestAttempt> attempts = attemptRepository.search(null, test.getId(), null, null, group, "%",
-                Sort.by("finishedAt"));
+        List<TestAttempt> attempts = attemptRepository.search(null, null, test.getId(), null, null, form.getGroupId(),
+                "%", Sort.by("finishedAt"));
         BinaryOperator<TestAttempt> pick = switch (form.getAttempt()) {
             case "last" -> (a, b) -> b;
             case "first" -> (a, b) -> a;
@@ -107,14 +135,12 @@ public class GradeSheetService {
         Map<Long, TestAttempt> byStudent = new LinkedHashMap<>();
         attempts.forEach(a -> byStudent.merge(a.getStudent().getId(), a, pick));
 
-        // Список студентов: все студенты группы (для отметки «н/я») или только проходившие
+        // Список студентов: вся группа (не проходившие получают «н/я») или только проходившие
         Map<Long, User> students = new LinkedHashMap<>();
         if (form.isIncludeAbsent()) {
-            userRepository.search("%", Role.STUDENT, group, Sort.by("fullName"))
-                    .stream().filter(User::isEnabled).forEach(u -> students.put(u.getId(), u));
+            userRepository.findStudentsOfGroup(form.getGroupId()).forEach(u -> students.put(u.getId(), u));
         }
         byStudent.values().forEach(a -> students.putIfAbsent(a.getStudent().getId(), a.getStudent()));
-
         // Зачёт оценивается как «зачтено / не зачтено» (порог — нижняя граница «3»), остальные формы — по пятибалльной шкале
         boolean passFail = PASS_FAIL.equalsIgnoreCase(form.getControlForm() == null ? "" : form.getControlForm().trim());
         List<Row> rows = new ArrayList<>();
@@ -206,10 +232,11 @@ public class GradeSheetService {
         List<String> lines = new ArrayList<>();
         add(lines, "", f.getUniversity());
         add(lines, "", f.getTitle());
-        add(lines, "Учебный год: ", join(f.getAcademicYear(), isBlank(f.getSemester()) ? null : "семестр: " + f.getSemester()));
+        add(lines, "Учебный год: ", join(f.getAcademicYear(), isBlank(f.getSemester()) ? null : f.getSemester() + " семестр"));
         add(lines, "Факультет: ", f.getFaculty());
         add(lines, "Кафедра: ", f.getDepartment());
-        add(lines, "Группа: ", isBlank(f.getGroup()) ? "все группы" : f.getGroup());
+        add(lines, "Специальность: ", f.getSpecialty());
+        add(lines, "Группа: ", isBlank(f.getGroup()) ? null : f.getGroup() + (f.getCourse() == null ? "" : ", " + f.getCourse() + " курс"));
         add(lines, "Дисциплина: ", f.getDiscipline());
         add(lines, "Тест: ", sheet.testTitle());
         add(lines, "Форма контроля: ", f.getControlForm());

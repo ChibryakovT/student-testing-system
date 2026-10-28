@@ -153,14 +153,19 @@
         window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });
     }
 
-    // ---------- Панель ведомости: при смене теста поля шапки подставятся заново ----------
+    // ---------- Панель ведомости: группа → дисциплина → тест, страница обновляется при выборе ----------
     var sheetForm = document.getElementById('sheet-form');
     if (sheetForm) {
-        var test = sheetForm.querySelector('select[name="testId"]');
-        if (test) test.addEventListener('change', function () {
-            ['discipline', 'teacher', 'controlForm'].forEach(function (n) {
-                var el = sheetForm.querySelector('[name="' + n + '"]');
-                if (el) el.value = '';
+        var reset = { groupId: ['subjectId', 'testId'], subjectId: ['testId'], testId: [] };
+        sheetForm.querySelectorAll('select[data-autosubmit]').forEach(function (select) {
+            select.addEventListener('change', function () {
+                (reset[select.name] || []).forEach(function (n) {
+                    var el = sheetForm.querySelector('[name="' + n + '"]');
+                    if (el) el.value = '';
+                });
+                sheetForm.removeAttribute('target');
+                sheetForm.action = sheetForm.getAttribute('data-panel-action') || sheetForm.action;
+                sheetForm.submit();
             });
         });
     }

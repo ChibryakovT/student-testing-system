@@ -11,6 +11,7 @@ import ru.edu.testing.domain.Role;
 import ru.edu.testing.dto.UserForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.security.AppUserDetails;
+import ru.edu.testing.service.UniversityService;
 import ru.edu.testing.service.UserService;
 
 /** Управление пользователями. Доступно только администратору (см. SecurityConfig). */
@@ -19,19 +20,21 @@ import ru.edu.testing.service.UserService;
 public class UserController {
 
     private final UserService userService;
+    private final UniversityService universityService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UniversityService universityService) {
         this.userService = userService;
+        this.universityService = universityService;
     }
 
     @GetMapping
     public String list(@RequestParam(required = false) String q,
                        @RequestParam(required = false) Role role,
-                       @RequestParam(required = false) String group,
+                       @RequestParam(required = false) Long groupId,
                        @RequestParam(defaultValue = "name") String sort, Model model) {
-        model.addAttribute("users", userService.search(q, role, group, sort));
-        model.addAttribute("groups", userService.groupNames());
-        model.addAttribute("group", group);
+        model.addAttribute("users", userService.search(q, role, groupId, sort));
+        model.addAttribute("groups", userService.groups());
+        model.addAttribute("groupId", groupId);
         model.addAttribute("roles", Role.values());
         model.addAttribute("q", q);
         model.addAttribute("role", role);
@@ -42,14 +45,14 @@ public class UserController {
     @GetMapping("/new")
     public String createForm(Model model) {
         model.addAttribute("form", new UserForm());
-        model.addAttribute("roles", Role.values());
+        formModel(model);
         return "users/form";
     }
 
     @PostMapping
     public String create(@Valid @ModelAttribute("form") UserForm form, BindingResult result, Model model,
                          RedirectAttributes redirect) {
-        model.addAttribute("roles", Role.values());
+        formModel(model);
         if (result.hasErrors()) {
             return "users/form";
         }
@@ -86,5 +89,11 @@ public class UserController {
             redirect.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/users";
+    }
+
+    private void formModel(Model model) {
+        model.addAttribute("roles", Role.values());
+        model.addAttribute("groups", userService.groups());
+        model.addAttribute("departments", universityService.departments());
     }
 }

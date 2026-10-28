@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.edu.testing.domain.*;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.exception.NotFoundException;
+import ru.edu.testing.repository.CurriculumRepository;
 import ru.edu.testing.repository.TestAttemptRepository;
 import ru.edu.testing.repository.UserRepository;
 import ru.edu.testing.security.AppUserDetails;
@@ -33,12 +34,14 @@ public class AttemptService {
     private final TestAttemptRepository attemptRepository;
     private final TestService testService;
     private final UserRepository userRepository;
+    private final CurriculumRepository curriculumRepository;
 
     public AttemptService(TestAttemptRepository attemptRepository, TestService testService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository, CurriculumRepository curriculumRepository) {
         this.attemptRepository = attemptRepository;
         this.testService = testService;
         this.userRepository = userRepository;
+        this.curriculumRepository = curriculumRepository;
     }
 
     /** Начать прохождение. Если есть незавершённая попытка — продолжить её. */
@@ -137,7 +140,7 @@ public class AttemptService {
     /** Результат: студент видит только свои попытки, преподаватель и администратор — все. */
     public TestAttempt getResult(Long attemptId, AppUserDetails user) {
         TestAttempt attempt = find(attemptId);
-        if (user.isStudent() && !attempt.getStudent().getId().equals(user.getId())) {
+        if (!canSee(attempt, user)) {
             throw new NotFoundException("Результат не найден");
         }
         if (!attempt.isFinished()) {
@@ -146,20 +149,39 @@ public class AttemptService {
         return attempt;
     }
 
-    public List<TestAttempt> search(String query, Long testId, Long subjectId, Boolean passed, String groupName,
+    /** Студент — свои результаты; преподаватель — своих групп по своим дисциплинам; администратор — все. */
+    public List<TestAttempt> search(String query, Long testId, Long subjectId, Boolean passed, Long groupId,
                                     String sort, AppUserDetails user) {
         Long studentId = user.isStudent() ? user.getId() : null;
-        String group = groupName == null || groupName.isBlank() ? null : groupName.trim();
-        return attemptRepository.search(studentId, testId, subjectId, passed, group, Patterns.like(query),
+        Long teacherId = user.isStaff() && !user.isAdmin() ? user.getId() : null;
+        return attemptRepository.search(studentId, teacherId, testId, subjectId, passed, groupId, Patterns.like(query),
                 SORTS.getOrDefault(sort, SORTS.get("date")));
+    }
+
+    /** Право видеть попытку: своя (студент), своей группы по своей дисциплине или свой тест (преподаватель). */
+    boolean canSee(TestAttempt attempt, AppUserDetails user) {
+        if (user.isAdmin()) {
+            return true;
+        }
+        if (user.isStudent()) {
+            return attempt.getStudent().getId().equals(user.getId());
+        }
+        Test test = attempt.getTest();
+        if (test.getAuthor().getId().equals(user.getId())) {
+            return true;
+        }
+        StudyGroup group = attempt.getStudent().getGroup();
+        return group != null && curriculumRepository.existsByTeacherIdAndGroupIdAndSubjectId(
+                user.getId(), group.getId(), test.getSubject().getId());
     }
 
     @Transactional
     public void delete(Long attemptId, AppUserDetails user) {
-        if (!user.isStaff()) {
-            throw new AccessDeniedException("Удалять результаты может только преподаватель");
+        TestAttempt attempt = find(attemptId);
+        if (!user.isStaff() || !canSee(attempt, user)) {
+            throw new AccessDeniedException("Удалять результаты может только преподаватель группы");
         }
-        attemptRepository.delete(find(attemptId));
+        attemptRepository.delete(attempt);
     }
 
     private TestAttempt find(Long id) {

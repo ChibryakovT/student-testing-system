@@ -3,11 +3,11 @@ package ru.edu.testing.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.edu.testing.domain.ControlForm;
 import ru.edu.testing.domain.Subject;
 import ru.edu.testing.dto.SubjectForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.exception.NotFoundException;
+import ru.edu.testing.repository.DepartmentRepository;
 import ru.edu.testing.repository.SubjectRepository;
 import ru.edu.testing.repository.TestRepository;
 
@@ -19,22 +19,26 @@ public class SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final TestRepository testRepository;
+    private final DepartmentRepository departmentRepository;
 
-    public SubjectService(SubjectRepository subjectRepository, TestRepository testRepository) {
+    public SubjectService(SubjectRepository subjectRepository, TestRepository testRepository,
+                          DepartmentRepository departmentRepository) {
         this.subjectRepository = subjectRepository;
         this.testRepository = testRepository;
+        this.departmentRepository = departmentRepository;
     }
 
     public List<Subject> findAll(String query) {
         return findAll(query, null);
     }
 
-    /** Поиск по названию и фильтр по форме контроля. */
-    public List<Subject> findAll(String query, ControlForm controlForm) {
-        List<Subject> list = query == null || query.isBlank()
-                ? subjectRepository.findAllByOrderByNameAsc()
-                : subjectRepository.findByNameContainingIgnoreCaseOrderByNameAsc(query.trim());
-        return controlForm == null ? list : list.stream().filter(s -> s.getControlForm() == controlForm).toList();
+    /** Поиск по названию и фильтр по кафедре. */
+    public List<Subject> findAll(String query, Long departmentId) {
+        String q = query == null ? "" : query.trim().toLowerCase();
+        return subjectRepository.findAllWithDepartment().stream()
+                .filter(s -> q.isEmpty() || s.getName().toLowerCase().contains(q))
+                .filter(s -> departmentId == null || (s.getDepartment() != null && departmentId.equals(s.getDepartment().getId())))
+                .toList();
     }
 
     public Subject get(Long id) {
@@ -72,9 +76,10 @@ public class SubjectService {
         subjectRepository.delete(subject);
     }
 
-    private static void apply(Subject subject, SubjectForm form) {
+    private void apply(Subject subject, SubjectForm form) {
         subject.setName(form.getName().trim());
         subject.setDescription(form.getDescription() == null ? null : form.getDescription().trim());
-        subject.setControlForm(form.getControlForm());
+        subject.setDepartment(form.getDepartmentId() == null ? null : departmentRepository.findById(form.getDepartmentId())
+                .orElseThrow(() -> new BusinessException("Кафедра не найдена")));
     }
 }

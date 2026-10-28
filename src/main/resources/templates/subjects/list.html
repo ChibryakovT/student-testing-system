@@ -10,21 +10,20 @@
     </div>
     <form class="d-flex gap-2 mb-3" method="get" th:action="@{/subjects}">
         <input class="form-control" name="q" th:value="${q}" placeholder="Поиск по названию">
-        <select class="form-select w-auto" name="controlForm" aria-label="Форма контроля">
-            <option value="">Все формы контроля</option>
-            <option th:each="f : ${controlForms}" th:value="${f}" th:text="${f.title}" th:selected="${f == controlForm}"></option>
+        <select class="form-select w-auto" name="departmentId" aria-label="Кафедра">
+            <option value="">Все кафедры</option>
+            <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}" th:selected="${d.id == departmentId}"></option>
         </select>
         <button class="btn btn-outline-primary" type="submit">Найти</button>
     </form>
     <div class="table-responsive card reveal">
         <table class="table table-hover mb-0 align-middle">
-            <thead><tr><th>ID</th><th>Название</th><th>Форма контроля</th><th>Описание</th><th></th></tr></thead>
+            <thead><tr><th>ID</th><th>Название</th><th>Кафедра</th><th>Описание</th><th></th></tr></thead>
             <tbody>
             <tr th:each="s : ${subjects}">
                 <td th:text="${s.id}">1</td>
                 <td class="fw-semibold" th:text="${s.name}">название</td>
-                <td><span class="badge" th:text="${s.controlForm.title}"
-                          th:classappend="${s.controlForm.name() == 'EXAM'} ? 'text-bg-primary' : (${s.controlForm.name() == 'CREDIT'} ? 'text-bg-success' : 'text-bg-info')">форма</span></td>
+                <td class="small text-muted" th:text="${s.department != null} ? ${s.department.name} : '—'">кафедра</td>
                 <td class="text-muted" th:text="${s.description}">описание</td>
                 <td class="text-nowrap">
                     <a class="btn btn-sm btn-outline-secondary" th:href="@{/subjects/{id}/edit(id=${s.id})}"><i class="bi bi-pencil"></i> Изменить</a>

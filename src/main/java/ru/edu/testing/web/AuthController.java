@@ -3,6 +3,7 @@ package ru.edu.testing.web;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -28,13 +29,15 @@ public class AuthController {
     }
 
     @GetMapping("/register")
-    public String registerForm(@ModelAttribute("form") RegistrationForm form) {
+    public String registerForm(@ModelAttribute("form") RegistrationForm form, Model model) {
+        model.addAttribute("groups", userService.groups());
         return "register";
     }
 
     @PostMapping("/register")
     public String register(@Valid @ModelAttribute("form") RegistrationForm form, BindingResult result,
-                           RedirectAttributes redirect) {
+                           RedirectAttributes redirect, Model model) {
+        model.addAttribute("groups", userService.groups());
         if (result.hasErrors()) {
             return "register";
         }

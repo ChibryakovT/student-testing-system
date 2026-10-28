@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Структура вуза — ЭСТ</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-1 page-title"><i class="bi bi-diagram-3"></i>Структура вуза и учебный план</h1>
+    <p class="text-muted mb-4">Группы, их дисциплины и преподаватели. Отсюда система знает, у кого какой предмет и кто его ведёт.</p>
+
+    <h2 class="h5 mb-3">Учебные группы</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-4 reveal" th:each="e, st : ${groups}" th:style="'--delay:' + ${(st.index % 6) * 60} + 'ms'">
+            <a class="card stat-tile lift h-100" th:href="@{/structure/groups/{id}(id=${e.key.id})}">
+                <span class="stat-icon blue"><i class="bi bi-people"></i></span>
+                <span>
+                    <span class="stat-value d-block" th:text="${e.key.name}">2 ПИА</span>
+                    <span class="stat-label">
+                        <span th:if="${e.key.course != null}" th:text="${e.key.course} + ' курс · '">курс</span>
+                        <span th:text="${e.value} + ' студ.'">0</span>
+                    </span>
+                    <span class="d-block small text-muted" th:text="${e.key.specialty}">специальность</span>
+                </span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-7 reveal">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-building me-2 text-primary"></i>Факультеты и кафедры</div>
+                <div class="card-body">
+                    <div th:each="f : ${faculties}" class="mb-3">
+                        <div class="fw-semibold" th:text="${f.name}">факультет</div>
+                        <ul class="list-unstyled small text-muted mb-0 ms-3">
+                            <li th:each="d : ${departments}" th:if="${d.faculty.id == f.id}"><i class="bi bi-dot"></i><span th:text="${d.name}">кафедра</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5 reveal">
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-plus-square me-2 text-primary"></i>Новая группа</div>
+                <form class="card-body" method="post" th:action="@{/structure/groups}">
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label small" for="g-name">Название</label>
+                            <input class="form-control" id="g-name" name="name" required maxlength="30" placeholder="1 ПИА"></div>
+                        <div class="col-6"><label class="form-label small" for="g-course">Курс</label>
+                            <input class="form-control" id="g-course" name="course" type="number" min="1" max="6"></div>
+                        <div class="col-12"><label class="form-label small" for="g-spec">Специальность</label>
+                            <input class="form-control" id="g-spec" name="specialty" maxlength="150" value="09.03.03 Прикладная информатика"></div>
+                        <div class="col-12"><label class="form-label small" for="g-fac">Факультет</label>
+                            <select class="form-select" id="g-fac" name="facultyId">
+                                <option th:each="f : ${faculties}" th:value="${f.id}" th:text="${f.name}"></option>
+                            </select></div>
+                    </div>
+                    <button class="btn btn-primary mt-3" type="submit"><i class="bi bi-check2 me-1"></i>Создать</button>
+                </form>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="bi bi-person-badge me-2 text-primary"></i>Преподаватели <span class="text-muted small" th:text="'(' + ${#lists.size(teachers)} + ')'"></span></div>
+                <div class="list-group list-group-flush quick-menu teacher-list">
+                    <a class="list-group-item list-group-item-action" th:each="t : ${teachers}" th:href="@{/structure/teachers/{id}(id=${t.id})}">
+                        <i class="bi bi-person"></i>
+                        <span><span th:text="${t.fullName}">ФИО</span>
+                            <span class="d-block small text-muted" th:text="${t.department != null} ? ${t.department.name} : ''">кафедра</span></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

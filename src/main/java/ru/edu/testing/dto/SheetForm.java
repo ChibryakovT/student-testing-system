@@ -6,9 +6,15 @@ import java.util.List;
 /** Настройки ведомости: что выводить, шапка документа, шкала оценок и параметры файла. */
 public class SheetForm {
 
-    // Данные
+    // Данные: группа → дисциплина из её учебного плана → тест
+    private Long groupId;
+    private Long subjectId;
     private Long testId;
+
+    // Шапка документа — заполняется автоматически из учебного плана (GradeSheetService.fillFromPlan)
     private String group;
+    private Integer course;
+    private String specialty;
     private String attempt = "best";          // best | last | first
     private boolean includeAbsent = true;     // показывать не проходивших («н/я»)
     private String sort = "name";             // name | grade | book
@@ -18,7 +24,6 @@ public class SheetForm {
     private int grade4 = 70;
     private int grade3 = 50;
 
-    // Шапка документа
     private String university;
     private String title = "Зачётно-экзаменационная ведомость";
     private String academicYear;
@@ -46,6 +51,14 @@ public class SheetForm {
         };
     }
 
+    public Long getGroupId() { return groupId; }
+    public void setGroupId(Long groupId) { this.groupId = groupId; }
+    public Long getSubjectId() { return subjectId; }
+    public void setSubjectId(Long subjectId) { this.subjectId = subjectId; }
+    public Integer getCourse() { return course; }
+    public void setCourse(Integer course) { this.course = course; }
+    public String getSpecialty() { return specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
     public Long getTestId() { return testId; }
     public void setTestId(Long testId) { this.testId = testId; }
     public String getGroup() { return group; }

@@ -67,7 +67,7 @@ public class SecurityConfig {
     public SecurityFilterChain webChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/register", "/credits", "/css/**", "/js/**", "/img/**", "/vendor/**", "/favicon.ico", "/favicon.svg", "/error").permitAll()
-                        .requestMatchers("/users/**", "/reports/**").hasRole("ADMIN")
+                        .requestMatchers("/users/**", "/reports/**", "/structure/**").hasRole("ADMIN")
                         .requestMatchers("/subjects/**").hasAnyRole("TEACHER", "ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
