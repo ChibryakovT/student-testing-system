@@ -21,15 +21,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRole(Role role);
 
     @Query("""
-            select u from User u
+            select u from User u left join fetch u.group g left join fetch u.department d
             where (lower(u.username) like :pattern or lower(u.fullName) like :pattern
-                   or lower(coalesce(u.groupName, '')) like :pattern)
+                   or lower(coalesce(g.name, '')) like :pattern or lower(coalesce(d.name, '')) like :pattern)
               and (:role is null or u.role = :role)
-              and (:groupName is null or u.groupName = :groupName)
+              and (:groupId is null or g.id = :groupId)
             """)
     List<User> search(@Param("pattern") String pattern, @Param("role") Role role,
-                      @Param("groupName") String groupName, Sort sort);
+                      @Param("groupId") Long groupId, Sort sort);
 
-    @Query("select distinct u.groupName from User u where u.groupName is not null order by u.groupName")
-    List<String> findGroupNames();
+    /** Активные студенты группы — для ведомости. */
+    @Query("""
+            select u from User u where u.group.id = :groupId and u.role = ru.edu.testing.domain.Role.STUDENT
+              and u.enabled = true order by u.fullName
+            """)
+    List<User> findStudentsOfGroup(@Param("groupId") Long groupId);
+
+    @Query("select u from User u left join fetch u.department where u.role = :role order by u.fullName")
+    List<User> findByRoleOrdered(@Param("role") Role role);
 }

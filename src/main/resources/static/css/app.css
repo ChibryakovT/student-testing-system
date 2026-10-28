@@ -241,3 +241,8 @@ body.page-leaving main { opacity: 0; transform: translateY(6px); transition: opa
 /* Аккуратные числа в таблицах отчёта */
 .pct { min-width: 4.2rem; text-align: right; font-variant-numeric: tabular-nums; font-size: .9rem; white-space: nowrap; }
 .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Структура вуза и ведомость */
+.teacher-list { max-height: 420px; overflow-y: auto; }
+.auto-header dt { font-weight: 500; color: var(--muted); font-size: .85rem; padding-top: .15rem; }
+.auto-header dd { margin-bottom: .45rem; }

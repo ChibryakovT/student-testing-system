@@ -21,9 +21,10 @@ public final class ApiDtos {
         }
     }
 
-    public record SubjectDto(Long id, String name, String description, ControlForm controlForm) {
+    public record SubjectDto(Long id, String name, String description, String department) {
         public static SubjectDto of(Subject s) {
-            return new SubjectDto(s.getId(), s.getName(), s.getDescription(), s.getControlForm());
+            return new SubjectDto(s.getId(), s.getName(), s.getDescription(),
+                    s.getDepartment() == null ? null : s.getDepartment().getName());
         }
     }
 
@@ -71,6 +72,29 @@ public final class ApiDtos {
     }
 
     public record SubmitRequest(@NotNull @Valid List<AnswerRequest> answers) {
+    }
+
+    public record GroupDto(Long id, String name, Integer course, String specialty, String faculty) {
+        public static GroupDto of(StudyGroup g) {
+            return new GroupDto(g.getId(), g.getName(), g.getCourse(), g.getSpecialty(),
+                    g.getFaculty() == null ? null : g.getFaculty().getName());
+        }
+    }
+
+    public record CurriculumDto(Long id, Long subjectId, String subject, Long teacherId, String teacher,
+                                Integer semester, ControlForm controlForm) {
+        public static CurriculumDto of(CurriculumItem c) {
+            return new CurriculumDto(c.getId(), c.getSubject().getId(), c.getSubject().getName(),
+                    c.getTeacher() == null ? null : c.getTeacher().getId(),
+                    c.getTeacher() == null ? null : c.getTeacher().getFullName(), c.getSemester(), c.getControlForm());
+        }
+    }
+
+    public record CurriculumRequest(@NotNull Long subjectId, Long teacherId, Integer semester, ControlForm controlForm) {
+    }
+
+    public record GroupRequest(@jakarta.validation.constraints.NotBlank String name, Integer course, String specialty,
+                               Long facultyId) {
     }
 
     public record ErrorResponse(LocalDateTime timestamp, int status, String error, String message,

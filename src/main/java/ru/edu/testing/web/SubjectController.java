@@ -6,11 +6,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import ru.edu.testing.domain.ControlForm;
 import ru.edu.testing.domain.Subject;
 import ru.edu.testing.dto.SubjectForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.service.SubjectService;
+import ru.edu.testing.service.UniversityService;
 
 /** Справочник дисциплин. Доступ ограничен в SecurityConfig (преподаватель, администратор). */
 @Controller
@@ -18,18 +18,20 @@ import ru.edu.testing.service.SubjectService;
 public class SubjectController {
 
     private final SubjectService subjectService;
+    private final UniversityService universityService;
 
-    public SubjectController(SubjectService subjectService) {
+    public SubjectController(SubjectService subjectService, UniversityService universityService) {
         this.subjectService = subjectService;
+        this.universityService = universityService;
     }
 
     @GetMapping
     public String list(@RequestParam(required = false) String q,
-                       @RequestParam(required = false) ControlForm controlForm, Model model) {
-        model.addAttribute("subjects", subjectService.findAll(q, controlForm));
+                       @RequestParam(required = false) Long departmentId, Model model) {
+        model.addAttribute("subjects", subjectService.findAll(q, departmentId));
         model.addAttribute("q", q);
-        model.addAttribute("controlForm", controlForm);
-        model.addAttribute("controlForms", ControlForm.values());
+        model.addAttribute("departmentId", departmentId);
+        model.addAttribute("departments", universityService.departments());
         return "subjects/list";
     }
 
@@ -37,7 +39,7 @@ public class SubjectController {
     public String createForm(Model model) {
         model.addAttribute("form", new SubjectForm());
         model.addAttribute("subjectId", null);
-        model.addAttribute("controlForms", ControlForm.values());
+        model.addAttribute("departments", universityService.departments());
         return "subjects/form";
     }
 
@@ -45,7 +47,7 @@ public class SubjectController {
     public String create(@Valid @ModelAttribute("form") SubjectForm form, BindingResult result, Model model,
                          RedirectAttributes redirect) {
         model.addAttribute("subjectId", null);
-        model.addAttribute("controlForms", ControlForm.values());
+        model.addAttribute("departments", universityService.departments());
         if (result.hasErrors()) {
             return "subjects/form";
         }
@@ -65,10 +67,10 @@ public class SubjectController {
         SubjectForm form = new SubjectForm();
         form.setName(subject.getName());
         form.setDescription(subject.getDescription());
-        form.setControlForm(subject.getControlForm());
+        form.setDepartmentId(subject.getDepartment() == null ? null : subject.getDepartment().getId());
         model.addAttribute("form", form);
         model.addAttribute("subjectId", id);
-        model.addAttribute("controlForms", ControlForm.values());
+        model.addAttribute("departments", universityService.departments());
         return "subjects/form";
     }
 
@@ -76,7 +78,7 @@ public class SubjectController {
     public String update(@PathVariable Long id, @Valid @ModelAttribute("form") SubjectForm form,
                          BindingResult result, Model model, RedirectAttributes redirect) {
         model.addAttribute("subjectId", id);
-        model.addAttribute("controlForms", ControlForm.values());
+        model.addAttribute("departments", universityService.departments());
         if (result.hasErrors()) {
             return "subjects/form";
         }

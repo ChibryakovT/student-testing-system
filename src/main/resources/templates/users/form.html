@@ -21,8 +21,11 @@
                 <div class="invalid-feedback" th:errors="*{email}"></div>
             </div>
             <div class="col-md-3 mb-3">
-                <label class="form-label" for="groupName">Группа</label>
-                <input class="form-control" th:field="*{groupName}" th:errorclass="is-invalid">
+                <label class="form-label" for="groupId">Группа <span class="text-muted small">(студент)</span></label>
+                <select class="form-select" th:field="*{groupId}">
+                    <option value="">—</option>
+                    <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">группа</option>
+                </select>
             </div>
             <div class="col-md-3 mb-3">
                 <label class="form-label" for="recordBook">№ зачётки</label>
@@ -47,6 +50,13 @@
                 <input class="form-control" type="password" th:field="*{password}" th:errorclass="is-invalid" autocomplete="new-password">
                 <div class="invalid-feedback" th:errors="*{password}"></div>
             </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="departmentId">Кафедра <span class="text-muted small">(преподаватель)</span></label>
+            <select class="form-select" th:field="*{departmentId}">
+                <option value="">—</option>
+                <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name} + ' — ' + ${d.faculty.name}">кафедра</option>
+            </select>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-primary" type="submit">Создать</button>

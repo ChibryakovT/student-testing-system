@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Преподаватель — ЭСТ</title></head>
+<body>
+<section>
+    <nav class="small mb-2"><a th:href="@{/structure}"><i class="bi bi-arrow-left"></i> Структура вуза</a></nav>
+    <h1 class="h3 mb-1 page-title"><i class="bi bi-person-badge"></i><span th:text="${teacher.fullName}">ФИО</span></h1>
+    <p class="text-muted mb-4">
+        <span th:text="${teacher.department != null} ? ${teacher.department.name} : 'Кафедра не указана'">кафедра</span>
+        · логин <code th:text="${teacher.username}">login</code>
+    </p>
+    <div class="card reveal">
+        <div class="card-header"><i class="bi bi-briefcase me-2 text-primary"></i>Нагрузка: дисциплины и группы</div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead><tr><th>Группа</th><th>Дисциплина</th><th>Семестр</th><th>Форма контроля</th></tr></thead>
+                <tbody>
+                <tr th:each="c : ${load}">
+                    <td><a th:href="@{/structure/groups/{id}(id=${c.group.id})}" th:text="${c.group.name}">группа</a></td>
+                    <td class="fw-medium" th:text="${c.subject.name}">дисциплина</td>
+                    <td th:text="${c.semester}">3</td>
+                    <td><span class="badge text-bg-light" th:text="${c.controlForm.title}">форма</span></td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" th:if="${#lists.isEmpty(load)}"><i class="bi bi-briefcase"></i>По учебному плану дисциплин нет (ведёт практические занятия вместе с лектором)</div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

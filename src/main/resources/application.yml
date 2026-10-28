@@ -46,6 +46,10 @@ app:
   demo:
     enabled: ${DEMO_DATA:true}
     password: ${DEMO_PASSWORD:}
+    teacher-password: ${DEMO_TEACHER_PASSWORD:}
+  seed:
+    # Локальный файл с данными вуза (расписание, преподаватели). Не хранится в Git.
+    file: ${SEED_FILE:data/university.json}
   sheet:
     # Название вуза в шапке ведомости (можно изменить на панели ведомости)
     university: ${SHEET_UNIVERSITY:Российско-Таджикский (Славянский) университет}

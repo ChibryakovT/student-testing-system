@@ -18,12 +18,13 @@ import ru.edu.testing.dto.SheetForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.security.AppUserDetails;
 import ru.edu.testing.service.GradeSheetService;
-import ru.edu.testing.service.UserService;
+import ru.edu.testing.service.UniversityService;
 import ru.edu.testing.service.ReportService;
 import ru.edu.testing.service.SubjectService;
 import ru.edu.testing.service.TestService;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /** Аналитический отчёт: доступ только у администратора (см. SecurityConfig). */
 @Controller
@@ -34,17 +35,17 @@ public class ReportController {
     private final SubjectService subjectService;
     private final TestService testService;
     private final GradeSheetService sheetService;
-    private final UserService userService;
+    private final UniversityService universityService;
     private final String university;
 
     public ReportController(ReportService reportService, SubjectService subjectService, TestService testService,
-                            GradeSheetService sheetService, UserService userService,
+                            GradeSheetService sheetService, UniversityService universityService,
                             @Value("${app.sheet.university:}") String university) {
         this.reportService = reportService;
         this.subjectService = subjectService;
         this.testService = testService;
         this.sheetService = sheetService;
-        this.userService = userService;
+        this.universityService = universityService;
         this.university = university;
     }
 
@@ -76,12 +77,13 @@ public class ReportController {
     // ---------- Ведомость: панель настройки, печать, CSV, Excel ----------
 
     @GetMapping("/sheet")
-    public String sheet(@ModelAttribute("form") SheetForm form, @AuthenticationPrincipal AppUserDetails me, Model model) {
-        sheetService.fillDefaults(form, university);
-        model.addAttribute("tests", testService.search(null, null, "title", me));
-        model.addAttribute("groups", userService.groupNames());
+    public String sheet(@ModelAttribute("form") SheetForm form, Model model) {
+        sheetService.fillFromPlan(form, university);
+        model.addAttribute("groups", universityService.groups());
+        model.addAttribute("plan", form.getGroupId() == null ? List.of() : universityService.curriculum(form.getGroupId()));
+        model.addAttribute("sheetTests", sheetService.testsOf(form.getSubjectId()));
         model.addAttribute("allColumns", SheetColumn.values());
-        if (form.getTestId() != null) {
+        if (form.getGroupId() != null && form.getSubjectId() != null && form.getTestId() != null) {
             try {
                 model.addAttribute("sheet", sheetService.build(form));
             } catch (BusinessException e) {
@@ -93,14 +95,14 @@ public class ReportController {
 
     @GetMapping("/sheet/print")
     public String sheetPrint(@ModelAttribute("form") SheetForm form, Model model) {
-        sheetService.fillDefaults(form, university);
+        sheetService.fillFromPlan(form, university);
         model.addAttribute("sheet", sheetService.build(form));
         return "reports/sheet-print";
     }
 
     @GetMapping("/sheet/export.csv")
     public ResponseEntity<byte[]> sheetCsv(@ModelAttribute SheetForm form) {
-        sheetService.fillDefaults(form, university);
+        sheetService.fillFromPlan(form, university);
         GradeSheet sheet = sheetService.build(form);
         String charset = "windows-1251".equalsIgnoreCase(form.getEncoding()) ? "windows-1251" : "UTF-8";
         return file(sheetService.toCsv(sheet), GradeSheetService.fileName(sheet, "csv"),
@@ -109,7 +111,7 @@ public class ReportController {
 
     @GetMapping("/sheet/export.xlsx")
     public ResponseEntity<byte[]> sheetXlsx(@ModelAttribute SheetForm form) {
-        sheetService.fillDefaults(form, university);
+        sheetService.fillFromPlan(form, university);
         GradeSheet sheet = sheetService.build(form);
         return file(sheetService.toXlsx(sheet), GradeSheetService.fileName(sheet, "xlsx"),
                 MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));

@@ -33,13 +33,15 @@
                     <i class="bi bi-book"></i>Дисциплины</a></li>
                 <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'reports'} ? 'active'" th:href="@{/reports}">
                     <i class="bi bi-graph-up-arrow"></i>Отчёты</a></li>
+                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'structure'} ? 'active'" th:href="@{/structure}">
+                    <i class="bi bi-diagram-3"></i>Структура</a></li>
                 <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'users'} ? 'active'" th:href="@{/users}">
                     <i class="bi bi-people"></i>Пользователи</a></li>
             </ul>
             <div class="d-flex align-items-center gap-3 mt-2 mt-lg-0">
                 <div class="user-chip">
-                    <span class="user-avatar" th:text="${#strings.substring(me.fullName, 0, 1)}">И</span>
-                    <span class="d-flex d-lg-none d-xl-flex flex-column lh-sm">
+                    <span class="user-avatar" th:text="${#strings.substring(me.fullName, 0, 1)}" th:title="${me.fullName}">И</span>
+                    <span class="flex-column lh-sm" th:classappend="${me.admin} ? 'd-flex d-lg-none d-xxl-flex' : 'd-flex d-lg-none d-xl-flex'">
                         <span class="user-name" th:text="${me.fullName}" th:title="${me.fullName}">Пользователь</span>
                         <span class="small opacity-75" th:text="${me.role.title}">роль</span>
                     </span>

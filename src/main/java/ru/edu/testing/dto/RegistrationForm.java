@@ -26,8 +26,8 @@ public class RegistrationForm {
     @Size(max = 150)
     private String email;
 
-    @Size(max = 30, message = "Название группы не длиннее 30 символов")
-    private String groupName;
+    /** Учебная группа (обязательна для студента). */
+    private Long groupId;
 
     @Size(max = 20, message = "Номер зачётки не длиннее 20 символов")
     @Pattern(regexp = "^[0-9A-Za-zА-Яа-я/-]*$", message = "Номер зачётки: цифры, буквы, «-» и «/»")
@@ -41,8 +41,8 @@ public class RegistrationForm {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public String getGroupName() { return groupName; }
-    public void setGroupName(String groupName) { this.groupName = groupName; }
+    public Long getGroupId() { return groupId; }
+    public void setGroupId(Long groupId) { this.groupId = groupId; }
     public String getRecordBook() { return recordBook; }
     public void setRecordBook(String recordBook) { this.recordBook = recordBook; }
 }

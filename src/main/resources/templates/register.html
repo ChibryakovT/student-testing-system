@@ -26,9 +26,11 @@
                         <div class="invalid-feedback" th:errors="*{email}"></div>
                     </div>
                     <div class="col-md-5 mb-3">
-                        <label class="form-label" for="groupName">Группа</label>
-                        <input class="form-control" th:field="*{groupName}" placeholder="ПИ-21" th:errorclass="is-invalid">
-                        <div class="invalid-feedback" th:errors="*{groupName}"></div>
+                        <label class="form-label" for="groupId">Группа</label>
+                        <select class="form-select" th:field="*{groupId}" required>
+                            <option value="">— выберите —</option>
+                            <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">группа</option>
+                        </select>
                     </div>
                 </div>
                 <div class="mb-3">

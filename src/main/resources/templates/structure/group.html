@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Группа — ЭСТ</title></head>
+<body>
+<section>
+    <nav class="small mb-2"><a th:href="@{/structure}"><i class="bi bi-arrow-left"></i> Структура вуза</a></nav>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-1 page-title"><i class="bi bi-people"></i><span th:text="'Группа ' + ${group.name}">Группа</span></h1>
+            <div class="text-muted">
+                <span th:if="${group.course != null}" th:text="${group.course} + ' курс · '">курс</span>
+                <span th:text="${group.specialty}">специальность</span>
+                <span th:if="${group.faculty != null}" th:text="' · ' + ${group.faculty.name}">факультет</span>
+            </div>
+        </div>
+        <a class="btn btn-outline-primary" th:href="@{/reports/sheet(groupId=${group.id})}"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Ведомость группы</a>
+    </div>
+
+    <div class="card mb-4 reveal">
+        <div class="card-header"><i class="bi bi-journal-bookmark me-2 text-primary"></i>Учебный план
+            <span class="text-muted small" th:text="'(' + ${#lists.size(plan)} + ' дисциплин)'"></span></div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead><tr><th>Дисциплина</th><th>Кафедра</th><th>Преподаватель</th><th>Семестр</th><th>Форма контроля</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="c : ${plan}">
+                    <td class="fw-medium" th:text="${c.subject.name}">дисциплина</td>
+                    <td class="small text-muted" th:text="${c.subject.department != null} ? ${c.subject.department.name} : '—'">кафедра</td>
+                    <td><a th:if="${c.teacher != null}" th:href="@{/structure/teachers/{id}(id=${c.teacher.id})}" th:text="${c.teacher.fullName}">преподаватель</a>
+                        <span th:if="${c.teacher == null}" class="text-muted">не назначен</span></td>
+                    <td th:text="${c.semester}">3</td>
+                    <td><span class="badge" th:text="${c.controlForm.title}"
+                              th:classappend="${c.controlForm.name() == 'EXAM'} ? 'text-bg-primary' : (${c.controlForm.name() == 'CREDIT'} ? 'text-bg-success' : 'text-bg-info')">форма</span></td>
+                    <td class="text-end">
+                        <form th:action="@{/structure/plan/{id}/delete(id=${c.id})}" method="post" data-confirm="Убрать дисциплину из плана группы?">
+                            <button class="btn btn-sm btn-outline-danger" type="submit" title="Убрать"><i class="bi bi-x-lg"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" th:if="${#lists.isEmpty(plan)}"><i class="bi bi-journal-x"></i>В плане группы пока нет дисциплин</div>
+        </div>
+        <form class="card-body border-top" method="post" th:action="@{/structure/groups/{id}/plan(id=${group.id})}">
+            <div class="small fw-semibold mb-2">Добавить или изменить дисциплину в плане</div>
+            <div class="row g-2 align-items-end">
+                <div class="col-lg-4"><label class="form-label small" for="p-subject">Дисциплина</label>
+                    <select class="form-select" id="p-subject" name="subjectId" required>
+                        <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}"></option>
+                    </select></div>
+                <div class="col-lg-3"><label class="form-label small" for="p-teacher">Преподаватель</label>
+                    <select class="form-select" id="p-teacher" name="teacherId">
+                        <option value="">не назначен</option>
+                        <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"></option>
+                    </select></div>
+                <div class="col-lg-1"><label class="form-label small" for="p-sem">Семестр</label>
+                    <input class="form-control" id="p-sem" name="semester" type="number" min="1" max="12"
+                           th:value="${group.course != null} ? ${group.course * 2 - 1} : ''"></div>
+                <div class="col-lg-2"><label class="form-label small" for="p-form">Форма контроля</label>
+                    <select class="form-select" id="p-form" name="controlForm">
+                        <option th:each="f : ${controlForms}" th:value="${f}" th:text="${f.title}"></option>
+                    </select></div>
+                <div class="col-lg-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-plus-lg me-1"></i>Сохранить</button></div>
+            </div>
+        </form>
+    </div>
+
+    <div class="card reveal">
+        <div class="card-header"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Студенты
+            <span class="text-muted small" th:text="'(' + ${#lists.size(students)} + ')'"></span></div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead><tr><th>№</th><th>ФИО</th><th>Логин</th><th>№ зачётки</th></tr></thead>
+                <tbody>
+                <tr th:each="u, st : ${students}">
+                    <td class="text-muted" th:text="${st.count}">1</td>
+                    <td th:text="${u.fullName}">ФИО</td>
+                    <td class="small" th:text="${u.username}">логин</td>
+                    <td class="small" th:text="${u.recordBook}">зачётка</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" th:if="${#lists.isEmpty(students)}"><i class="bi bi-person-x"></i>В группе пока нет студентов</div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -45,11 +45,15 @@ class SystemScenariosTest {
 
     private String teacher;
     private String student;
+    /** Учебная группа студента; дисциплины теста добавляются в её учебный план. */
+    private long groupId;
+    private final Map<String, Long> userIds = new java.util.HashMap<>();
 
     @BeforeEach
     void setUp() throws Exception {
+        groupId = createGroup().get("id").asLong();
         teacher = createUser("TEACHER");
-        student = createUser("STUDENT");
+        student = createUser("STUDENT", groupId);
     }
 
     // ---------- Авторизация и регистрация ----------
@@ -94,7 +98,7 @@ class SystemScenariosTest {
         mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(Map.of("username", login, "password", PASS,
                                 "fullName", "Новый Студент", "email", login + "@example.com",
-                                "groupName", "ПИ-21", "role", "ADMIN"))))
+                                "groupId", groupId, "role", "ADMIN"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.role").value("STUDENT"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
@@ -139,10 +143,9 @@ class SystemScenariosTest {
     @DisplayName("9. Добавление дисциплины преподавателем — запись добавлена")
     void addSubject() throws Exception {
         String name = "Дисциплина " + SEQ.incrementAndGet();
-        api(post("/api/subjects"), teacher, Map.of("name", name, "description", "Описание", "controlForm", "CREDIT"))
+        api(post("/api/subjects"), teacher, Map.of("name", name, "description", "Описание"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value(name))
-                .andExpect(jsonPath("$.controlForm").value("CREDIT"));
+                .andExpect(jsonPath("$.name").value(name));
     }
 
     @Test
@@ -250,7 +253,7 @@ class SystemScenariosTest {
         long attemptId = startAttempt(testId, student).get("attemptId").asLong();
         api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", List.of()))
                 .andExpect(status().isOk());
-        String otherStudent = createUser("STUDENT");
+        String otherStudent = createUser("STUDENT", groupId);
         api(get("/api/attempts/" + attemptId), otherStudent, null).andExpect(status().isNotFound());
         api(get("/api/attempts/" + attemptId), teacher, null).andExpect(status().isOk());
     }
@@ -274,71 +277,118 @@ class SystemScenariosTest {
     @Test
     @DisplayName("21. Администратор: фильтр пользователей и результатов по группе")
     void adminGroupFilter() throws Exception {
-        String group = "ГР-" + SEQ.incrementAndGet();
-        String login = "grp" + SEQ.incrementAndGet();
-        api(post("/api/users"), ADMIN, Map.of("username", login, "password", PASS, "fullName", "Студент группы",
-                "email", login + "@example.com", "role", "STUDENT", "groupName", group))
-                .andExpect(status().isCreated());
-        api(get("/api/users").param("group", group), ADMIN, null)
+        JsonNode group = createGroup();
+        long otherGroup = group.get("id").asLong();
+        String login = createUser("STUDENT", otherGroup);
+        api(get("/api/users").param("groupId", String.valueOf(otherGroup)), ADMIN, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].username").value(login));
 
         long testId = createPublishedTest();
+        addPlan(otherGroup, subjectOf(testId), teacher, "EXAM");
         long attemptId = startAttempt(testId, login).get("attemptId").asLong();
         api(post("/api/attempts/" + attemptId + "/submit"), login, Map.of("answers", List.of()))
                 .andExpect(status().isOk());
-        api(get("/api/attempts").param("group", group), ADMIN, null)
+        api(get("/api/attempts").param("groupId", String.valueOf(otherGroup)), ADMIN, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].groupName").value(group));
+                .andExpect(jsonPath("$[0].groupName").value(group.get("name").asText()));
     }
 
     @Test
     @DisplayName("22. Ведомость: CSV и Excel по группе, оценки по шкале, зачёт, отметка «н/я»; преподавателю — 403")
     void gradeSheetExport() throws Exception {
-        String group = "ВД-" + SEQ.incrementAndGet();
-        String passed = "sheetA" + SEQ.incrementAndGet();
-        String absent = "sheetB" + SEQ.incrementAndGet();
-        for (String login : List.of(passed, absent)) {
-            api(post("/api/users"), ADMIN, Map.of("username", login, "password", PASS, "fullName", "Студент " + login,
-                    "email", login + "@example.com", "role", "STUDENT", "groupName", group, "recordBook", "Z-" + login))
-                    .andExpect(status().isCreated());
-        }
+        JsonNode group = createGroup();
+        long sheetGroup = group.get("id").asLong();
+        String passed = createUser("STUDENT", sheetGroup);
+        String absent = createUser("STUDENT", sheetGroup);
         long testId = createPublishedTest();
+        long subjectId = subjectOf(testId);
+        addPlan(sheetGroup, subjectId, teacher, "EXAM");
         long attemptId = startAttempt(testId, passed).get("attemptId").asLong();
         api(post("/api/attempts/" + attemptId + "/submit"), passed, Map.of("answers", correctAnswers(testId)))
                 .andExpect(status().isOk());
 
-        String csv = mvc.perform(get("/reports/sheet/export.csv").with(user(ADMIN).roles("ADMIN"))
-                        .param("testId", String.valueOf(testId)).param("group", group)
-                        .param("columns", "NUM", "NAME", "BOOK", "GRADE", "GRADE_WORD"))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Content-Disposition", containsString(".csv")))
-                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
-        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Группа: " + group), csv);
-        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Студент " + passed + ";Z-" + passed + ";5;отлично"), csv);
-        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Студент " + absent + ";Z-" + absent + ";н/я;не явился"), csv);
+        String csv = sheetCsv(sheetGroup, subjectId, testId, "NUM", "NAME", "GRADE", "GRADE_WORD");
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Группа: " + group.get("name").asText()), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Пользователь " + passed + ";5;отлично"), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Пользователь " + absent + ";н/я;не явился"), csv);
         org.junit.jupiter.api.Assertions.assertTrue(csv.contains("5 (отл.) = 1") && csv.contains("не явились = 1"), csv);
-        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Форма контроля: экзамен"), "форма контроля из дисциплины: " + csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Форма контроля: экзамен"), "форма контроля из плана: " + csv);
 
-        // Зачёт: вместо оценки — «зачтено / не зачтено»
-        String credit = mvc.perform(get("/reports/sheet/export.csv").with(user(ADMIN).roles("ADMIN"))
-                        .param("testId", String.valueOf(testId)).param("group", group).param("controlForm", "зачёт")
-                        .param("columns", "NAME", "GRADE", "GRADE_WORD"))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
-        org.junit.jupiter.api.Assertions.assertTrue(credit.contains("Студент " + passed + ";зач.;зачтено"), credit);
+        // Зачёт по учебному плану группы: вместо оценки — «зачтено / не зачтено»
+        addPlan(sheetGroup, subjectId, teacher, "CREDIT");
+        String credit = sheetCsv(sheetGroup, subjectId, testId, "NAME", "GRADE", "GRADE_WORD");
+        org.junit.jupiter.api.Assertions.assertTrue(credit.contains("Пользователь " + passed + ";зач.;зачтено"), credit);
         org.junit.jupiter.api.Assertions.assertTrue(credit.contains("зачтено = 1, не зачтено = 0, не явились = 1"), credit);
 
         byte[] xlsx = mvc.perform(get("/reports/sheet/export.xlsx").with(user(ADMIN).roles("ADMIN"))
-                        .param("testId", String.valueOf(testId)).param("group", group))
+                        .param("groupId", String.valueOf(sheetGroup)).param("subjectId", String.valueOf(subjectId))
+                        .param("testId", String.valueOf(testId)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
         try (var wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(xlsx))) {
             org.junit.jupiter.api.Assertions.assertEquals("Ведомость", wb.getSheetAt(0).getSheetName());
         }
         mvc.perform(get("/reports/sheet").with(user(teacher).roles("TEACHER"))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("23. Учебный план: студент другой группы не видит тест по чужой дисциплине — 404")
+    void studentOfOtherGroupCannotSeeTest() throws Exception {
+        long testId = createPublishedTest();
+        String outsider = createUser("STUDENT", createGroup().get("id").asLong());
+        api(get("/api/tests/" + testId), outsider, null).andExpect(status().isNotFound());
+        api(post("/api/tests/" + testId + "/attempts"), outsider, null).andExpect(status().isNotFound());
+        api(get("/api/tests"), outsider, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + testId + ")]").isEmpty());
+        api(get("/api/tests/" + testId), student, null).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("24. Учебный план: преподаватель не создаёт тесты по чужой дисциплине и не видит чужие результаты")
+    void teacherLimitedToOwnSubjects() throws Exception {
+        long subjectId = createSubject();
+        String other = createUser("TEACHER");
+        api(post("/api/tests"), other, testBody(subjectId, "Чужой предмет", false))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message", containsString("не ведёте")));
+        long draft = createTest(subjectId, "Черновик коллеги");
+        api(get("/api/tests/" + draft), other, null).andExpect(status().isNotFound());
+
+        long testId = createPublishedTest();
+        long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", List.of()))
+                .andExpect(status().isOk());
+        api(get("/api/attempts/" + attemptId), other, null).andExpect(status().isNotFound());
+        api(get("/api/attempts"), other, null).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(0)));
+        api(get("/api/attempts/" + attemptId), teacher, null).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("25. Ведомость: шапка заполняется из учебного плана; дисциплина не из плана группы — ошибка")
+    void sheetHeaderFromCurriculum() throws Exception {
+        JsonNode group = createGroup();
+        long sheetGroup = group.get("id").asLong();
+        long testId = createPublishedTest();
+        long subjectId = subjectOf(testId);
+        mvc.perform(get("/reports/sheet/export.csv").with(user(ADMIN).roles("ADMIN"))
+                        .param("groupId", String.valueOf(sheetGroup)).param("subjectId", String.valueOf(subjectId))
+                        .param("testId", String.valueOf(testId)))
+                .andExpect(status().isBadRequest());
+
+        addPlan(sheetGroup, subjectId, teacher, "GRADED_CREDIT");
+        String csv = sheetCsv(sheetGroup, subjectId, testId, "NAME", "GRADE");
+        String subjectName = json.readTree(api(get("/api/subjects/" + subjectId), teacher, null)
+                .andReturn().getResponse().getContentAsString()).get("name").asText();
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Дисциплина: " + subjectName), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Преподаватель: Пользователь " + teacher), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Форма контроля: дифференцированный зачёт"), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Группа: " + group.get("name").asText() + ", 2 курс"), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("Специальность: 09.03.03 Прикладная информатика"), csv);
+        org.junit.jupiter.api.Assertions.assertTrue(csv.contains("3 семестр"), csv);
     }
 
     // ---------- Вспомогательные методы ----------
@@ -353,15 +403,55 @@ class SystemScenariosTest {
     }
 
     private String createUser(String role) throws Exception {
+        return createUser(role, null);
+    }
+
+    private String createUser(String role, Long group) throws Exception {
         String login = role.toLowerCase() + SEQ.incrementAndGet();
-        api(post("/api/users"), ADMIN, Map.of("username", login, "password", PASS, "fullName", "Пользователь " + login,
-                "email", login + "@example.com", "role", role))
-                .andExpect(status().isCreated());
+        Map<String, Object> body = new java.util.HashMap<>(Map.of("username", login, "password", PASS,
+                "fullName", "Пользователь " + login, "email", login + "@example.com", "role", role));
+        if (group != null) {
+            body.put("groupId", group);
+        }
+        String response = api(post("/api/users"), ADMIN, body)
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        userIds.put(login, json.readTree(response).get("id").asLong());
         return login;
     }
 
+    private JsonNode createGroup() throws Exception {
+        String response = api(post("/api/groups"), ADMIN, Map.of("name", "Г-" + SEQ.incrementAndGet(), "course", 2,
+                "specialty", "09.03.03 Прикладная информатика"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        return json.readTree(response);
+    }
+
+    /** Добавить (или обновить) дисциплину в учебном плане группы: преподаватель, 3 семестр, форма контроля. */
+    private void addPlan(long group, long subjectId, String teacherLogin, String form) throws Exception {
+        api(post("/api/groups/" + group + "/curriculum"), ADMIN, Map.of("subjectId", subjectId,
+                "teacherId", userIds.get(teacherLogin), "semester", 3, "controlForm", form))
+                .andExpect(status().isCreated());
+    }
+
+    /** Новая дисциплина, которую по учебному плану группы ведёт преподаватель teacher. */
     private long createSubject() throws Exception {
-        return id(api(post("/api/subjects"), teacher, Map.of("name", "Предмет " + SEQ.incrementAndGet())));
+        long subjectId = id(api(post("/api/subjects"), teacher, Map.of("name", "Предмет " + SEQ.incrementAndGet())));
+        addPlan(groupId, subjectId, teacher, "EXAM");
+        return subjectId;
+    }
+
+    private long subjectOf(long testId) throws Exception {
+        return json.readTree(api(get("/api/tests/" + testId), teacher, null).andReturn().getResponse()
+                .getContentAsString()).get("subjectId").asLong();
+    }
+
+    private String sheetCsv(long group, long subjectId, long testId, String... columns) throws Exception {
+        return mvc.perform(get("/reports/sheet/export.csv").with(user(ADMIN).roles("ADMIN"))
+                        .param("groupId", String.valueOf(group)).param("subjectId", String.valueOf(subjectId))
+                        .param("testId", String.valueOf(testId)).param("columns", columns))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString(".csv")))
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     private Map<String, Object> testBody(long subjectId, String title, boolean published) {

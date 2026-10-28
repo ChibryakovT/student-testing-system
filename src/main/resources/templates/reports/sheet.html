@@ -9,21 +9,26 @@
         <a class="btn btn-outline-secondary btn-sm" th:href="@{/reports}">← Аналитический отчёт</a>
     </div>
 
-    <form id="sheet-form" method="get" th:action="@{/reports/sheet}" th:object="${form}">
+    <form id="sheet-form" method="get" th:action="@{/reports/sheet}" th:attr="data-panel-action=@{/reports/sheet}" th:object="${form}">
         <div class="row g-3">
             <div class="col-lg-4">
                 <div class="card mb-3">
                     <div class="card-header fw-semibold">1. Что выводить</div>
                     <div class="card-body">
-                        <label class="form-label small" for="testId">Тест</label>
-                        <select class="form-select mb-2" th:field="*{testId}" required>
-                            <option value="">— выберите тест —</option>
-                            <option th:each="t : ${tests}" th:value="${t.id}" th:text="${t.title} + ' (' + ${t.subject.name} + ')'"></option>
+                        <label class="form-label small" for="groupId">Группа</label>
+                        <select class="form-select mb-2" th:field="*{groupId}" data-autosubmit>
+                            <option value="">— выберите группу —</option>
+                            <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name} + (${g.course} != null ? ', ' + ${g.course} + ' курс' : '')"></option>
                         </select>
-                        <label class="form-label small" for="group">Группа</label>
-                        <select class="form-select mb-2" th:field="*{group}">
-                            <option value="">Все группы</option>
-                            <option th:each="g : ${groups}" th:value="${g}" th:text="${g}"></option>
+                        <label class="form-label small" for="subjectId">Дисциплина <span class="text-muted">(из учебного плана группы)</span></label>
+                        <select class="form-select mb-2" th:field="*{subjectId}" th:disabled="${form.groupId == null}" data-autosubmit>
+                            <option value="" th:text="${form.groupId == null} ? 'сначала выберите группу' : '— выберите дисциплину —'"></option>
+                            <option th:each="c : ${plan}" th:value="${c.subject.id}" th:text="${c.subject.name}"></option>
+                        </select>
+                        <label class="form-label small" for="testId">Тест</label>
+                        <select class="form-select mb-2" th:field="*{testId}" th:disabled="${form.subjectId == null}" data-autosubmit>
+                            <option value="" th:text="${form.subjectId == null} ? 'сначала выберите дисциплину' : (${#lists.isEmpty(sheetTests)} ? 'по дисциплине нет тестов' : '— выберите тест —')"></option>
+                            <option th:each="t : ${sheetTests}" th:value="${t.id}" th:text="${t.title}"></option>
                         </select>
                         <label class="form-label small" for="attempt">Какую попытку учитывать</label>
                         <select class="form-select mb-2" th:field="*{attempt}">
@@ -72,38 +77,32 @@
 
             <div class="col-lg-8">
                 <div class="card mb-3">
-                    <div class="card-header fw-semibold">4. Шапка документа</div>
+                    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                        <span>4. Шапка документа <span class="text-muted fw-normal small">— заполняется автоматически</span></span>
+                        <i class="bi bi-magic text-primary"></i>
+                    </div>
                     <div class="card-body">
-                        <div class="row g-2">
-                            <div class="col-md-8"><label class="form-label small" for="university">Учебное заведение</label>
-                                <input class="form-control" th:field="*{university}" maxlength="200"></div>
-                            <div class="col-md-4"><label class="form-label small" for="title">Название документа</label>
-                                <input class="form-control" th:field="*{title}" maxlength="100"></div>
-                            <div class="col-md-3"><label class="form-label small" for="academicYear">Учебный год</label>
-                                <input class="form-control" th:field="*{academicYear}" maxlength="20"></div>
-                            <div class="col-md-3"><label class="form-label small" for="semester">Семестр</label>
-                                <input class="form-control" th:field="*{semester}" maxlength="20"></div>
-                            <div class="col-md-3"><label class="form-label small" for="controlForm">Форма контроля</label>
-                                <select class="form-select" th:field="*{controlForm}">
-                                    <option value="">Из дисциплины</option>
-                                    <option value="экзамен">Экзамен</option>
-                                    <option value="зачёт">Зачёт</option>
-                                    <option value="дифференцированный зачёт">Дифф. зачёт</option>
-                                    <option value="контрольная работа">Контрольная работа</option>
-                                    <option value="тестирование">Тестирование</option>
-                                </select></div>
-                            <div class="col-md-3"><label class="form-label small" for="date">Дата</label>
-                                <input class="form-control" th:field="*{date}" maxlength="20" placeholder="дд.мм.гггг"></div>
-                            <div class="col-md-6"><label class="form-label small" for="faculty">Факультет</label>
-                                <input class="form-control" th:field="*{faculty}" maxlength="150" placeholder="Например, Естественнонаучный"></div>
-                            <div class="col-md-6"><label class="form-label small" for="department">Кафедра</label>
-                                <input class="form-control" th:field="*{department}" maxlength="150" placeholder="Например, Информатика и ИТ"></div>
-                            <div class="col-md-6"><label class="form-label small" for="discipline">Дисциплина</label>
-                                <input class="form-control" th:field="*{discipline}" maxlength="200"></div>
-                            <div class="col-md-6"><label class="form-label small" for="teacher">Преподаватель</label>
-                                <input class="form-control" th:field="*{teacher}" maxlength="150"></div>
+                        <div class="empty-state py-3" th:if="${form.discipline == null}">
+                            <i class="bi bi-diagram-3"></i>Выберите группу и дисциплину — факультет, кафедра, преподаватель,
+                            форма контроля, курс и семестр подставятся из учебного плана
                         </div>
-                        <div class="form-text">Дисциплина, преподаватель и форма контроля подставляются из выбранного теста; их можно изменить.</div>
+                        <dl class="row mb-0 auto-header" th:if="${form.discipline != null}">
+                            <dt class="col-sm-4">Учебное заведение</dt><dd class="col-sm-8" th:text="${form.university}">вуз</dd>
+                            <dt class="col-sm-4">Факультет</dt><dd class="col-sm-8" th:text="${form.faculty} ?: '—'">факультет</dd>
+                            <dt class="col-sm-4">Кафедра</dt><dd class="col-sm-8" th:text="${form.department} ?: '—'">кафедра</dd>
+                            <dt class="col-sm-4">Специальность</dt><dd class="col-sm-8" th:text="${form.specialty} ?: '—'">специальность</dd>
+                            <dt class="col-sm-4">Группа, курс</dt><dd class="col-sm-8" th:text="${form.group} + ', ' + ${form.course} + ' курс'">группа</dd>
+                            <dt class="col-sm-4">Дисциплина</dt><dd class="col-sm-8 fw-semibold" th:text="${form.discipline}">дисциплина</dd>
+                            <dt class="col-sm-4">Преподаватель</dt><dd class="col-sm-8 fw-semibold" th:text="${form.teacher} ?: 'не назначен'">преподаватель</dd>
+                            <dt class="col-sm-4">Форма контроля</dt><dd class="col-sm-8"><span class="badge text-bg-primary" th:text="${form.controlForm}">экзамен</span></dd>
+                            <dt class="col-sm-4">Учебный год, семестр</dt><dd class="col-sm-8" th:text="${form.academicYear} + (${form.semester} != null ? ', ' + ${form.semester} + ' семестр' : '')">год</dd>
+                        </dl>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-8"><label class="form-label small" for="title">Название документа</label>
+                                <input class="form-control" th:field="*{title}" maxlength="100"></div>
+                            <div class="col-md-4"><label class="form-label small" for="date">Дата</label>
+                                <input class="form-control" th:field="*{date}" maxlength="20" placeholder="дд.мм.гггг"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -148,7 +147,7 @@
         </div>
     </div>
     <div class="alert alert-light border" th:if="${sheet == null and errorMessage == null}">
-        Выберите тест и нажмите «Показать», чтобы увидеть ведомость.
+        Выберите группу, дисциплину и тест — ведомость появится здесь.
     </div>
 </section>
 </body>

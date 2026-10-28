@@ -28,8 +28,15 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
-    @Column(name = "group_name", length = 30)
-    private String groupName;
+    /** Учебная группа (для студентов). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private StudyGroup group;
+
+    /** Кафедра (для преподавателей). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     @Column(name = "record_book", length = 20)
     private String recordBook;
@@ -56,8 +63,12 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
-    public String getGroupName() { return groupName; }
-    public void setGroupName(String groupName) { this.groupName = groupName; }
+    public StudyGroup getGroup() { return group; }
+    public void setGroup(StudyGroup group) { this.group = group; }
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
+    /** Название группы — для таблиц и выгрузок. */
+    public String getGroupName() { return group == null ? null : group.getName(); }
     public String getRecordBook() { return recordBook; }
     public void setRecordBook(String recordBook) { this.recordBook = recordBook; }
     public boolean isEnabled() { return enabled; }

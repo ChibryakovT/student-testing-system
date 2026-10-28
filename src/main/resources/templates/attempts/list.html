@@ -26,10 +26,10 @@
                 </select>
             </div>
             <div class="col-md-2" th:if="${me.admin}">
-                <label class="form-label small" for="group">Группа</label>
-                <select class="form-select" id="group" name="group">
+                <label class="form-label small" for="groupId">Группа</label>
+                <select class="form-select" id="groupId" name="groupId">
                     <option value="">Все группы</option>
-                    <option th:each="g : ${groups}" th:value="${g}" th:text="${g}" th:selected="${g == group}"></option>
+                    <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}" th:selected="${g.id == groupId}"></option>
                 </select>
             </div>
             <div class="col-md-2">

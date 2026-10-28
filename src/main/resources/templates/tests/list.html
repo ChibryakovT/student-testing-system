@@ -47,7 +47,7 @@
                     <img th:src="@{${cover}}" alt="" loading="lazy">
                     <div class="cover-badges">
                         <span class="badge" th:text="${t.subject.name}">дисциплина</span>
-                        <span class="badge" th:text="${t.subject.controlForm.title}">форма</span>
+                        <span class="badge" th:if="${forms[t.subject.id] != null}" th:text="${forms[t.subject.id]}">форма</span>
                     </div>
                     <span class="badge position-absolute top-0 end-0 m-2" style="z-index:1" th:if="${me.staff}"
                           th:classappend="${t.published} ? 'text-bg-success' : 'text-bg-secondary'"

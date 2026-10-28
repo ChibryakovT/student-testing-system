@@ -37,7 +37,8 @@ public class TestController {
                        @RequestParam(defaultValue = "new") String sort,
                        @AuthenticationPrincipal AppUserDetails me, Model model) {
         model.addAttribute("tests", testService.search(q, subjectId, sort, me));
-        model.addAttribute("subjects", subjectService.findAll(null));
+        model.addAttribute("subjects", testService.subjectsFor(me));
+        model.addAttribute("forms", testService.controlForms(me));
         model.addAttribute("q", q);
         model.addAttribute("subjectId", subjectId);
         model.addAttribute("sort", sort);
@@ -49,14 +50,15 @@ public class TestController {
         Test test = testService.get(id, me);
         model.addAttribute("test", test);
         model.addAttribute("canEdit", testService.canEdit(test, me));
+        model.addAttribute("forms", testService.controlForms(me));
         return "tests/view";
     }
 
     @GetMapping("/new")
     @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
-    public String createForm(Model model) {
+    public String createForm(@AuthenticationPrincipal AppUserDetails me, Model model) {
         model.addAttribute("form", new TestForm());
-        return formView(model, null);
+        return formView(model, null, me);
     }
 
     @PostMapping
@@ -64,7 +66,7 @@ public class TestController {
     public String create(@Valid @ModelAttribute("form") TestForm form, BindingResult result,
                          @AuthenticationPrincipal AppUserDetails me, Model model, RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            return formView(model, null);
+            return formView(model, null, me);
         }
         try {
             Test test = testService.create(form, me);
@@ -72,7 +74,7 @@ public class TestController {
             return "redirect:/tests/" + test.getId();
         } catch (BusinessException e) {
             result.reject("test", e.getMessage());
-            return formView(model, null);
+            return formView(model, null, me);
         }
     }
 
@@ -88,7 +90,7 @@ public class TestController {
         form.setPassingScore(test.getPassingScore());
         form.setPublished(test.isPublished());
         model.addAttribute("form", form);
-        return formView(model, id);
+        return formView(model, id, me);
     }
 
     @PostMapping("/{id}")
@@ -96,13 +98,13 @@ public class TestController {
     public String update(@PathVariable Long id, @Valid @ModelAttribute("form") TestForm form, BindingResult result,
                          @AuthenticationPrincipal AppUserDetails me, Model model, RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            return formView(model, id);
+            return formView(model, id, me);
         }
         try {
             testService.update(id, form, me);
         } catch (BusinessException e) {
             result.reject("test", e.getMessage());
-            return formView(model, id);
+            return formView(model, id, me);
         }
         redirect.addFlashAttribute("success", "Изменения сохранены");
         return "redirect:/tests/" + id;
@@ -124,9 +126,9 @@ public class TestController {
         return "redirect:/attempts/" + attempt.getId();
     }
 
-    private String formView(Model model, Long id) {
+    private String formView(Model model, Long id, AppUserDetails me) {
         model.addAttribute("testId", id);
-        model.addAttribute("subjects", subjectService.findAll(null));
+        model.addAttribute("subjects", testService.subjectsFor(me));
         return "tests/form";
     }
 }

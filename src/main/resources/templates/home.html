@@ -66,6 +66,7 @@
                     <a class="list-group-item list-group-item-action" th:href="@{/subjects}" th:if="${me.staff}"><i class="bi bi-book"></i>Справочник дисциплин</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/reports}" th:if="${me.admin}"><i class="bi bi-graph-up-arrow"></i>Аналитический отчёт</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/reports/sheet}" th:if="${me.admin}"><i class="bi bi-file-earmark-spreadsheet"></i>Ведомость и экспорт</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/structure}" th:if="${me.admin}"><i class="bi bi-diagram-3"></i>Структура вуза и учебный план</a>
                     <a class="list-group-item list-group-item-action" th:href="@{/users}" th:if="${me.admin}"><i class="bi bi-people"></i>Пользователи</a>
                 </div>
             </div>

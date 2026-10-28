@@ -16,20 +16,25 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 
     @Query("""
             select a from TestAttempt a join fetch a.test t join fetch t.subject s join fetch a.student u
+            left join fetch u.group g
             where a.status = ru.edu.testing.domain.AttemptStatus.FINISHED
               and (:studentId is null or u.id = :studentId)
               and (:testId is null or t.id = :testId)
               and (:subjectId is null or s.id = :subjectId)
               and (:passed is null or a.passed = :passed)
-              and (:groupName is null or u.groupName = :groupName)
+              and (:groupId is null or g.id = :groupId)
+              and (:teacherId is null or t.author.id = :teacherId
+                   or exists (select 1 from CurriculumItem c
+                              where c.teacher.id = :teacherId and c.group = g and c.subject = s))
               and (lower(u.fullName) like :pattern or lower(t.title) like :pattern
-                   or lower(coalesce(u.groupName, '')) like :pattern)
+                   or lower(coalesce(g.name, '')) like :pattern)
             """)
     List<TestAttempt> search(@Param("studentId") Long studentId,
+                             @Param("teacherId") Long teacherId,
                              @Param("testId") Long testId,
                              @Param("subjectId") Long subjectId,
                              @Param("passed") Boolean passed,
-                             @Param("groupName") String groupName,
+                             @Param("groupId") Long groupId,
                              @Param("pattern") String pattern,
                              Sort sort);
 

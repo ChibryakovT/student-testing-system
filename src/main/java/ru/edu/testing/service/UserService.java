@@ -6,6 +6,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.edu.testing.domain.Role;
+import ru.edu.testing.domain.StudyGroup;
+import ru.edu.testing.repository.DepartmentRepository;
+import ru.edu.testing.repository.StudyGroupRepository;
 import ru.edu.testing.domain.User;
 import ru.edu.testing.dto.RegistrationForm;
 import ru.edu.testing.exception.BusinessException;
@@ -27,10 +30,15 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StudyGroupRepository groupRepository;
+    private final DepartmentRepository departmentRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       StudyGroupRepository groupRepository, DepartmentRepository departmentRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.groupRepository = groupRepository;
+        this.departmentRepository = departmentRepository;
     }
 
     /** Самостоятельная регистрация всегда создаёт студента: роль из запроса не принимается. */
@@ -58,8 +66,18 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(form.getPassword()));
         user.setFullName(form.getFullName().trim());
         user.setEmail(email);
-        user.setGroupName(blankToNull(form.getGroupName()));
         user.setRole(role);
+        if (role == Role.STUDENT) {
+            if (form.getGroupId() == null) {
+                throw new BusinessException("Выберите учебную группу");
+            }
+            user.setGroup(groupRepository.findById(form.getGroupId())
+                    .orElseThrow(() -> new BusinessException("Учебная группа не найдена")));
+        }
+        if (role == Role.TEACHER && form instanceof ru.edu.testing.dto.UserForm uf && uf.getDepartmentId() != null) {
+            user.setDepartment(departmentRepository.findById(uf.getDepartmentId())
+                    .orElseThrow(() -> new BusinessException("Кафедра не найдена")));
+        }
         user.setRecordBook(blankToNull(form.getRecordBook()));
         User saved = userRepository.save(user);
         if (role == Role.STUDENT && saved.getRecordBook() == null) {
@@ -69,14 +87,13 @@ public class UserService {
         return saved;
     }
 
-    public List<User> search(String query, Role role, String groupName, String sort) {
-        return userRepository.search(Patterns.like(query), role, blankToNull(groupName),
-                SORTS.getOrDefault(sort, SORTS.get("name")));
+    public List<User> search(String query, Role role, Long groupId, String sort) {
+        return userRepository.search(Patterns.like(query), role, groupId, SORTS.getOrDefault(sort, SORTS.get("name")));
     }
 
-    /** Список учебных групп для фильтра. */
-    public List<String> groupNames() {
-        return userRepository.findGroupNames();
+    /** Учебные группы для фильтров и форм. */
+    public List<StudyGroup> groups() {
+        return groupRepository.findAllOrdered();
     }
 
     public User get(Long id) {

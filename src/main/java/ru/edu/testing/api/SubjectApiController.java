@@ -22,8 +22,8 @@ public class SubjectApiController {
 
     @GetMapping
     public List<SubjectDto> list(@RequestParam(required = false) String q,
-                                 @RequestParam(required = false) ru.edu.testing.domain.ControlForm controlForm) {
-        return subjectService.findAll(q, controlForm).stream().map(SubjectDto::of).toList();
+                                 @RequestParam(required = false) Long departmentId) {
+        return subjectService.findAll(q, departmentId).stream().map(SubjectDto::of).toList();
     }
 
     @GetMapping("/{id}")

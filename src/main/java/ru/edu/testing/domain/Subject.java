@@ -16,15 +16,15 @@ public class Subject {
     @Column(length = 500)
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "control_form", nullable = false, length = 20)
-    private ControlForm controlForm = ControlForm.EXAM;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     public Long getId() { return id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public ControlForm getControlForm() { return controlForm; }
-    public void setControlForm(ControlForm controlForm) { this.controlForm = controlForm; }
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
 }

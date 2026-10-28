@@ -9,6 +9,12 @@ public class UserForm extends RegistrationForm {
     @NotNull(message = "Выберите роль")
     private Role role = Role.STUDENT;
 
+    /** Кафедра (для преподавателя). */
+    private Long departmentId;
+
+    public Long getDepartmentId() { return departmentId; }
+    public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
+
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 }

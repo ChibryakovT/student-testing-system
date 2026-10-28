@@ -15,10 +15,10 @@
                 <input class="form-control" id="q" name="q" th:value="${q}" placeholder="ФИО, логин или группа">
             </div>
             <div class="col-md-2">
-                <label class="form-label small" for="group">Группа</label>
-                <select class="form-select" id="group" name="group">
+                <label class="form-label small" for="groupId">Группа</label>
+                <select class="form-select" id="groupId" name="groupId">
                     <option value="">Все группы</option>
-                    <option th:each="g : ${groups}" th:value="${g}" th:text="${g}" th:selected="${g == group}"></option>
+                    <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}" th:selected="${g.id == groupId}"></option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -42,13 +42,14 @@
     </form>
     <div class="table-responsive card reveal">
         <table class="table table-hover mb-0 align-middle">
-            <thead><tr><th>ФИО</th><th>Логин</th><th>E-mail</th><th>Группа</th><th>№ зачётки</th><th>Роль и доступ</th><th></th></tr></thead>
+            <thead><tr><th>ФИО</th><th>Логин</th><th>E-mail</th><th>Группа / кафедра</th><th>№ зачётки</th><th>Роль и доступ</th><th></th></tr></thead>
             <tbody>
             <tr th:each="u : ${users}">
                 <td th:text="${u.fullName}">ФИО</td>
                 <td th:text="${u.username}">логин</td>
                 <td th:text="${u.email}">email</td>
-                <td th:text="${u.groupName}">группа</td>
+                <td><span th:if="${u.group != null}" class="badge text-bg-light" th:text="${u.group.name}">группа</span>
+                    <span th:if="${u.department != null}" class="small text-muted" th:text="${u.department.name}">кафедра</span></td>
                 <td th:text="${u.recordBook}">зачётка</td>
                 <td>
                     <form class="d-flex gap-2 align-items-center" th:action="@{/users/{id}(id=${u.id})}" method="post">
