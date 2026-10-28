@@ -4,8 +4,8 @@
 <head><title>Новый пользователь — ЭСТ</title></head>
 <body>
 <section class="form-narrow">
-    <h1 class="h3 mb-3">Новый пользователь</h1>
-    <form class="card card-body" th:action="@{/users}" th:object="${form}" method="post" novalidate>
+    <h1 class="h3 mb-3 page-title"><i class="bi bi-person-plus"></i><span>Новый пользователь</span></h1>
+    <form class="card card-body reveal" th:action="@{/users}" th:object="${form}" method="post" novalidate>
         <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
             <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
         </div>

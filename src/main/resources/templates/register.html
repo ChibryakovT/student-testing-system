@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
-<head><title>Регистрация — ЭСТ</title></head>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/auth :: head('Регистрация — ЭСТ РТСУ')}"></head>
 <body>
-<section class="auth-card">
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <h1 class="h4 mb-4">Регистрация студента</h1>
+<div class="auth-page">
+    <div th:replace="~{fragments/auth :: visual('/img/library.jpg', 'Присоединяйтесь к системе тестирования', 'Регистрация занимает минуту — после неё станут доступны тесты по вашим дисциплинам.')}"></div>
+
+    <div class="auth-form-side">
+        <div class="auth-box">
+            <span class="brand-mark"><i class="bi bi-person-plus-fill"></i></span>
+            <h1 class="h3 mb-1">Регистрация студента</h1>
+            <p class="text-muted mb-4">Заполните данные, чтобы создать учётную запись</p>
             <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
                 <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
                     <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
@@ -45,11 +48,12 @@
                     <div class="form-text">Минимум 8 символов, буквы и цифры</div>
                     <div class="invalid-feedback" th:errors="*{password}"></div>
                 </div>
-                <button class="btn btn-primary w-100" type="submit">Зарегистрироваться</button>
+                <button class="btn btn-primary w-100 py-2" type="submit">Зарегистрироваться <i class="bi bi-arrow-right ms-1"></i></button>
             </form>
-            <p class="mt-3 mb-0 text-center small">Уже есть учётная запись? <a th:href="@{/login}">Войти</a></p>
+            <p class="mt-4 mb-0 text-center text-muted">Уже есть учётная запись? <a th:href="@{/login}" class="fw-semibold">Войти</a></p>
         </div>
     </div>
-</section>
+</div>
+<script th:src="@{/js/app.js}"></script>
 </body>
 </html>

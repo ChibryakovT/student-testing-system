@@ -5,8 +5,8 @@
 <body>
 <section>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Каталог тестов</h1>
-        <a class="btn btn-primary" th:href="@{/tests/new}" th:if="${me.staff}">+ Создать тест</a>
+        <h1 class="h3 mb-0 page-title"><i class="bi bi-journal-check"></i>Каталог тестов</h1>
+        <a class="btn btn-primary" th:href="@{/tests/new}" th:if="${me.staff}"><i class="bi bi-plus-lg me-1"></i>Создать тест</a>
     </div>
 
     <form class="card card-body mb-3 filter-bar" method="get" th:action="@{/tests}">
@@ -34,35 +34,38 @@
                 </select>
             </div>
             <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary flex-fill" type="submit">Найти</button>
+                <button class="btn btn-primary flex-fill" type="submit"><i class="bi bi-search me-1"></i>Найти</button>
                 <a class="btn btn-outline-secondary" th:href="@{/tests}" title="Сбросить">×</a>
             </div>
         </div>
     </form>
 
     <div class="row g-3">
-        <div class="col-md-6 col-lg-4" th:each="t : ${tests}">
-            <div class="card h-100 test-card">
-                <div class="card-body d-flex flex-column">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span><span class="badge text-bg-light" th:text="${t.subject.name}">дисциплина</span>
-                            <span class="badge text-bg-secondary" th:text="${t.subject.controlForm.title}">форма</span></span>
-                        <span class="badge" th:classappend="${t.published} ? 'text-bg-success' : 'text-bg-secondary'"
-                              th:text="${t.published} ? 'Опубликован' : 'Черновик'" th:if="${me.staff}">статус</span>
+        <div class="col-md-6 col-lg-4 reveal" th:each="t, st : ${tests}" th:style="'--delay:' + ${(st.index % 6) * 60} + 'ms'">
+            <a class="card h-100 test-card lift text-decoration-none text-reset" th:href="@{/tests/{id}(id=${t.id})}">
+                <div class="test-cover" th:with="cover=${@covers.of(t.subject.name)}">
+                    <img th:src="@{${cover}}" alt="" loading="lazy">
+                    <div class="cover-badges">
+                        <span class="badge" th:text="${t.subject.name}">дисциплина</span>
+                        <span class="badge" th:text="${t.subject.controlForm.title}">форма</span>
                     </div>
-                    <h2 class="h5" th:text="${t.title}">Название</h2>
-                    <p class="text-muted small flex-grow-1" th:text="${t.description}">описание</p>
-                    <div class="small text-muted mb-3">
-                        <span th:text="${#lists.size(t.questions)} + ' вопр.'">0 вопр.</span> ·
-                        <span th:text="${t.timeLimitMinutes} + ' мин'">0 мин</span> ·
-                        проходной <span th:text="${t.passingScore} + '%'">0%</span>
-                    </div>
-                    <a class="btn btn-outline-primary btn-sm" th:href="@{/tests/{id}(id=${t.id})}">Открыть</a>
+                    <span class="badge position-absolute top-0 end-0 m-2" style="z-index:1" th:if="${me.staff}"
+                          th:classappend="${t.published} ? 'text-bg-success' : 'text-bg-secondary'"
+                          th:text="${t.published} ? 'Опубликован' : 'Черновик'">статус</span>
                 </div>
-            </div>
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5 mb-1" th:text="${t.title}">Название</h2>
+                    <p class="text-muted small flex-grow-1 mb-3" th:text="${t.description}">описание</p>
+                    <div class="test-meta">
+                        <span><i class="bi bi-question-circle"></i><span th:text="${#lists.size(t.questions)} + ' вопр.'">0</span></span>
+                        <span><i class="bi bi-stopwatch"></i><span th:text="${t.timeLimitMinutes} + ' мин'">0</span></span>
+                        <span><i class="bi bi-flag"></i><span th:text="'от ' + ${t.passingScore} + ' %'">0</span></span>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
-    <div class="alert alert-light border" th:if="${#lists.isEmpty(tests)}">По заданным условиям тесты не найдены</div>
+    <div class="card empty-state" th:if="${#lists.isEmpty(tests)}"><i class="bi bi-search"></i>По заданным условиям тесты не найдены</div>
     <p class="text-muted small mt-3" th:text="'Найдено тестов: ' + ${#lists.size(tests)}"></p>
 </section>
 </body>

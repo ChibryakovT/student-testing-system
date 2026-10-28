@@ -4,8 +4,8 @@
 <head><title>Тест — ЭСТ</title></head>
 <body>
 <section class="form-narrow">
-    <h1 class="h3 mb-3" th:text="${testId == null} ? 'Новый тест' : 'Редактирование теста'">Тест</h1>
-    <form class="card card-body" th:object="${form}" method="post"
+    <h1 class="h3 mb-3 page-title"><i class="bi bi-journal-plus"></i><span th:text="${testId == null} ? 'Новый тест' : 'Редактирование теста'">Тест</span></h1>
+    <form class="card card-body reveal" th:object="${form}" method="post"
           th:action="${testId == null} ? @{/tests} : @{/tests/{id}(id=${testId})}" novalidate>
         <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
             <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
@@ -45,7 +45,7 @@
             <label class="form-check-label" for="published1">Опубликовать (тест станет доступен студентам)</label>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-1"></i>Сохранить</button>
             <a class="btn btn-outline-secondary" th:href="${testId == null} ? @{/tests} : @{/tests/{id}(id=${testId})}">Отмена</a>
         </div>
     </form>

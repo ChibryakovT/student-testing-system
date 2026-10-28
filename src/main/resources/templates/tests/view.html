@@ -5,49 +5,49 @@
 <body>
 <section>
     <nav class="small mb-2"><a th:href="@{/tests}">← Каталог тестов</a></nav>
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex flex-wrap justify-content-between gap-2">
-                <div>
-                    <span class="badge text-bg-light mb-2" th:text="${test.subject.name}">дисциплина</span>
-                    <span class="badge text-bg-secondary mb-2" th:text="${test.subject.controlForm.title}">форма</span>
-                    <span class="badge mb-2" th:if="${me.staff}"
-                          th:classappend="${test.published} ? 'text-bg-success' : 'text-bg-secondary'"
+    <div class="test-hero" th:with="cover=${@covers.of(test.subject.name)}">
+        <div class="hero-bg" th:style="'background-image:url(' + @{${cover}} + ')'"></div>
+        <div class="d-flex flex-wrap justify-content-between gap-3 align-items-end">
+            <div>
+                <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <span class="badge text-bg-light" th:text="${test.subject.name}">дисциплина</span>
+                    <span class="badge text-bg-light" th:text="${test.subject.controlForm.title}">форма</span>
+                    <span class="badge" th:if="${me.staff}" th:classappend="${test.published} ? 'text-bg-success' : 'text-bg-secondary'"
                           th:text="${test.published} ? 'Опубликован' : 'Черновик'">статус</span>
-                    <h1 class="h3" th:text="${test.title}">Название</h1>
-                    <p class="text-muted mb-2" th:text="${test.description}">описание</p>
-                    <div class="small text-muted">
-                        Автор: <span th:text="${test.author.fullName}">автор</span> ·
-                        вопросов: <span th:text="${#lists.size(test.questions)}">0</span> ·
-                        макс. балл: <span th:text="${test.maxScore}">0</span> ·
-                        время: <span th:text="${test.timeLimitMinutes}">0</span> мин ·
-                        проходной: <span th:text="${test.passingScore}">0</span>%
-                    </div>
                 </div>
-                <div class="d-flex align-items-start gap-2">
-                    <form th:if="${me.student}" th:action="@{/tests/{id}/start(id=${test.id})}" method="post">
-                        <button class="btn btn-success btn-lg" type="submit">Начать тест</button>
-                    </form>
-                    <a th:if="${canEdit}" class="btn btn-outline-primary" th:href="@{/tests/{id}/edit(id=${test.id})}">Редактировать</a>
-                    <form th:if="${canEdit}" th:action="@{/tests/{id}/delete(id=${test.id})}" method="post"
-                          data-confirm="Удалить тест вместе с вопросами и результатами?">
-                        <button class="btn btn-outline-danger" type="submit">Удалить</button>
-                    </form>
+                <h1 class="h2 mb-2" th:text="${test.title}">Название</h1>
+                <p class="mb-3 opacity-75" th:text="${test.description}">описание</p>
+                <div class="test-meta" style="color:rgba(255,255,255,.85)">
+                    <span><i class="bi bi-person"></i><span th:text="${test.author.fullName}">автор</span></span>
+                    <span><i class="bi bi-question-circle"></i><span th:text="${#lists.size(test.questions)} + ' вопросов'">0</span></span>
+                    <span><i class="bi bi-star"></i><span th:text="'макс. ' + ${test.maxScore} + ' б.'">0</span></span>
+                    <span><i class="bi bi-stopwatch"></i><span th:text="${test.timeLimitMinutes} + ' мин'">0</span></span>
+                    <span><i class="bi bi-flag"></i><span th:text="'проходной ' + ${test.passingScore} + ' %'">0</span></span>
                 </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <form th:if="${me.student}" th:action="@{/tests/{id}/start(id=${test.id})}" method="post">
+                    <button class="btn btn-light btn-lg fw-bold" type="submit"><i class="bi bi-play-fill me-1"></i>Начать тест</button>
+                </form>
+                <a th:if="${canEdit}" class="btn btn-glass" th:href="@{/tests/{id}/edit(id=${test.id})}"><i class="bi bi-pencil me-1"></i>Редактировать</a>
+                <form th:if="${canEdit}" th:action="@{/tests/{id}/delete(id=${test.id})}" method="post"
+                      data-confirm="Удалить тест вместе с вопросами и результатами?">
+                    <button class="btn btn-glass" type="submit"><i class="bi bi-trash"></i></button>
+                </form>
             </div>
         </div>
     </div>
 
-    <div th:if="${me.student}" class="alert alert-info">
+    <div th:if="${me.student}" class="alert alert-info"><i class="bi bi-info-circle me-1"></i>
         После нажатия «Начать тест» запустится таймер. Неотправленные ответы по истечении времени не засчитываются.
     </div>
 
     <div th:if="${canEdit}">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h5 mb-0">Вопросы</h2>
-            <a class="btn btn-primary btn-sm" th:href="@{/tests/{id}/questions/new(id=${test.id})}">+ Добавить вопрос</a>
+            <a class="btn btn-primary btn-sm" th:href="@{/tests/{id}/questions/new(id=${test.id})}"><i class="bi bi-plus-lg me-1"></i>Добавить вопрос</a>
         </div>
-        <div class="card mb-3" th:each="q, st : ${test.questions}">
+        <div class="card mb-3 question-card reveal" th:each="q, st : ${test.questions}">
             <div class="card-body">
                 <div class="d-flex justify-content-between gap-2">
                     <div>
@@ -65,7 +65,7 @@
                 </div>
                 <ul class="list-unstyled mb-0">
                     <li th:each="o : ${q.options}" th:classappend="${o.correct} ? 'text-success fw-semibold'">
-                        <span th:text="${o.correct} ? '✔' : '○'"></span> <span th:text="${o.text}">вариант</span>
+                        <i class="bi" th:classappend="${o.correct} ? 'bi-check-circle-fill' : 'bi-circle'"></i> <span th:text="${o.text}">вариант</span>
                     </li>
                 </ul>
             </div>
