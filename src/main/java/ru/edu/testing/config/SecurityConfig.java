@@ -29,10 +29,11 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    // Bootstrap, иконки и шрифт подключены локально, поэтому внешние источники не нужны
     private static final String CSP = "default-src 'self'; "
-            + "script-src 'self' https://cdn.jsdelivr.net; "
-            + "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            + "font-src 'self' https://cdn.jsdelivr.net; "
+            + "script-src 'self'; "
+            + "style-src 'self' 'unsafe-inline'; "
+            + "font-src 'self'; "
             + "img-src 'self' data:; "
             + "form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'";
 
@@ -65,7 +66,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain webChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers("/login", "/register", "/credits", "/css/**", "/js/**", "/img/**", "/vendor/**", "/favicon.ico", "/favicon.svg", "/error").permitAll()
                         .requestMatchers("/users/**", "/reports/**").hasRole("ADMIN")
                         .requestMatchers("/subjects/**").hasAnyRole("TEACHER", "ADMIN")
                         .anyRequest().authenticated())

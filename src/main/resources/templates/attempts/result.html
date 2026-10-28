@@ -3,25 +3,36 @@
       th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
 <head><title>Результат — ЭСТ</title></head>
 <body>
-<section class="form-narrow">
+<section class="form-narrow mx-auto">
     <nav class="small mb-2"><a th:href="@{/attempts}">← Результаты</a></nav>
-    <div class="card mb-4 text-center">
+    <div class="card mb-4 text-center reveal">
         <div class="card-body py-4">
             <div class="text-muted" th:text="${attempt.test.title}">тест</div>
-            <div class="result-percent" th:classappend="${attempt.passed} ? 'text-success' : 'text-danger'"
-                 th:text="${attempt.percent} + '%'">0%</div>
-            <div class="fs-5 mb-2" th:text="${attempt.passed} ? 'Тест сдан' : 'Тест не сдан'">итог</div>
-            <div class="text-muted small">
-                Студент: <span th:text="${attempt.student.fullName}">ФИО</span> ·
-                баллы: <span th:text="${attempt.score} + ' из ' + ${attempt.maxScore}">0 из 0</span> ·
-                проходной: <span th:text="${attempt.test.passingScore}">0</span>% ·
-                время: <span th:text="${attempt.durationMinutes}">0</span> мин ·
-                <span th:text="${#temporals.format(attempt.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</span>
+            <div class="result-ring" th:with="color=${attempt.passed} ? '#16a37f' : '#dc3545'">
+                <svg width="170" height="170" viewBox="0 0 170 170">
+                    <circle class="ring-bg" cx="85" cy="85" r="74" fill="none" stroke-width="14"></circle>
+                    <circle class="ring-fg" cx="85" cy="85" r="74" fill="none" stroke-width="14"
+                            th:attr="stroke=${color},data-percent=${attempt.percent}"
+                            stroke-dasharray="464.96" stroke-dashoffset="464.96"></circle>
+                </svg>
+                <div class="ring-value" th:classappend="${attempt.passed} ? 'text-success' : 'text-danger'"
+                     th:attr="data-count=${attempt.percent},data-suffix='%'" th:text="${attempt.percent} + '%'">0%</div>
+            </div>
+            <div class="fs-4 fw-bold mb-2" th:classappend="${attempt.passed} ? 'text-success' : 'text-danger'">
+                <i class="bi" th:classappend="${attempt.passed} ? 'bi-patch-check-fill' : 'bi-x-octagon-fill'"></i>
+                <span th:text="${attempt.passed} ? 'Тест сдан' : 'Тест не сдан'">итог</span>
+            </div>
+            <div class="test-meta justify-content-center">
+                <span><i class="bi bi-person"></i><span th:text="${attempt.student.fullName}">ФИО</span></span>
+                <span><i class="bi bi-star"></i><span th:text="${attempt.score} + ' из ' + ${attempt.maxScore} + ' баллов'">0</span></span>
+                <span><i class="bi bi-flag"></i><span th:text="'проходной ' + ${attempt.test.passingScore} + ' %'">0</span></span>
+                <span><i class="bi bi-stopwatch"></i><span th:text="${attempt.durationMinutes} + ' мин'">0</span></span>
+                <span><i class="bi bi-calendar3"></i><span th:text="${#temporals.format(attempt.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</span></span>
             </div>
         </div>
     </div>
-    <h2 class="h5 mb-3">Разбор по вопросам</h2>
-    <div class="table-responsive card">
+    <h2 class="h5 mb-3"><i class="bi bi-list-check me-2 text-primary"></i>Разбор по вопросам</h2>
+    <div class="table-responsive card reveal">
         <table class="table mb-0 align-middle">
             <thead><tr><th>№</th><th>Вопрос</th><th>Ваш ответ</th><th>Итог</th><th>Баллы</th></tr></thead>
             <tbody>

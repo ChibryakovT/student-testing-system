@@ -5,50 +5,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:replace="${title}">Тестирование</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary-subtle app-navbar" th:if="${me != null}">
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar" th:if="${me != null}">
     <div class="container">
-        <a class="navbar-brand fw-semibold" th:href="@{/}">ЭСТ · Тестирование</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <a class="navbar-brand" th:href="@{/}">
+            <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+            <span>ЭСТ <span class="fw-normal opacity-75">· РТСУ</span></span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+                aria-label="Меню">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="nav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" th:href="@{/}">Главная</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/tests}">Тесты</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/attempts}"
-                                        th:text="${me.student} ? 'Мои результаты' : 'Результаты'">Результаты</a></li>
-                <li class="nav-item" th:if="${me.staff}"><a class="nav-link" th:href="@{/subjects}">Дисциплины</a></li>
-                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:href="@{/reports}">Отчёты</a></li>
-                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:href="@{/users}">Пользователи</a></li>
+            <ul class="navbar-nav me-auto ms-lg-3 gap-lg-1">
+                <li class="nav-item"><a class="nav-link" th:classappend="${section == ''} ? 'active'" th:href="@{/}">
+                    <i class="bi bi-house"></i>Главная</a></li>
+                <li class="nav-item"><a class="nav-link" th:classappend="${section == 'tests'} ? 'active'" th:href="@{/tests}">
+                    <i class="bi bi-journal-check"></i>Тесты</a></li>
+                <li class="nav-item"><a class="nav-link" th:classappend="${section == 'attempts'} ? 'active'" th:href="@{/attempts}">
+                    <i class="bi bi-bar-chart-line"></i><span th:text="${me.student} ? 'Мои результаты' : 'Результаты'">Результаты</span></a></li>
+                <li class="nav-item" th:if="${me.staff}"><a class="nav-link" th:classappend="${section == 'subjects'} ? 'active'" th:href="@{/subjects}">
+                    <i class="bi bi-book"></i>Дисциплины</a></li>
+                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'reports'} ? 'active'" th:href="@{/reports}">
+                    <i class="bi bi-graph-up-arrow"></i>Отчёты</a></li>
+                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'users'} ? 'active'" th:href="@{/users}">
+                    <i class="bi bi-people"></i>Пользователи</a></li>
             </ul>
-            <span class="navbar-text me-3 small">
-                <span th:text="${me.fullName}">Пользователь</span>
-                <span class="badge text-bg-light ms-1" th:text="${me.role.title}">роль</span>
-            </span>
-            <form th:action="@{/logout}" method="post">
-                <button class="btn btn-sm btn-outline-light" type="submit">Выйти</button>
-            </form>
+            <div class="d-flex align-items-center gap-3 mt-2 mt-lg-0">
+                <div class="user-chip">
+                    <span class="user-avatar" th:text="${#strings.substring(me.fullName, 0, 1)}">И</span>
+                    <span class="d-flex d-lg-none d-xl-flex flex-column lh-sm">
+                        <span class="user-name" th:text="${me.fullName}" th:title="${me.fullName}">Пользователь</span>
+                        <span class="small opacity-75" th:text="${me.role.title}">роль</span>
+                    </span>
+                </div>
+                <form th:action="@{/logout}" method="post">
+                    <button class="btn btn-sm btn-glass" type="submit" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
+                </form>
+            </div>
         </div>
     </div>
 </nav>
 
-<main class="container py-4">
-    <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
-    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+<main class="container py-4 page-enter">
     <th:block th:replace="${content}"></th:block>
 </main>
 
-<footer class="container pb-4 text-muted small">
-    Электронная система тестирования студентов · Spring Boot + PostgreSQL
+<div class="toast-stack" aria-live="polite">
+    <div class="toast-msg" th:if="${success}" data-autohide>
+        <i class="bi bi-check-circle-fill"></i><div th:text="${success}">успех</div>
+    </div>
+    <div class="toast-msg error" th:if="${errorMessage}" data-autohide>
+        <i class="bi bi-exclamation-triangle-fill"></i><div th:text="${errorMessage}">ошибка</div>
+    </div>
+</div>
+
+<footer class="app-footer py-3 mt-4">
+    <div class="container d-flex flex-wrap justify-content-between gap-2 small text-muted">
+        <span><i class="bi bi-mortarboard me-1"></i>Электронная система тестирования студентов · РТСУ</span>
+        <a th:href="@{/credits}"><i class="bi bi-camera me-1"></i>Фото: Wikimedia Commons — авторы и лицензии</a>
+    </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/app.js}"></script>
 </body>
 </html>

@@ -4,78 +4,96 @@
 <head><title>Главная — ЭСТ</title></head>
 <body>
 <section>
-    <h1 class="h3 mb-1">Здравствуйте, <span th:text="${me.fullName}">пользователь</span>!</h1>
-    <p class="text-muted mb-4" th:text="${me.student} ? 'Выберите тест для прохождения или посмотрите свои результаты'
-        : 'Управляйте тестами, вопросами и анализируйте результаты студентов'">подсказка</p>
+    <div class="hero-banner">
+        <div class="hero-bg" th:style="'background-image:url(' + @{/img/campus-rtsu.jpg} + ')'"></div>
+        <div class="hero-content">
+            <div class="eyebrow" th:text="${me.role.title}">роль</div>
+            <h1>Здравствуйте, <span th:text="${me.fullName}">пользователь</span>!</h1>
+            <p th:text="${me.student} ? 'Выберите тест для прохождения или посмотрите свои результаты'
+                : (${me.admin} ? 'Управляйте пользователями, формируйте отчёты и ведомости'
+                : 'Создавайте тесты, наполняйте их вопросами и следите за результатами студентов')">подсказка</p>
+            <div class="hero-actions">
+                <a class="btn btn-light" th:href="@{/tests}"><i class="bi bi-journal-check me-1"></i>Каталог тестов</a>
+                <a class="btn btn-glass" th:if="${me.staff}" th:href="@{/tests/new}"><i class="bi bi-plus-lg me-1"></i>Создать тест</a>
+                <a class="btn btn-glass" th:if="${me.admin}" th:href="@{/reports/sheet}"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Ведомость</a>
+                <a class="btn btn-glass" th:if="${me.student}" th:href="@{/attempts}"><i class="bi bi-bar-chart-line me-1"></i>Мои результаты</a>
+            </div>
+        </div>
+    </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-lg-3">
-            <a class="card menu-card h-100" th:href="@{/tests}">
-                <div class="card-body">
-                    <div class="menu-value" th:text="${availableTests}">0</div>
-                    <div class="text-muted" th:text="${me.student} ? 'Доступно тестов' : 'Всего тестов'">Тесты</div>
-                </div>
+        <div class="col-sm-6 col-lg-3 reveal" style="--delay:.05s">
+            <a class="card stat-tile lift" th:href="@{/tests}">
+                <span class="stat-icon blue"><i class="bi bi-journal-text"></i></span>
+                <span><span class="stat-value d-block" th:attr="data-count=${availableTests}" th:text="${availableTests}">0</span>
+                    <span class="stat-label" th:text="${me.student} ? 'доступно тестов' : 'всего тестов'">тесты</span></span>
             </a>
         </div>
-        <div class="col-sm-6 col-lg-3">
-            <a class="card menu-card h-100" th:href="@{/attempts}">
-                <div class="card-body">
-                    <div class="menu-value" th:text="${me.student} ? ${#lists.size(recentAttempts)} : ${summary.finishedAttempts}">0</div>
-                    <div class="text-muted" th:text="${me.student} ? 'Последних результатов' : 'Завершённых попыток'">Попытки</div>
-                </div>
+        <div class="col-sm-6 col-lg-3 reveal" style="--delay:.12s">
+            <a class="card stat-tile lift" th:href="@{/attempts}">
+                <span class="stat-icon teal"><i class="bi bi-check2-square"></i></span>
+                <span><span class="stat-value d-block" th:with="v=${me.student} ? ${#lists.size(recentAttempts)} : ${summary.finishedAttempts}"
+                            th:attr="data-count=${v}" th:text="${v}">0</span>
+                    <span class="stat-label" th:text="${me.student} ? 'последних результатов' : 'завершённых попыток'">попытки</span></span>
             </a>
         </div>
-        <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
-            <a class="card menu-card h-100" th:href="${me.admin} ? @{/reports} : @{/attempts}">
-                <div class="card-body">
-                    <div class="menu-value" th:text="${#numbers.formatDecimal(summary.averagePercent, 1, 1, 'COMMA')} + ' %'">0 %</div>
-                    <div class="text-muted">Средний результат</div>
-                </div>
+        <div class="col-sm-6 col-lg-3 reveal" style="--delay:.19s" th:if="${me.staff}">
+            <a class="card stat-tile lift" th:href="${me.admin} ? @{/reports} : @{/attempts}">
+                <span class="stat-icon amber"><i class="bi bi-speedometer2"></i></span>
+                <span><span class="stat-value d-block" th:attr="data-count=${summary.averagePercent},data-decimals=1,data-suffix=' %'"
+                            th:text="${#numbers.formatDecimal(summary.averagePercent, 1, 1, 'COMMA')} + ' %'">0 %</span>
+                    <span class="stat-label">средний результат</span></span>
             </a>
         </div>
-        <div class="col-sm-6 col-lg-3" th:if="${me.staff}">
-            <a class="card menu-card h-100" th:href="${me.admin} ? @{/reports} : @{/attempts}">
-                <div class="card-body">
-                    <div class="menu-value" th:text="${summary.passRate()} + ' %'">0 %</div>
-                    <div class="text-muted">Доля сдавших</div>
-                </div>
+        <div class="col-sm-6 col-lg-3 reveal" style="--delay:.26s" th:if="${me.staff}">
+            <a class="card stat-tile lift" th:href="${me.admin} ? @{/reports} : @{/attempts}">
+                <span class="stat-icon rose"><i class="bi bi-trophy"></i></span>
+                <span><span class="stat-value d-block" th:attr="data-count=${summary.passRate()},data-suffix=' %'"
+                            th:text="${summary.passRate()} + ' %'">0 %</span>
+                    <span class="stat-label">доля сдавших</span></span>
             </a>
         </div>
     </div>
 
     <div class="row g-3">
-        <div class="col-lg-4">
+        <div class="col-lg-4 reveal" style="--delay:.1s">
             <div class="card h-100">
-                <div class="card-header fw-semibold">Главное меню</div>
-                <div class="list-group list-group-flush">
-                    <a class="list-group-item list-group-item-action" th:href="@{/tests}">Каталог тестов</a>
-                    <a class="list-group-item list-group-item-action" th:href="@{/tests/new}" th:if="${me.staff}">Создать тест</a>
-                    <a class="list-group-item list-group-item-action" th:href="@{/attempts}">Результаты тестирования</a>
-                    <a class="list-group-item list-group-item-action" th:href="@{/subjects}" th:if="${me.staff}">Справочник дисциплин</a>
-                    <a class="list-group-item list-group-item-action" th:href="@{/reports}" th:if="${me.admin}">Аналитический отчёт</a>
-                    <a class="list-group-item list-group-item-action" th:href="@{/reports/sheet}" th:if="${me.admin}">Ведомость и экспорт (печать, CSV, Excel)</a>
-                    <a class="list-group-item list-group-item-action" th:href="@{/users}" th:if="${me.admin}">Пользователи</a>
+                <div class="card-header"><i class="bi bi-grid me-2 text-primary"></i>Главное меню</div>
+                <div class="list-group list-group-flush quick-menu">
+                    <a class="list-group-item list-group-item-action" th:href="@{/tests}"><i class="bi bi-journal-check"></i>Каталог тестов</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/tests/new}" th:if="${me.staff}"><i class="bi bi-plus-square"></i>Создать тест</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/attempts}"><i class="bi bi-bar-chart-line"></i>Результаты тестирования</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/subjects}" th:if="${me.staff}"><i class="bi bi-book"></i>Справочник дисциплин</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/reports}" th:if="${me.admin}"><i class="bi bi-graph-up-arrow"></i>Аналитический отчёт</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/reports/sheet}" th:if="${me.admin}"><i class="bi bi-file-earmark-spreadsheet"></i>Ведомость и экспорт</a>
+                    <a class="list-group-item list-group-item-action" th:href="@{/users}" th:if="${me.admin}"><i class="bi bi-people"></i>Пользователи</a>
                 </div>
             </div>
         </div>
-        <div class="col-lg-8">
+        <div class="col-lg-8 reveal" style="--delay:.18s">
             <div class="card h-100">
-                <div class="card-header fw-semibold">Последние результаты</div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-2 text-primary"></i>Последние результаты</span>
+                    <a class="small" th:href="@{/attempts}">Все результаты <i class="bi bi-chevron-right"></i></a>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover mb-0 align-middle">
                         <thead><tr><th>Тест</th><th th:if="${me.staff}">Студент</th><th>Дата</th><th>Балл</th><th></th></tr></thead>
                         <tbody>
                         <tr th:each="a : ${recentAttempts}">
-                            <td th:text="${a.test.title}">тест</td>
+                            <td class="fw-medium" th:text="${a.test.title}">тест</td>
                             <td th:if="${me.staff}" th:text="${a.student.fullName}">студент</td>
-                            <td th:text="${#temporals.format(a.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</td>
+                            <td class="text-muted small" th:text="${#temporals.format(a.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</td>
                             <td><span class="badge" th:classappend="${a.passed} ? 'text-bg-success' : 'text-bg-danger'"
-                                      th:text="${a.percent} + '%'">0%</span></td>
-                            <td><a th:href="@{/attempts/{id}/result(id=${a.id})}">подробнее</a></td>
+                                      th:text="${a.percent} + ' %'">0 %</span></td>
+                            <td class="text-end"><a class="btn btn-sm btn-outline-primary" th:href="@{/attempts/{id}/result(id=${a.id})}">
+                                <i class="bi bi-eye"></i></a></td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(recentAttempts)}"><td colspan="5" class="text-muted">Пока нет результатов</td></tr>
                         </tbody>
                     </table>
+                    <div class="empty-state" th:if="${#lists.isEmpty(recentAttempts)}">
+                        <i class="bi bi-inbox"></i>Пока нет результатов
+                    </div>
                 </div>
             </div>
         </div>

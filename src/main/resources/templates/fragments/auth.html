@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<!-- Общий каркас страниц входа и регистрации: фото слева, форма справа -->
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle}">ЭСТ</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:fragment="visual(image, heading, text)" class="auth-visual">
+    <div class="hero-bg" th:style="'background-image:url(' + @{${image}} + ')'"></div>
+    <a class="photo-credit" th:href="@{/credits}"><i class="bi bi-camera"></i> Фото: Wikimedia Commons</a>
+    <div class="visual-text">
+        <div class="small text-uppercase opacity-75 fw-semibold mb-2" style="letter-spacing:.12em">Российско-Таджикский (Славянский) университет</div>
+        <h2 class="fw-bold" th:text="${heading}">Заголовок</h2>
+        <p class="opacity-75 mb-0" th:text="${text}">Текст</p>
+        <ul class="features">
+            <li><i class="bi bi-check2-circle"></i>Тесты по дисциплинам с таймером</li>
+            <li><i class="bi bi-check2-circle"></i>Мгновенная проверка и разбор ответов</li>
+            <li><i class="bi bi-check2-circle"></i>Ведомости и аналитика по группам</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

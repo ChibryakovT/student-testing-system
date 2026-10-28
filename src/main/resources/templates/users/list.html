@@ -5,8 +5,8 @@
 <body>
 <section>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Пользователи</h1>
-        <a class="btn btn-primary" th:href="@{/users/new}">+ Добавить</a>
+        <h1 class="h3 mb-0 page-title"><i class="bi bi-people"></i>Пользователи</h1>
+        <a class="btn btn-primary" th:href="@{/users/new}"><i class="bi bi-person-plus me-1"></i>Добавить</a>
     </div>
     <form class="card card-body mb-3 filter-bar" method="get" th:action="@{/users}">
         <div class="row g-2 align-items-end">
@@ -37,10 +37,10 @@
                     <option value="created" th:selected="${sort == 'created'}">Новые</option>
                 </select>
             </div>
-            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Найти</button></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search me-1"></i>Найти</button></div>
         </div>
     </form>
-    <div class="table-responsive card">
+    <div class="table-responsive card reveal">
         <table class="table table-hover mb-0 align-middle">
             <thead><tr><th>ФИО</th><th>Логин</th><th>E-mail</th><th>Группа</th><th>№ зачётки</th><th>Роль и доступ</th><th></th></tr></thead>
             <tbody>
@@ -63,7 +63,7 @@
                 </td>
                 <td>
                     <form th:action="@{/users/{id}/delete(id=${u.id})}" method="post" data-confirm="Удалить пользователя?">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+                        <button class="btn btn-sm btn-outline-danger" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
                     </form>
                 </td>
             </tr>

@@ -5,20 +5,32 @@
 <body>
 <section>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Аналитический отчёт</h1>
+        <h1 class="h3 mb-0 page-title"><i class="bi bi-graph-up-arrow"></i>Аналитический отчёт</h1>
         <div class="d-flex gap-2">
-            <a class="btn btn-primary" th:href="@{/reports/sheet}">Ведомость и экспорт</a>
-            <a class="btn btn-outline-success" th:href="@{/reports/export.csv(subjectId=${subjectId})}">Скачать CSV</a>
+            <a class="btn btn-primary" th:href="@{/reports/sheet}"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Ведомость и экспорт</a>
+            <a class="btn btn-outline-success" th:href="@{/reports/export.csv(subjectId=${subjectId})}"><i class="bi bi-download me-1"></i>CSV</a>
         </div>
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.students}">0</div><div class="stat-label">студентов</div></div></div></div>
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.tests}">0</div><div class="stat-label">тестов</div></div></div></div>
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.publishedTests}">0</div><div class="stat-label">опубликовано</div></div></div></div>
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.finishedAttempts}">0</div><div class="stat-label">попыток</div></div></div></div>
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${#numbers.formatDecimal(summary.averagePercent, 1, 1, 'COMMA')} + ' %'">0</div><div class="stat-label">средний балл</div></div></div></div>
-        <div class="col-6 col-lg-2"><div class="card stat"><div class="card-body"><div class="stat-value" th:text="${summary.passRate()} + ' %'">0</div><div class="stat-label">сдали</div></div></div></div>
+        <div class="col-6 col-lg-2 reveal" style="--delay:0.00s"><div class="card stat-tile flex-column align-items-start gap-2">
+            <span class="stat-icon blue"><i class="bi bi-people"></i></span>
+            <span><span class="stat-value d-block" th:attr="data-count=${summary.students}" th:text="${summary.students}">0</span><span class="stat-label">студентов</span></span></div></div>
+        <div class="col-6 col-lg-2 reveal" style="--delay:0.05s"><div class="card stat-tile flex-column align-items-start gap-2">
+            <span class="stat-icon teal"><i class="bi bi-journal-text"></i></span>
+            <span><span class="stat-value d-block" th:attr="data-count=${summary.tests}" th:text="${summary.tests}">0</span><span class="stat-label">тестов</span></span></div></div>
+        <div class="col-6 col-lg-2 reveal" style="--delay:0.10s"><div class="card stat-tile flex-column align-items-start gap-2">
+            <span class="stat-icon blue"><i class="bi bi-broadcast"></i></span>
+            <span><span class="stat-value d-block" th:attr="data-count=${summary.publishedTests}" th:text="${summary.publishedTests}">0</span><span class="stat-label">опубликовано</span></span></div></div>
+        <div class="col-6 col-lg-2 reveal" style="--delay:0.15s"><div class="card stat-tile flex-column align-items-start gap-2">
+            <span class="stat-icon teal"><i class="bi bi-check2-square"></i></span>
+            <span><span class="stat-value d-block" th:attr="data-count=${summary.finishedAttempts}" th:text="${summary.finishedAttempts}">0</span><span class="stat-label">попыток</span></span></div></div>
+        <div class="col-6 col-lg-2 reveal" style="--delay:0.20s"><div class="card stat-tile flex-column align-items-start gap-2">
+            <span class="stat-icon amber"><i class="bi bi-speedometer2"></i></span>
+            <span><span class="stat-value d-block" th:attr="data-count=${summary.averagePercent},data-decimals=1,data-suffix=' %'" th:text="${#numbers.formatDecimal(summary.averagePercent, 1, 1, 'COMMA')} + ' %'">0</span><span class="stat-label">средний балл</span></span></div></div>
+        <div class="col-6 col-lg-2 reveal" style="--delay:0.25s"><div class="card stat-tile flex-column align-items-start gap-2">
+            <span class="stat-icon rose"><i class="bi bi-trophy"></i></span>
+            <span><span class="stat-value d-block" th:attr="data-count=${summary.passRate()},data-suffix=' %'" th:text="${summary.passRate()} + ' %'">0</span><span class="stat-label">сдали</span></span></div></div>
     </div>
 
     <form class="d-flex flex-wrap gap-2 mb-3" method="get" th:action="@{/reports}">
@@ -33,8 +45,8 @@
         <button class="btn btn-primary" type="submit">Показать</button>
     </form>
 
-    <div class="card mb-4">
-        <div class="card-header fw-semibold">Успеваемость по тестам</div>
+    <div class="card mb-4 reveal">
+        <div class="card-header fw-semibold"><i class="bi bi-table me-2 text-primary"></i>Успеваемость по тестам</div>
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
                 <thead><tr><th>Тест</th><th>Дисциплина</th><th>Попыток</th><th class="w-25">Средний результат</th><th>Мин</th><th>Макс</th><th>Сдали</th></tr></thead>
@@ -62,7 +74,7 @@
         </div>
     </div>
 
-    <div class="card" th:if="${selectedTest != null}">
+    <div class="card reveal" th:if="${selectedTest != null}">
         <div class="card-header fw-semibold" th:text="'Сложность вопросов: ' + ${selectedTest.title}">вопросы</div>
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
