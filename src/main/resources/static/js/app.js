@@ -160,6 +160,18 @@
         window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });
     }
 
+    // ---------- Простые фильтры: выбор в списке сразу применяется ----------
+    document.querySelectorAll('select[data-autosubmit-simple]').forEach(function (select) {
+        select.addEventListener('change', function () {
+            var form = select.form;
+            // группа и преподаватель — взаимоисключающие
+            form.querySelectorAll('select[data-autosubmit-simple]').forEach(function (other) {
+                if (other !== select) other.value = '';
+            });
+            form.submit();
+        });
+    });
+
     // ---------- Панель ведомости: группа → дисциплина → тест, страница обновляется при выборе ----------
     var sheetForm = document.getElementById('sheet-form');
     if (sheetForm) {

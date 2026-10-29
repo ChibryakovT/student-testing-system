@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -45,12 +47,17 @@ public class UniversitySeeder {
     private final TestService testService;
     private final QuestionService questionService;
     private final AttemptService attemptService;
+    private final LessonRepository lessonRepository;
+    private final ExamRepository examRepository;
 
     public UniversitySeeder(ObjectMapper mapper, FacultyRepository facultyRepository,
                             DepartmentRepository departmentRepository, SubjectRepository subjectRepository,
                             StudyGroupRepository groupRepository, CurriculumRepository curriculumRepository,
                             UserRepository userRepository, PasswordEncoder passwordEncoder, TestService testService,
-                            QuestionService questionService, AttemptService attemptService) {
+                            QuestionService questionService, AttemptService attemptService,
+                            LessonRepository lessonRepository, ExamRepository examRepository) {
+        this.lessonRepository = lessonRepository;
+        this.examRepository = examRepository;
         this.mapper = mapper;
         this.facultyRepository = facultyRepository;
         this.departmentRepository = departmentRepository;
@@ -127,12 +134,30 @@ public class UniversitySeeder {
             studentsByGroup.put(g.name(), students);
         }
 
+        List<CurriculumItem> plan = new ArrayList<>();
         for (PlanSeed p : data.curriculum()) {
-            curriculumRepository.save(new CurriculumItem(required(groups, p.group(), "группа"),
+            plan.add(curriculumRepository.save(new CurriculumItem(required(groups, p.group(), "группа"),
                     required(subjects, p.subject(), "дисциплина"),
                     p.teacher() == null ? null : required(teachers, p.teacher(), "преподаватель"),
-                    p.semester(), ControlForm.valueOf(p.form())));
+                    p.semester(), ControlForm.valueOf(p.form()))));
         }
+
+        int lessonCount = 0;
+        for (LessonSeed l : data.lessons() == null ? List.<LessonSeed>of() : data.lessons()) {
+            Lesson lesson = new Lesson();
+            lesson.setGroup(required(groups, l.group(), "группа"));
+            lesson.setDayOfWeek(l.day());
+            lesson.setPairNo(l.pair());
+            lesson.setWeekType(WeekType.valueOf(l.week()));
+            lesson.setSubject(l.subject() == null ? null : required(subjects, l.subject(), "дисциплина"));
+            lesson.setTitle(l.title());
+            lesson.setTeacher(l.teacher() == null ? null : required(teachers, l.teacher(), "преподаватель"));
+            lesson.setCoTeacher(l.coTeacher() == null ? null : required(teachers, l.coTeacher(), "преподаватель"));
+            lesson.setRoom(l.room());
+            lessonRepository.save(lesson);
+            lessonCount++;
+        }
+        int examCount = scheduleSession(plan);
 
         Map<String, List<Test>> testsBySubject = new HashMap<>();
         for (TestSeed t : data.tests()) {
@@ -153,12 +178,60 @@ public class UniversitySeeder {
         }
 
         int attempts = simulateAttempts(data, groups, studentsByGroup, testsBySubject);
+        log.info("Расписание: {} занятий, {} экзаменов и зачётов в сессию", lessonCount, examCount);
         log.info("Загружено: {} факультетов, {} кафедр, {} дисциплин, {} преподавателей, {} групп, {} студентов, "
                         + "{} строк учебного плана, {} тестов, {} попыток",
                 faculties.size(), departments.size(), subjects.size(), teachers.size(), groups.size(),
                 studentsByGroup.values().stream().mapToInt(List::size).sum(), data.curriculum().size(),
                 data.tests().size(), attempts);
         return accounts;
+    }
+
+    /**
+     * Сессия зимнего семестра: зачёты и дифференцированные зачёты — на зачётной неделе (последние будни декабря),
+     * экзамены — в январе с интервалом 3–4 дня. Аудитория — та, где группа чаще всего занимается.
+     */
+    private int scheduleSession(List<CurriculumItem> plan) {
+        int year = LocalDate.now().getMonthValue() >= 9 ? LocalDate.now().getYear() : LocalDate.now().getYear() - 1;
+        String[] rooms = {"213", "214", "218", "221", "223", "224", "226"};
+        Map<Long, List<CurriculumItem>> byGroup = new LinkedHashMap<>();
+        plan.forEach(c -> byGroup.computeIfAbsent(c.getGroup().getId(), k -> new ArrayList<>()).add(c));
+        int count = 0;
+        for (List<CurriculumItem> items : byGroup.values()) {
+            LocalDate creditDay = LocalDate.of(year, 12, 21);
+            LocalDate examDay = LocalDate.of(year + 1, 1, 12);
+            int i = 0;
+            int credits = 0;
+            for (CurriculumItem c : items.stream().sorted(Comparator.comparing(x -> x.getSubject().getName())).toList()) {
+                Exam exam = new Exam();
+                exam.setPlan(c);
+                if (c.getControlForm() == ControlForm.EXAM) {
+                    exam.setDate(examDay);
+                    exam.setStartTime(LocalTime.of(9, 0));
+                    examDay = workday(examDay.plusDays(3 + (i % 2)));
+                } else {
+                    // Два зачёта в день: в 12:40 и в 14:10
+                    exam.setDate(creditDay);
+                    exam.setStartTime(credits % 2 == 0 ? LocalTime.of(12, 40) : LocalTime.of(14, 10));
+                    if (credits % 2 == 1) {
+                        creditDay = workday(creditDay.plusDays(1));
+                    }
+                    credits++;
+                }
+                exam.setRoom(rooms[(int) ((c.getGroup().getId() + i) % rooms.length)]);
+                examRepository.save(exam);
+                i++;
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static LocalDate workday(LocalDate d) {
+        while (d.getDayOfWeek().getValue() > 5) {
+            d = d.plusDays(1);
+        }
+        return d;
     }
 
     /** История прохождения: каждый студент проходит тесты по дисциплинам своей группы с разной подготовкой. */

@@ -22,6 +22,9 @@ spring:
   mvc:
     problemdetails:
       enabled: false
+  web:
+    locale: ru
+    locale-resolver: fixed
 
 server:
   port: ${PORT:8080}

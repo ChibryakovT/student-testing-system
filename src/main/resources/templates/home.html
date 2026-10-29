@@ -16,6 +16,46 @@
         </div>
     </div>
 
+    <!-- Сегодня и ближайшая сессия (студент, преподаватель) -->
+    <div class="row g-3 mb-4" th:if="${!me.admin}">
+        <div class="col-lg-6 reveal">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-calendar-day me-2 text-primary"></i>Сегодня по расписанию</span>
+                    <a class="small" th:href="@{/schedule}">Вся неделя <i class="bi bi-chevron-right"></i></a>
+                </div>
+                <div class="list-group list-group-flush today-list">
+                    <div class="list-group-item" th:each="l : ${todayLessons}">
+                        <span class="pair-no" th:text="${l.pairNo == 1} ? 'I' : (${l.pairNo == 2} ? 'II' : (${l.pairNo == 3} ? 'III' : 'IV'))">I</span>
+                        <span class="flex-grow-1"><span class="fw-semibold d-block" th:text="${l.name}">дисциплина</span>
+                            <span class="small text-muted" th:text="${pairTimes[l.pairNo]} + (${me.student} ? (${#strings.isEmpty(l.teachers)} ? '' : ' · ' + ${l.teachers}) : ' · ' + ${l.group.name})">время</span></span>
+                        <span class="small text-muted text-nowrap" th:if="${l.room != null}"><i class="bi bi-door-open"></i> <span th:text="${l.room}">213</span></span>
+                    </div>
+                </div>
+                <div class="empty-state py-4" th:if="${#lists.isEmpty(todayLessons)}"><i class="bi bi-cup-hot"></i>Сегодня занятий нет</div>
+            </div>
+        </div>
+        <div class="col-lg-6 reveal" style="--delay:60ms">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-mortarboard me-2 text-primary"></i>Ближайшие экзамены и зачёты</span>
+                    <a class="small" th:href="@{/schedule(tab='exams')}">Вся сессия <i class="bi bi-chevron-right"></i></a>
+                </div>
+                <div class="list-group list-group-flush today-list">
+                    <div class="list-group-item" th:each="e : ${nextExams}" th:with="days=${@scheduleService.daysUntil(e.date)}">
+                        <span class="text-center lh-sm" style="width:3rem"><span class="d-block fw-bold fs-5" th:text="${e.date.dayOfMonth}">12</span>
+                            <span class="small text-muted" th:text="${#temporals.format(e.date, 'MMM')}">янв</span></span>
+                        <span class="flex-grow-1"><span class="fw-semibold d-block" th:text="${e.plan.subject.name}">дисциплина</span>
+                            <span class="small text-muted" th:text="${e.plan.controlForm.title} + (${me.student} ? '' : ' · ' + ${e.plan.group.name})">экзамен</span></span>
+                        <span class="status-chip" th:classappend="${days <= 7} ? 'low' : 'todo'"
+                              th:text="${days == 0} ? 'сегодня' : (${days == 1} ? 'завтра' : 'через ' + ${days} + ' дн.')">через</span>
+                    </div>
+                </div>
+                <div class="empty-state py-4" th:if="${#lists.isEmpty(nextExams)}"><i class="bi bi-calendar-check"></i>Сессия ещё не назначена</div>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== Студент ===================== -->
     <th:block th:if="${me.student}">
         <div class="row g-3 mb-4">

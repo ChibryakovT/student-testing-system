@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Расписание — ЭСТ</title></head>
+<body>
+<section>
+    <div class="page-head">
+        <div>
+            <h1 class="h3 page-title"><i class="bi bi-calendar-week"></i><span th:text="${heading}">Расписание</span></h1>
+            <p class="subtitle">
+                Сейчас <span class="badge week-badge" th:classappend="${numerator} ? 'num' : 'den'"
+                             th:text="${numerator} ? 'числитель' : 'знаменатель'">числитель</span>
+                <span th:text="'· сегодня ' + ${#temporals.format(today, 'd MMMM, EEEE')}">сегодня</span>
+            </p>
+        </div>
+        <!-- Выбор: любая группа или преподаватель -->
+        <form class="d-flex flex-wrap gap-2" method="get" th:action="@{/schedule}">
+            <input type="hidden" name="tab" th:value="${tab}">
+            <select class="form-select w-auto" name="groupId" data-autosubmit-simple aria-label="Группа">
+                <option value="">Группа…</option>
+                <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}" th:selected="${g.id == groupId}"></option>
+            </select>
+            <select class="form-select w-auto" name="teacherId" data-autosubmit-simple aria-label="Преподаватель">
+                <option value="">Преподаватель…</option>
+                <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}" th:selected="${t.id == teacherId}"></option>
+            </select>
+        </form>
+    </div>
+
+    <ul class="nav nav-pills schedule-tabs mb-3">
+        <li class="nav-item"><a class="nav-link" th:classappend="${tab == 'week'} ? 'active'"
+               th:href="@{/schedule(tab='week',groupId=${groupId},teacherId=${teacherId})}"><i class="bi bi-calendar3-week me-1"></i>Занятия</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${tab == 'exams'} ? 'active'"
+               th:href="@{/schedule(tab='exams',groupId=${groupId},teacherId=${teacherId})}"><i class="bi bi-mortarboard me-1"></i>Сессия
+            <span class="badge text-bg-light ms-1" th:text="${#lists.size(exams)}">0</span></a></li>
+    </ul>
+
+    <!-- ===================== Недельное расписание ===================== -->
+    <div th:if="${tab == 'week'}" class="reveal">
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table schedule-grid mb-0">
+                    <thead><tr><th class="pair-col">Пара</th>
+                        <th th:each="d, ds : ${days}" th:classappend="${ds.index == todayIndex} ? 'today'" th:text="${d}">день</th></tr></thead>
+                    <tbody>
+                    <tr th:each="row : ${grid}">
+                        <td class="pair-col"><div class="pair-no" th:text="${row.roman}">I</div><div class="pair-time" th:text="${row.time}">время</div></td>
+                        <td th:each="cell, cs : ${row.days}" th:classappend="${cs.index == todayIndex} ? 'today'">
+                            <div class="lesson" th:each="l : ${cell}"
+                                 th:classappend="${!l.weekType.matches(numerator)} ? 'other-week' : ''"
+                                 th:with="kc=${l.subject == null}">
+                                <div class="d-flex justify-content-between gap-1">
+                                    <span class="lesson-name" th:classappend="${kc} ? 'text-muted'" th:text="${l.name}">дисциплина</span>
+                                    <span class="week-tag" th:if="${l.weekType.name() != 'EVERY'}"
+                                          th:classappend="${l.weekType.name() == 'NUMERATOR'} ? 'num' : 'den'" th:text="${l.weekType.shortTitle}">числ.</span>
+                                </div>
+                                <div class="lesson-meta">
+                                    <span th:if="${byTeacher}" class="fw-semibold" th:text="${l.group.name}">группа</span>
+                                    <span th:if="${!byTeacher and !#strings.isEmpty(l.teachers)}" th:text="${l.teachers}">преподаватель</span>
+                                    <span th:if="${l.room != null}"><i class="bi bi-door-open"></i> <span th:text="${l.room}">213</span></span>
+                                </div>
+                                <div class="lesson-admin" th:if="${me.admin and !byTeacher}">
+                                    <a th:href="@{/schedule(groupId=${groupId},editLesson=${l.id})} + '#lesson-form'" title="Изменить"><i class="bi bi-pencil"></i></a>
+                                    <form th:action="@{/schedule/lessons/{id}/delete(id=${l.id})}" method="post" data-confirm="Удалить занятие из расписания?">
+                                        <button type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <p class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Занятия другой недели (числитель / знаменатель) показаны бледнее.</p>
+
+        <!-- Администратор: добавить / изменить пару -->
+        <div class="card mt-3" id="lesson-form" th:if="${me.admin and groupId != null}" th:with="e=${edit}">
+            <div class="card-header"><i class="bi me-2 text-primary" th:classappend="${e != null} ? 'bi-pencil' : 'bi-plus-square'"></i>
+                <span th:text="${e != null} ? 'Изменить занятие' : 'Добавить занятие'">Добавить занятие</span></div>
+            <form class="card-body" method="post" th:action="@{/schedule/lessons}">
+                <input type="hidden" name="groupId" th:value="${groupId}">
+                <input type="hidden" name="id" th:if="${e != null}" th:value="${e.id}">
+                <div class="row g-2">
+                    <div class="col-md-2"><label class="form-label small" for="l-day">День</label>
+                        <select class="form-select" id="l-day" name="day">
+                            <option th:each="d, ds : ${days}" th:value="${ds.count}" th:text="${d}" th:selected="${e != null and e.dayOfWeek == ds.count}"></option>
+                        </select></div>
+                    <div class="col-md-2"><label class="form-label small" for="l-pair">Пара</label>
+                        <select class="form-select" id="l-pair" name="pair">
+                            <option th:each="r : ${grid}" th:value="${r.pair}" th:text="${r.roman} + ' · ' + ${r.time}"
+                                    th:selected="${e != null and e.pairNo == r.pair}"></option>
+                        </select></div>
+                    <div class="col-md-3"><label class="form-label small" for="l-week">Неделя</label>
+                        <select class="form-select" id="l-week" name="week">
+                            <option th:each="w : ${weekTypes}" th:value="${w}" th:text="${w.title}" th:selected="${e != null and e.weekType == w}"></option>
+                        </select></div>
+                    <div class="col-md-3"><label class="form-label small" for="l-subject">Дисциплина</label>
+                        <select class="form-select" id="l-subject" name="subjectId">
+                            <option value="">— другое занятие —</option>
+                            <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}"
+                                    th:selected="${e != null and e.subject != null and e.subject.id == s.id}"></option>
+                        </select></div>
+                    <div class="col-md-2"><label class="form-label small" for="l-room">Аудитория</label>
+                        <input class="form-control" id="l-room" name="room" maxlength="30" th:value="${e != null} ? ${e.room} : ''"></div>
+                    <div class="col-md-4"><label class="form-label small" for="l-teacher">Преподаватель</label>
+                        <select class="form-select" id="l-teacher" name="teacherId">
+                            <option value="">—</option>
+                            <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"
+                                    th:selected="${e != null and e.teacher != null and e.teacher.id == t.id}"></option>
+                        </select></div>
+                    <div class="col-md-4"><label class="form-label small" for="l-co">Второй преподаватель</label>
+                        <select class="form-select" id="l-co" name="coTeacherId">
+                            <option value="">—</option>
+                            <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"
+                                    th:selected="${e != null and e.coTeacher != null and e.coTeacher.id == t.id}"></option>
+                        </select></div>
+                    <div class="col-md-4"><label class="form-label small" for="l-title">Название (если не дисциплина)</label>
+                        <input class="form-control" id="l-title" name="title" maxlength="150" placeholder="Кураторский час"
+                               th:value="${e != null} ? ${e.title} : ''"></div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-1"></i>Сохранить</button>
+                    <a class="btn btn-outline-secondary" th:if="${e != null}" th:href="@{/schedule(groupId=${groupId})}">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================== Сессия ===================== -->
+    <div th:if="${tab == 'exams'}" class="reveal">
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead><tr><th>Дата</th><th>Время</th><th>Дисциплина</th><th>Форма</th>
+                        <th th:text="${byTeacher} ? 'Группа' : 'Преподаватель'">Преподаватель</th><th>Ауд.</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:each="e : ${exams}" th:classappend="${e.date.isBefore(today)} ? 'text-muted past'"
+                        th:with="days=${@scheduleService.daysUntil(e.date)}">
+                        <td class="text-nowrap"><span class="fw-semibold" th:text="${#temporals.format(e.date, 'd MMMM')}">12 января</span>
+                            <span class="d-block small text-muted" th:text="${#temporals.format(e.date, 'EEEE')}">понедельник</span></td>
+                        <td th:text="${e.startTime != null} ? ${#temporals.format(e.startTime, 'HH:mm')} : '—'">09:00</td>
+                        <td class="fw-medium" th:text="${e.plan.subject.name}">дисциплина</td>
+                        <td><span class="badge" th:text="${e.plan.controlForm.title}"
+                                  th:classappend="${e.plan.controlForm.name() == 'EXAM'} ? 'text-bg-primary' : (${e.plan.controlForm.name() == 'CREDIT'} ? 'text-bg-success' : 'text-bg-info')">форма</span></td>
+                        <td th:text="${byTeacher} ? ${e.plan.group.name} : (${e.plan.teacher != null} ? ${e.plan.teacher.fullName} : '—')">преподаватель</td>
+                        <td th:text="${e.room} ?: '—'">214</td>
+                        <td class="text-end text-nowrap">
+                            <span class="status-chip" th:if="${days >= 0}" th:classappend="${days <= 7} ? 'low' : 'todo'"
+                                  th:text="${days == 0} ? 'сегодня' : (${days == 1} ? 'завтра' : 'через ' + ${days} + ' дн.')">через 5 дн.</span>
+                            <form class="d-inline" th:if="${me.admin and !byTeacher}" th:action="@{/schedule/exams/{id}/delete(id=${e.id})}"
+                                  method="post" data-confirm="Удалить из расписания сессии?">
+                                <button class="btn btn-sm btn-outline-danger ms-1" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="empty-state" th:if="${#lists.isEmpty(exams)}"><i class="bi bi-calendar-x"></i>Сессия ещё не назначена</div>
+            </div>
+        </div>
+
+        <!-- Администратор: назначить или перенести экзамен -->
+        <div class="card mt-3" th:if="${me.admin and groupId != null}">
+            <div class="card-header"><i class="bi bi-calendar-plus me-2 text-primary"></i>Назначить или перенести экзамен / зачёт</div>
+            <form class="card-body" method="post" th:action="@{/schedule/exams}">
+                <input type="hidden" name="groupId" th:value="${groupId}">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-5"><label class="form-label small" for="x-plan">Дисциплина из учебного плана</label>
+                        <select class="form-select" id="x-plan" name="planId" required>
+                            <option th:each="c : ${plan}" th:value="${c.id}" th:text="${c.subject.name} + ' — ' + ${c.controlForm.title}"></option>
+                        </select></div>
+                    <div class="col-md-2"><label class="form-label small" for="x-date">Дата</label>
+                        <input class="form-control" type="date" id="x-date" name="date" required></div>
+                    <div class="col-md-2"><label class="form-label small" for="x-time">Время</label>
+                        <input class="form-control" type="time" id="x-time" name="time" value="09:00"></div>
+                    <div class="col-md-1"><label class="form-label small" for="x-room">Ауд.</label>
+                        <input class="form-control" id="x-room" name="room" maxlength="30"></div>
+                    <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-check2 me-1"></i>Сохранить</button></div>
+                </div>
+                <div class="form-text">Форма контроля и преподаватель берутся из учебного плана группы. Если дата уже была — экзамен переносится.</div>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

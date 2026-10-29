@@ -20,6 +20,8 @@
                 <i class="bi bi-journal-check"></i><span>Тесты</span></a>
             <a class="side-link" th:classappend="${section == 'attempts'} ? 'active'" th:href="@{/attempts}">
                 <i class="bi bi-bar-chart-line"></i><span>Мои результаты</span></a>
+            <a class="side-link" th:classappend="${section == 'schedule'} ? 'active'" th:href="@{/schedule}">
+                <i class="bi bi-calendar-week"></i><span>Расписание</span></a>
         </th:block>
 
         <!-- Преподаватель и администратор -->
@@ -29,6 +31,8 @@
                 <i class="bi bi-journal-check"></i><span th:text="${me.admin} ? 'Тесты' : 'Мои тесты'">Тесты</span></a>
             <a class="side-link" th:classappend="${section == 'attempts'} ? 'active'" th:href="@{/attempts}">
                 <i class="bi bi-bar-chart-line"></i><span>Результаты</span></a>
+            <a class="side-link" th:classappend="${section == 'schedule'} ? 'active'" th:href="@{/schedule}">
+                <i class="bi bi-calendar-week"></i><span>Расписание</span></a>
             <a class="side-link" th:if="${!me.admin}" th:classappend="${section == 'subjects'} ? 'active'" th:href="@{/subjects}">
                 <i class="bi bi-book"></i><span>Дисциплины</span></a>
         </th:block>

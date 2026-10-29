@@ -4,7 +4,13 @@ import java.util.List;
 
 /** Формат файла начальных данных вуза (data/university.json или seed/demo-university.json). */
 public record SeedData(List<FacultySeed> faculties, List<SubjectSeed> subjects, List<TeacherSeed> teachers,
-                       List<GroupSeed> groups, List<PlanSeed> curriculum, List<TestSeed> tests) {
+                       List<GroupSeed> groups, List<PlanSeed> curriculum, List<TestSeed> tests,
+                       List<LessonSeed> lessons) {
+
+    /** Пара: день (1 — Пн), номер пары, неделя (EVERY / NUMERATOR / DENOMINATOR), дисциплина или название. */
+    public record LessonSeed(String group, int day, int pair, String week, String subject, String title,
+                             String teacher, String coTeacher, String room) {
+    }
 
     public record FacultySeed(String name, List<String> departments) {
     }

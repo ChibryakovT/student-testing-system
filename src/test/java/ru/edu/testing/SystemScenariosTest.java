@@ -391,6 +391,52 @@ class SystemScenariosTest {
         org.junit.jupiter.api.Assertions.assertTrue(csv.contains("3 семестр"), csv);
     }
 
+    @Test
+    @DisplayName("26. Расписание: смотреть могут все, изменять — только администратор")
+    void scheduleAccess() throws Exception {
+        long subjectId = createSubject();
+        // Студент и преподаватель не могут добавить занятие
+        mvc.perform(post("/schedule/lessons").with(user(student).roles("STUDENT")).with(csrf())
+                        .param("groupId", String.valueOf(groupId)).param("day", "1").param("pair", "1")
+                        .param("subjectId", String.valueOf(subjectId)))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/schedule/lessons").with(user(teacher).roles("TEACHER")).with(csrf())
+                        .param("groupId", String.valueOf(groupId)).param("day", "1").param("pair", "1")
+                        .param("subjectId", String.valueOf(subjectId)))
+                .andExpect(status().isForbidden());
+        // Администратор добавляет пару по числителю
+        mvc.perform(post("/schedule/lessons").with(user(ADMIN).roles("ADMIN")).with(csrf())
+                        .param("groupId", String.valueOf(groupId)).param("day", "2").param("pair", "3")
+                        .param("week", "NUMERATOR").param("subjectId", String.valueOf(subjectId))
+                        .param("teacherId", String.valueOf(userIds.get(teacher))).param("room", "214"))
+                .andExpect(status().is3xxRedirection());
+        api(get("/api/schedule/groups/" + groupId), student, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lessons[0].day").value(2))
+                .andExpect(jsonPath("$.lessons[0].week").value("NUMERATOR"))
+                .andExpect(jsonPath("$.lessons[0].room").value("214"));
+        // Экзамен назначается по строке учебного плана: форма контроля и преподаватель — из плана
+        String plan = api(get("/api/groups/" + groupId + "/curriculum"), ADMIN, null)
+                .andReturn().getResponse().getContentAsString();
+        long planId = json.readTree(plan).get(0).get("id").asLong();
+        mvc.perform(post("/schedule/exams").with(user(ADMIN).roles("ADMIN")).with(csrf())
+                        .param("groupId", String.valueOf(groupId)).param("planId", String.valueOf(planId))
+                        .param("date", "2027-01-15").param("time", "09:00").param("room", "221"))
+                .andExpect(status().is3xxRedirection());
+        api(get("/api/schedule/groups/" + groupId), student, null)
+                .andExpect(jsonPath("$.exams[0].date").value("2027-01-15"))
+                .andExpect(jsonPath("$.exams[0].controlForm").value("экзамен"))
+                .andExpect(jsonPath("$.exams[0].teacher").value("Пользователь " + teacher));
+        // Студент входит через форму и открывает страницу расписания своей группы
+        var session = (org.springframework.mock.web.MockHttpSession) mvc.perform(
+                        org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders
+                                .formLogin().user(student).password(PASS))
+                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+        mvc.perform(get("/schedule").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("числитель")));
+    }
+
     // ---------- Вспомогательные методы ----------
 
     private ResultActions api(MockHttpServletRequestBuilder request, String user, Object body) throws Exception {
