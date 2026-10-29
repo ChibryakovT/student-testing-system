@@ -51,15 +51,19 @@
                 <i class="bi bi-book"></i><span>Дисциплины</span></a>
             <a class="side-link" th:classappend="${section == 'users'} ? 'active'" th:href="@{/users}">
                 <i class="bi bi-people"></i><span>Пользователи</span></a>
+            <a class="side-link" th:classappend="${section == 'audit'} ? 'active'" th:href="@{/audit}">
+                <i class="bi bi-clock-history"></i><span>Журнал действий</span></a>
         </th:block>
     </div>
 
     <div class="side-user">
+        <a class="side-user-link" th:href="@{/profile}" title="Профиль и смена пароля">
         <span class="user-avatar" th:text="${#strings.substring(me.fullName, 0, 1)}">И</span>
         <span class="side-user-text">
             <span class="d-block fw-semibold text-truncate" th:text="${me.fullName}" th:title="${me.fullName}">Пользователь</span>
-            <span class="d-block small text-muted" th:text="${me.role.title}">роль</span>
+            <span class="d-block small text-muted" th:text="${me.role.title} + ' · профиль'">роль</span>
         </span>
+        </a>
         <form th:action="@{/logout}" method="post">
             <button class="btn btn-sm btn-light" type="submit" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
         </form>

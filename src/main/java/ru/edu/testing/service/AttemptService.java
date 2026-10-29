@@ -31,13 +31,15 @@ public class AttemptService {
             "student", Sort.by("student.fullName", "finishedAt"),
             "test", Sort.by("test.title", "finishedAt"));
 
+    private final AuditService auditService;
     private final TestAttemptRepository attemptRepository;
     private final TestService testService;
     private final UserRepository userRepository;
     private final CurriculumRepository curriculumRepository;
 
     public AttemptService(TestAttemptRepository attemptRepository, TestService testService,
-                          UserRepository userRepository, CurriculumRepository curriculumRepository) {
+                          UserRepository userRepository, CurriculumRepository curriculumRepository, AuditService auditService) {
+        this.auditService = auditService;
         this.attemptRepository = attemptRepository;
         this.testService = testService;
         this.userRepository = userRepository;
@@ -56,6 +58,11 @@ public class AttemptService {
         }
         return attemptRepository.findFirstByTestIdAndStudentIdAndStatus(testId, user.getId(), AttemptStatus.IN_PROGRESS)
                 .orElseGet(() -> {
+                    Integer left = attemptsLeft(test, user.getId());
+                    if (left != null && left == 0) {
+                        throw new BusinessException(HttpStatus.CONFLICT,
+                                "Исчерпан лимит попыток: " + test.getMaxAttempts() + " из " + test.getMaxAttempts());
+                    }
                     TestAttempt attempt = new TestAttempt();
                     attempt.setTest(test);
                     attempt.setStudent(userRepository.getReferenceById(user.getId()));
@@ -63,6 +70,37 @@ public class AttemptService {
                     attempt.setMaxScore(test.getMaxScore());
                     return attemptRepository.save(attempt);
                 });
+    }
+
+    /** Сколько попыток осталось (null — без ограничений). */
+    public Integer attemptsLeft(Test test, Long studentId) {
+        if (test.getMaxAttempts() == null) {
+            return null;
+        }
+        long used = attemptRepository.countByTestIdAndStudentIdAndStatus(test.getId(), studentId, AttemptStatus.FINISHED);
+        return (int) Math.max(0, test.getMaxAttempts() - used);
+    }
+
+    /**
+     * Порядок вопросов и вариантов для попытки. При включённом перемешивании порядок у каждой попытки свой,
+     * но постоянный (зависит от номера попытки) — при обновлении страницы не меняется.
+     */
+    public static List<Question> orderFor(TestAttempt attempt) {
+        List<Question> questions = new ArrayList<>(attempt.getTest().getQuestions());
+        if (!attempt.getTest().isShuffle()) {
+            return questions;
+        }
+        Random random = new Random(attempt.getId() * 7919L);
+        Collections.shuffle(questions, random);
+        return questions;
+    }
+
+    public static List<AnswerOption> optionsFor(TestAttempt attempt, Question question) {
+        List<AnswerOption> options = new ArrayList<>(question.getOptions());
+        if (attempt.getTest().isShuffle()) {
+            Collections.shuffle(options, new Random(attempt.getId() * 31L + question.getId()));
+        }
+        return options;
     }
 
     /** Попытка, которую студент сейчас проходит (только своя и только незавершённая). */
@@ -134,6 +172,8 @@ public class AttemptService {
         attempt.setMaxScore(maxScore);
         attempt.setPercent(maxScore == 0 ? 0 : Math.round(score * 100f / maxScore));
         attempt.setPassed(attempt.getPercent() >= test.getPassingScore());
+        auditService.log("Тест пройден", "«" + test.getTitle() + "»: " + attempt.getPercent() + " %"
+                + (attempt.isPassed() ? ", сдан" : ", не сдан") + (overdue ? " (время вышло)" : ""));
         return attempt;
     }
 
@@ -181,6 +221,8 @@ public class AttemptService {
         if (!user.isStaff() || !canSee(attempt, user)) {
             throw new AccessDeniedException("Удалять результаты может только преподаватель группы");
         }
+        auditService.log("Результат удалён", attempt.getStudent().getFullName() + ", «" + attempt.getTest().getTitle()
+                + "» — " + attempt.getPercent() + " %");
         attemptRepository.delete(attempt);
     }
 

@@ -28,13 +28,15 @@ public class UserService {
             "role", Sort.by("role", "fullName"),
             "created", Sort.by(Sort.Direction.DESC, "createdAt"));
 
+    private final AuditService auditService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StudyGroupRepository groupRepository;
     private final DepartmentRepository departmentRepository;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       StudyGroupRepository groupRepository, DepartmentRepository departmentRepository) {
+                       StudyGroupRepository groupRepository, DepartmentRepository departmentRepository, AuditService auditService) {
+        this.auditService = auditService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.groupRepository = groupRepository;
@@ -80,6 +82,7 @@ public class UserService {
         }
         user.setRecordBook(blankToNull(form.getRecordBook()));
         User saved = userRepository.save(user);
+        auditService.log("Пользователь создан", saved.getUsername() + " — " + role.getTitle() + ", " + saved.getFullName());
         if (role == Role.STUDENT && saved.getRecordBook() == null) {
             // Номер зачётки не указан — формируется автоматически: год поступления + 05 + id
             saved.setRecordBook(String.format("%d05%04d", java.time.Year.now().getValue(), saved.getId()));
@@ -100,6 +103,26 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
     }
 
+    /** Смена пароля самим пользователем: нужен текущий пароль, новый не должен совпадать со старым. */
+    @Transactional
+    public void changePassword(Long userId, String current, String newPassword, String confirm) {
+        User user = get(userId);
+        if (!passwordEncoder.matches(current, user.getPasswordHash())) {
+            throw new BusinessException("Текущий пароль указан неверно");
+        }
+        if (!newPassword.equals(confirm)) {
+            throw new BusinessException("Новый пароль и повтор не совпадают");
+        }
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new BusinessException("Новый пароль совпадает с текущим");
+        }
+        if (newPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new BusinessException("Пароль слишком длинный");
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        auditService.log("Пароль изменён", user.getUsername());
+    }
+
     @Transactional
     public User update(Long id, Role role, boolean enabled, Long currentUserId) {
         User user = get(id);
@@ -108,6 +131,7 @@ public class UserService {
         }
         user.setRole(role);
         user.setEnabled(enabled);
+        auditService.log("Пользователь изменён", user.getUsername() + ": " + role.getTitle() + (enabled ? ", активен" : ", заблокирован"));
         return user;
     }
 
@@ -117,6 +141,7 @@ public class UserService {
         if (user.getId().equals(currentUserId)) {
             throw new BusinessException("Нельзя удалить собственную учётную запись");
         }
+        auditService.log("Пользователь удалён", user.getUsername() + " — " + user.getFullName());
         try {
             userRepository.delete(user);
             userRepository.flush();

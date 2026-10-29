@@ -51,10 +51,15 @@ public class ReportController {
 
     @GetMapping
     public String report(@RequestParam(required = false) Long subjectId,
+                         @RequestParam(required = false) Long rankGroupId,
                          @RequestParam(required = false) Long testId,
                          @AuthenticationPrincipal AppUserDetails me, Model model) {
         model.addAttribute("summary", reportService.summary());
         model.addAttribute("rows", reportService.testStatistics(subjectId));
+        model.addAttribute("groupRows", reportService.groupStatistics(subjectId));
+        model.addAttribute("ranking", reportService.ranking(subjectId, rankGroupId, 10));
+        model.addAttribute("groups", universityService.groups());
+        model.addAttribute("rankGroupId", rankGroupId);
         model.addAttribute("subjects", subjectService.findAll(null));
         model.addAttribute("tests", testService.search(null, null, "title", me));
         model.addAttribute("subjectId", subjectId);

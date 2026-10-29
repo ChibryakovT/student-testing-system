@@ -36,8 +36,8 @@ public class AttemptApiController {
     @PreAuthorize("hasRole('STUDENT')")
     public StartedAttemptDto start(@PathVariable Long testId, @AuthenticationPrincipal AppUserDetails me) {
         TestAttempt attempt = attemptService.start(testId, me);
-        List<QuestionDto> questions = attempt.getTest().getQuestions().stream()
-                .map(q -> QuestionDto.of(q, false)).toList();
+        List<QuestionDto> questions = AttemptService.orderFor(attempt).stream()
+                .map(q -> QuestionDto.of(q, AttemptService.optionsFor(attempt, q), false)).toList();
         return new StartedAttemptDto(attempt.getId(), attempt.getTest().getTitle(),
                 attempt.getTest().getTimeLimitMinutes(), attempt.getStartedAt(), questions);
     }

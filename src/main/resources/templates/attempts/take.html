@@ -20,7 +20,7 @@
     </div>
 
     <form id="attempt-form" th:action="@{/attempts/{id}/submit(id=${attempt.id})}" method="post">
-        <div class="card mb-3 question-take reveal" th:each="q, st : ${attempt.test.questions}" th:attr="data-question=${q.id}">
+        <div class="card mb-3 question-take reveal" th:each="q, st : ${questions}" th:attr="data-question=${q.id}">
             <div class="card-body">
                 <div class="d-flex justify-content-between gap-2 mb-1">
                     <div class="fw-semibold"><span class="text-primary" th:text="${st.count} + '.'"></span> <span th:text="${q.text}">вопрос</span></div>
@@ -28,7 +28,7 @@
                 </div>
                 <div class="small text-muted mb-2"
                      th:text="${q.type.name() == 'MULTIPLE'} ? 'Выберите все правильные варианты' : 'Выберите один вариант'">подсказка</div>
-                <div class="form-check" th:each="o : ${q.options}">
+                <div class="form-check" th:each="o : ${options[q.id]}">
                     <input class="form-check-input" th:type="${q.type.name() == 'MULTIPLE'} ? 'checkbox' : 'radio'"
                            th:name="'q' + ${q.id}" th:value="${o.id}" th:id="'o' + ${o.id}">
                     <label class="form-check-label" th:for="'o' + ${o.id}" th:text="${o.text}">вариант</label>

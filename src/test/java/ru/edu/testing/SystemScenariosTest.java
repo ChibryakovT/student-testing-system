@@ -437,6 +437,102 @@ class SystemScenariosTest {
                 .andExpect(content().string(containsString("числитель")));
     }
 
+    @Test
+    @DisplayName("27. Лимит попыток: после исчерпания новая попытка запрещена — 409")
+    void attemptLimit() throws Exception {
+        long testId = createPublishedTest();
+        Map<String, Object> body = new java.util.HashMap<>(testBody(subjectOf(testId), "Тест с лимитом", true));
+        body.put("maxAttempts", 1);
+        api(put("/api/tests/" + testId), teacher, body).andExpect(status().isOk());
+        long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", List.of())).andExpect(status().isOk());
+        api(post("/api/tests/" + testId + "/attempts"), student, null)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("лимит попыток")));
+    }
+
+    @Test
+    @DisplayName("28. Перемешивание: порядок вопросов у попытки постоянный, набор вопросов полный")
+    void shuffleIsStablePerAttempt() throws Exception {
+        long testId = createPublishedTest();
+        for (int i = 0; i < 4; i++) {
+            api(post("/api/tests/" + testId + "/questions"), teacher, Map.of("text", "Вопрос " + i, "type", "SINGLE",
+                    "points", 1, "options", List.of(Map.of("text", "да", "correct", true), Map.of("text", "нет", "correct", false))))
+                    .andExpect(status().isCreated());
+        }
+        Map<String, Object> body = new java.util.HashMap<>(testBody(subjectOf(testId), "Перемешанный тест", true));
+        body.put("shuffle", true);
+        api(put("/api/tests/" + testId), teacher, body).andExpect(status().isOk());
+        JsonNode first = startAttempt(testId, student);
+        JsonNode again = startAttempt(testId, student);   // незавершённая попытка продолжается
+        org.junit.jupiter.api.Assertions.assertEquals(first.get("attemptId"), again.get("attemptId"));
+        org.junit.jupiter.api.Assertions.assertEquals(first.get("questions"), again.get("questions"), "порядок не должен меняться");
+        org.junit.jupiter.api.Assertions.assertEquals(6, first.get("questions").size());
+    }
+
+    @Test
+    @DisplayName("29. Импорт вопросов из Excel: корректный файл добавляет вопросы, ошибка в строке — ничего не добавляет")
+    void importQuestionsFromExcel() throws Exception {
+        long testId = createTest(createSubject(), "Импорт");
+        var session = login(teacher, PASS);
+        mvc.perform(multipart("/tests/" + testId + "/questions/import").file(xlsx(
+                        new String[]{"2 + 2 = ?", "1", "4+", "5"}, new String[]{"Чётные числа", "2", "2+", "3", "8+"}))
+                        .session(session).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("success", "Импортировано вопросов: 2"));
+        mvc.perform(multipart("/tests/" + testId + "/questions/import").file(xlsx(
+                        new String[]{"Хороший вопрос", "1", "да+", "нет"}, new String[]{"Без правильного", "1", "а", "б"}))
+                        .session(session).with(csrf()))
+                .andExpect(flash().attribute("errorMessage", containsString("Строка 3")));
+        api(get("/api/tests/" + testId + "/questions"), teacher, null)
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[1].type").value("MULTIPLE"));
+    }
+
+    @Test
+    @DisplayName("30. Журнал действий: создание теста записывается, журнал виден только администратору")
+    void auditLog() throws Exception {
+        String title = "Журналируемый тест " + SEQ.incrementAndGet();
+        id(api(post("/api/tests"), teacher, testBody(createSubject(), title, false)));
+        mvc.perform(get("/audit").session(login(ADMIN, ADMIN_PASS)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Тест создан")))
+                .andExpect(content().string(containsString(title)));
+        mvc.perform(get("/audit").session(login(teacher, PASS))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("31. Профиль: смена пароля — старый пароль перестаёт работать, новый работает")
+    void changePassword() throws Exception {
+        String login = createUser("STUDENT", groupId);
+        var session = login(login, PASS);
+        mvc.perform(post("/profile/password").session(session).with(csrf())
+                        .param("currentPassword", "wrong-pass1").param("newPassword", "NewPass-2026").param("confirmPassword", "NewPass-2026"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Текущий пароль указан неверно")));
+        mvc.perform(post("/profile/password").session(session).with(csrf())
+                        .param("currentPassword", PASS).param("newPassword", "NewPass-2026").param("confirmPassword", "NewPass-2026"))
+                .andExpect(redirectedUrl("/profile"));
+        mvc.perform(post("/login").with(csrf()).param("username", login).param("password", PASS))
+                .andExpect(redirectedUrl("/login?error"));
+        mvc.perform(post("/login").with(csrf()).param("username", login).param("password", "NewPass-2026"))
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    @DisplayName("32. Аналитика: сравнение групп и рейтинг студентов в отчёте администратора")
+    void groupAnalytics() throws Exception {
+        long testId = createPublishedTest();
+        long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", correctAnswers(testId)))
+                .andExpect(status().isOk());
+        mvc.perform(get("/reports").param("subjectId", String.valueOf(subjectOf(testId))).session(login(ADMIN, ADMIN_PASS)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Сравнение групп")))
+                .andExpect(content().string(containsString("Рейтинг студентов")))
+                .andExpect(content().string(containsString("Пользователь " + student)));
+    }
+
     // ---------- Вспомогательные методы ----------
 
     private ResultActions api(MockHttpServletRequestBuilder request, String user, Object body) throws Exception {
@@ -489,6 +585,31 @@ class SystemScenariosTest {
     private long subjectOf(long testId) throws Exception {
         return json.readTree(api(get("/api/tests/" + testId), teacher, null).andReturn().getResponse()
                 .getContentAsString()).get("subjectId").asLong();
+    }
+
+    /** Вход через форму — сессия с настоящим пользователем системы. */
+    private org.springframework.mock.web.MockHttpSession login(String username, String password) throws Exception {
+        return (org.springframework.mock.web.MockHttpSession) mvc.perform(
+                        org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders
+                                .formLogin().user(username).password(password))
+                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+    }
+
+    /** Файл Excel с вопросами: первая строка — заголовок. */
+    private org.springframework.mock.web.MockMultipartFile xlsx(String[]... rows) throws Exception {
+        try (var wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook(); var out = new java.io.ByteArrayOutputStream()) {
+            var sheet = wb.createSheet();
+            sheet.createRow(0).createCell(0).setCellValue("Вопрос");
+            for (int r = 0; r < rows.length; r++) {
+                var row = sheet.createRow(r + 1);
+                for (int c = 0; c < rows[r].length; c++) {
+                    row.createCell(c).setCellValue(rows[r][c]);
+                }
+            }
+            wb.write(out);
+            return new org.springframework.mock.web.MockMultipartFile("file", "questions.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", out.toByteArray());
+        }
     }
 
     private String sheetCsv(long group, long subjectId, long testId, String... columns) throws Exception {

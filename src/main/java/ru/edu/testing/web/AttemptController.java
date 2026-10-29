@@ -6,6 +6,8 @@ import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import ru.edu.testing.domain.AnswerOption;
+import ru.edu.testing.domain.Question;
 import ru.edu.testing.domain.TestAttempt;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.security.AppUserDetails;
@@ -17,6 +19,7 @@ import ru.edu.testing.service.UserService;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -68,6 +71,12 @@ public class AttemptController {
         TestAttempt attempt = attemptService.getForTaking(id, me);
         LocalDateTime deadline = attempt.getStartedAt().plusMinutes(attempt.getTest().getTimeLimitMinutes());
         model.addAttribute("attempt", attempt);
+        // Порядок вопросов и вариантов: при включённом перемешивании — свой у каждой попытки
+        List<Question> questions = AttemptService.orderFor(attempt);
+        Map<Long, List<AnswerOption>> options = new HashMap<>();
+        questions.forEach(q -> options.put(q.getId(), AttemptService.optionsFor(attempt, q)));
+        model.addAttribute("questions", questions);
+        model.addAttribute("options", options);
         model.addAttribute("secondsLeft", Math.max(0, Duration.between(LocalDateTime.now(), deadline).getSeconds()));
         return "attempts/take";
     }

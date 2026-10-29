@@ -37,6 +37,14 @@ public class Test {
     @Column(nullable = false)
     private boolean published;
 
+    /** Перемешивать вопросы и варианты ответа у каждого студента. */
+    @Column(nullable = false)
+    private boolean shuffle;
+
+    /** Сколько раз студент может пройти тест (null — без ограничений). */
+    @Column(name = "max_attempts")
+    private Integer maxAttempts;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -77,6 +85,10 @@ public class Test {
     public void setPassingScore(int passingScore) { this.passingScore = passingScore; }
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
+    public boolean isShuffle() { return shuffle; }
+    public void setShuffle(boolean shuffle) { this.shuffle = shuffle; }
+    public Integer getMaxAttempts() { return maxAttempts; }
+    public void setMaxAttempts(Integer maxAttempts) { this.maxAttempts = maxAttempts; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public List<Question> getQuestions() { return questions; }

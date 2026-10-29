@@ -48,8 +48,12 @@ public final class ApiDtos {
 
     public record QuestionDto(Long id, String text, QuestionType type, int points, List<OptionDto> options) {
         public static QuestionDto of(Question q, boolean withCorrect) {
+            return of(q, q.getOptions(), withCorrect);
+        }
+
+        public static QuestionDto of(Question q, List<AnswerOption> options, boolean withCorrect) {
             return new QuestionDto(q.getId(), q.getText(), q.getType(), q.getPoints(),
-                    q.getOptions().stream().map(o -> OptionDto.of(o, withCorrect)).toList());
+                    options.stream().map(o -> OptionDto.of(o, withCorrect)).toList());
         }
     }
 

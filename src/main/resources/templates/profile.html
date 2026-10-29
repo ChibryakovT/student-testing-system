@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Профиль — ЭСТ</title></head>
+<body>
+<section class="form-narrow">
+    <div class="page-head"><div><h1 class="h3 page-title"><i class="bi bi-person-circle"></i>Профиль</h1>
+        <p class="subtitle">Данные учётной записи и смена пароля</p></div></div>
+    <div class="row g-3">
+        <div class="col-md-5 reveal">
+            <div class="card h-100"><div class="card-body text-center py-4">
+                <span class="user-avatar profile-avatar mx-auto mb-3" th:text="${#strings.substring(user.fullName, 0, 1)}">И</span>
+                <div class="fw-bold fs-5" th:text="${user.fullName}">ФИО</div>
+                <div class="text-muted mb-3" th:text="${user.role.title}">роль</div>
+                <dl class="row text-start small mb-0">
+                    <dt class="col-5 text-muted fw-normal">Логин</dt><dd class="col-7"><code th:text="${user.username}">login</code></dd>
+                    <dt class="col-5 text-muted fw-normal">E-mail</dt><dd class="col-7 text-break" th:text="${user.email}">email</dd>
+                    <th:block th:if="${user.group != null}">
+                        <dt class="col-5 text-muted fw-normal">Группа</dt><dd class="col-7" th:text="${user.group.name}">группа</dd>
+                        <dt class="col-5 text-muted fw-normal">№ зачётки</dt><dd class="col-7" th:text="${user.recordBook}">зачётка</dd>
+                    </th:block>
+                    <th:block th:if="${user.department != null}">
+                        <dt class="col-5 text-muted fw-normal">Кафедра</dt><dd class="col-7" th:text="${user.department.name}">кафедра</dd>
+                    </th:block>
+                </dl>
+            </div></div>
+        </div>
+        <div class="col-md-7 reveal" style="--delay:60ms">
+            <form class="card card-body h-100" method="post" th:action="@{/profile/password}" th:object="${form}" novalidate>
+                <div class="fw-semibold mb-3"><i class="bi bi-key me-2 text-primary"></i>Смена пароля</div>
+                <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                    <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+                </div>
+                <div class="mb-3"><label class="form-label" for="currentPassword">Текущий пароль</label>
+                    <input class="form-control" type="password" th:field="*{currentPassword}" th:errorclass="is-invalid" autocomplete="current-password">
+                    <div class="invalid-feedback" th:errors="*{currentPassword}"></div></div>
+                <div class="mb-3"><label class="form-label" for="newPassword">Новый пароль</label>
+                    <input class="form-control" type="password" th:field="*{newPassword}" th:errorclass="is-invalid" autocomplete="new-password">
+                    <div class="form-text">Минимум 8 символов, буквы и цифры</div>
+                    <div class="invalid-feedback" th:errors="*{newPassword}"></div></div>
+                <div class="mb-3"><label class="form-label" for="confirmPassword">Повторите новый пароль</label>
+                    <input class="form-control" type="password" th:field="*{confirmPassword}" th:errorclass="is-invalid" autocomplete="new-password">
+                    <div class="invalid-feedback" th:errors="*{confirmPassword}"></div></div>
+                <div><button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-1"></i>Сменить пароль</button></div>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

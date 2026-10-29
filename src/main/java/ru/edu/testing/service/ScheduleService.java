@@ -30,6 +30,7 @@ public class ScheduleService {
     public record PairRow(int pair, String roman, String time, List<List<Lesson>> days) {
     }
 
+    private final AuditService auditService;
     private final LessonRepository lessonRepository;
     private final ExamRepository examRepository;
     private final StudyGroupRepository groupRepository;
@@ -39,7 +40,8 @@ public class ScheduleService {
 
     public ScheduleService(LessonRepository lessonRepository, ExamRepository examRepository,
                            StudyGroupRepository groupRepository, SubjectRepository subjectRepository,
-                           UserRepository userRepository, CurriculumRepository curriculumRepository) {
+                           UserRepository userRepository, CurriculumRepository curriculumRepository, AuditService auditService) {
+        this.auditService = auditService;
         this.lessonRepository = lessonRepository;
         this.examRepository = examRepository;
         this.groupRepository = groupRepository;
@@ -135,6 +137,9 @@ public class ScheduleService {
         lesson.setTeacher(teacher(teacherId));
         lesson.setCoTeacher(teacher(coTeacherId));
         lesson.setRoom(blankToNull(room));
+        auditService.log(id == null ? "Занятие добавлено" : "Занятие изменено", lesson.getGroup().getName() + ", "
+                + DAYS.get(day - 1).toLowerCase() + ", " + ROMAN[pair] + " пара: " + lesson.getName()
+                + (lesson.getRoom() == null ? "" : ", ауд. " + lesson.getRoom()));
         return lessonRepository.save(lesson);
     }
 
@@ -142,6 +147,8 @@ public class ScheduleService {
     public Long deleteLesson(Long id) {
         Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new NotFoundException("Занятие не найдено"));
         Long groupId = lesson.getGroup().getId();
+        auditService.log("Занятие удалено", lesson.getGroup().getName() + ", " + DAYS.get(lesson.getDayOfWeek() - 1).toLowerCase()
+                + ", " + ROMAN[lesson.getPairNo()] + " пара: " + lesson.getName());
         lessonRepository.delete(lesson);
         return groupId;
     }
@@ -159,6 +166,8 @@ public class ScheduleService {
         exam.setDate(date);
         exam.setStartTime(time);
         exam.setRoom(blankToNull(room));
+        auditService.log("Сессия изменена", plan.getGroup().getName() + ": " + plan.getSubject().getName() + " ("
+                + plan.getControlForm().getTitle() + ") — " + date + (time == null ? "" : " " + time));
         return examRepository.save(exam);
     }
 
@@ -166,6 +175,7 @@ public class ScheduleService {
     public Long deleteExam(Long id) {
         Exam exam = examRepository.findById(id).orElseThrow(() -> new NotFoundException("Экзамен не найден"));
         Long groupId = exam.getPlan().getGroup().getId();
+        auditService.log("Сессия изменена", exam.getPlan().getGroup().getName() + ": удалён " + exam.getPlan().getSubject().getName());
         examRepository.delete(exam);
         return groupId;
     }

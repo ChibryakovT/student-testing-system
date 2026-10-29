@@ -48,6 +48,17 @@ public class ReportService {
         return attemptRepository.questionStatistics(testId);
     }
 
+    /** Сравнение групп по среднему результату (по всем тестам или по дисциплине). */
+    public List<ru.edu.testing.dto.GroupStatRow> groupStatistics(Long subjectId) {
+        return attemptRepository.groupStatistics(subjectId);
+    }
+
+    /** Топ студентов по среднему результату; учитываются студенты, прошедшие хотя бы 2 теста (или 1 — в разрезе дисциплины). */
+    public List<ru.edu.testing.dto.StudentRankRow> ranking(Long subjectId, Long groupId, int limit) {
+        return attemptRepository.ranking(subjectId, groupId, subjectId == null ? 2 : 1,
+                org.springframework.data.domain.PageRequest.of(0, limit));
+    }
+
     /** Выгрузка отчёта в CSV (разделитель «;» — открывается в Excel без настройки). */
     public String testStatisticsCsv(Long subjectId) {
         StringBuilder sb = new StringBuilder("﻿");

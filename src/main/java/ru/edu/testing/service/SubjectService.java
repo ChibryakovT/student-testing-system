@@ -17,12 +17,14 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class SubjectService {
 
+    private final AuditService auditService;
     private final SubjectRepository subjectRepository;
     private final TestRepository testRepository;
     private final DepartmentRepository departmentRepository;
 
     public SubjectService(SubjectRepository subjectRepository, TestRepository testRepository,
-                          DepartmentRepository departmentRepository) {
+                          DepartmentRepository departmentRepository, AuditService auditService) {
+        this.auditService = auditService;
         this.subjectRepository = subjectRepository;
         this.testRepository = testRepository;
         this.departmentRepository = departmentRepository;
@@ -52,6 +54,7 @@ public class SubjectService {
         }
         Subject subject = new Subject();
         apply(subject, form);
+        auditService.log("Дисциплина добавлена", subject.getName());
         return subjectRepository.save(subject);
     }
 
@@ -63,6 +66,7 @@ public class SubjectService {
             throw new BusinessException(HttpStatus.CONFLICT, "Дисциплина с таким названием уже существует");
         }
         apply(subject, form);
+        auditService.log("Дисциплина изменена", subject.getName());
         return subject;
     }
 
@@ -73,6 +77,7 @@ public class SubjectService {
             throw new BusinessException(HttpStatus.CONFLICT,
                     "По дисциплине есть тесты — сначала удалите или перенесите их");
         }
+        auditService.log("Дисциплина удалена", subject.getName());
         subjectRepository.delete(subject);
     }
 

@@ -34,13 +34,15 @@ public class TestService {
             "time", Sort.by("timeLimitMinutes", "title"),
             "subject", Sort.by("subject.name", "title"));
 
+    private final AuditService auditService;
     private final TestRepository testRepository;
     private final SubjectService subjectService;
     private final UserRepository userRepository;
     private final CurriculumRepository curriculumRepository;
 
     public TestService(TestRepository testRepository, SubjectService subjectService, UserRepository userRepository,
-                       CurriculumRepository curriculumRepository) {
+                       CurriculumRepository curriculumRepository, AuditService auditService) {
+        this.auditService = auditService;
         this.testRepository = testRepository;
         this.subjectService = subjectService;
         this.userRepository = userRepository;
@@ -132,7 +134,9 @@ public class TestService {
         if (test.isPublished()) {
             throw new BusinessException("Нельзя опубликовать тест без вопросов. Сохраните черновик и добавьте вопросы");
         }
-        return testRepository.save(test);
+        Test saved = testRepository.save(test);
+        auditService.log("Тест создан", "«" + saved.getTitle() + "» (" + saved.getSubject().getName() + ")");
+        return saved;
     }
 
     @Transactional
@@ -142,12 +146,15 @@ public class TestService {
         if (test.isPublished()) {
             validateReadyForPublishing(test);
         }
+        auditService.log("Тест изменён", "«" + test.getTitle() + "»" + (test.isPublished() ? ", опубликован" : ", черновик"));
         return test;
     }
 
     @Transactional
     public void delete(Long id, AppUserDetails user) {
-        testRepository.delete(getForEdit(id, user));
+        Test test = getForEdit(id, user);
+        auditService.log("Тест удалён", "«" + test.getTitle() + "»");
+        testRepository.delete(test);
     }
 
     public void checkCanEdit(Test test, AppUserDetails user) {
@@ -187,5 +194,7 @@ public class TestService {
         test.setTimeLimitMinutes(form.getTimeLimitMinutes());
         test.setPassingScore(form.getPassingScore());
         test.setPublished(form.isPublished());
+        test.setShuffle(form.isShuffle());
+        test.setMaxAttempts(form.getMaxAttempts());
     }
 }

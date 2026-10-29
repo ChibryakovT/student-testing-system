@@ -19,10 +19,12 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class QuestionService {
 
+    private final AuditService auditService;
     private final QuestionRepository questionRepository;
     private final TestService testService;
 
-    public QuestionService(QuestionRepository questionRepository, TestService testService) {
+    public QuestionService(QuestionRepository questionRepository, TestService testService, AuditService auditService) {
+        this.auditService = auditService;
         this.questionRepository = questionRepository;
         this.testService = testService;
     }
@@ -42,13 +44,16 @@ public class QuestionService {
         question.setPosition(test.getQuestions().size() + 1);
         apply(question, form);
         test.getQuestions().add(question);
-        return questionRepository.save(question);
+        Question saved = questionRepository.save(question);
+        auditService.log("Вопрос добавлен", "Тест «" + test.getTitle() + "»: " + saved.getText());
+        return saved;
     }
 
     @Transactional
     public Question update(Long id, QuestionForm form, AppUserDetails user) {
         Question question = getForEdit(id, user);
         apply(question, form);
+        auditService.log("Вопрос изменён", "Тест «" + question.getTest().getTitle() + "»: " + question.getText());
         return question;
     }
 
@@ -56,6 +61,7 @@ public class QuestionService {
     public Long delete(Long id, AppUserDetails user) {
         Question question = getForEdit(id, user);
         Test test = question.getTest();
+        auditService.log("Вопрос удалён", "Тест «" + test.getTitle() + "»: " + question.getText());
         test.getQuestions().remove(question);
         if (test.isPublished() && test.getQuestions().isEmpty()) {
             test.setPublished(false);

@@ -54,6 +54,9 @@ public class TestController {
         Test test = testService.get(id, me);
         model.addAttribute("test", test);
         model.addAttribute("canEdit", testService.canEdit(test, me));
+        if (me.isStudent()) {
+            model.addAttribute("attemptsLeft", attemptService.attemptsLeft(test, me.getId()));
+        }
         model.addAttribute("forms", testService.controlForms(me));
         return "tests/view";
     }
@@ -93,6 +96,8 @@ public class TestController {
         form.setTimeLimitMinutes(test.getTimeLimitMinutes());
         form.setPassingScore(test.getPassingScore());
         form.setPublished(test.isPublished());
+        form.setShuffle(test.isShuffle());
+        form.setMaxAttempts(test.getMaxAttempts());
         model.addAttribute("form", form);
         return formView(model, id, me);
     }

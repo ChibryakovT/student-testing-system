@@ -44,6 +44,11 @@ public class WebExceptionHandler {
         return page(model, response, HttpStatus.BAD_REQUEST, "Некорректные параметры запроса");
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public String tooLarge(Exception e, Model model, HttpServletResponse response) {
+        return page(model, response, HttpStatus.BAD_REQUEST, "Файл слишком большой: не более 2 МБ");
+    }
+
     @ExceptionHandler(Exception.class)
     public String unexpected(Exception e, Model model, HttpServletResponse response) {
         log.error("Необработанная ошибка", e);

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
+<head><title>Журнал действий — ЭСТ</title></head>
+<body>
+<section>
+    <div class="page-head">
+        <div><h1 class="h3 page-title"><i class="bi bi-clock-history"></i>Журнал действий</h1>
+            <p class="subtitle">Кто, когда и что изменил в системе: тесты, расписание, учебный план, пользователи, входы</p></div>
+    </div>
+    <form class="card card-body mb-3 filter-bar" method="get" th:action="@{/audit}">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-6"><label class="form-label small" for="q">Поиск</label>
+                <input class="form-control" id="q" name="q" th:value="${q}" placeholder="Логин или текст действия"></div>
+            <div class="col-md-4"><label class="form-label small" for="action">Действие</label>
+                <select class="form-select" id="action" name="action">
+                    <option value="">Все действия</option>
+                    <option th:each="a : ${actions}" th:value="${a}" th:text="${a}" th:selected="${a == action}"></option>
+                </select></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search me-1"></i>Найти</button></div>
+        </div>
+    </form>
+    <div class="card reveal">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead><tr><th>Когда</th><th>Пользователь</th><th>Действие</th><th>Подробности</th></tr></thead>
+                <tbody>
+                <tr th:each="e : ${entries}">
+                    <td class="text-nowrap small text-muted" th:text="${#temporals.format(e.createdAt, 'dd.MM.yyyy HH:mm:ss')}">дата</td>
+                    <td class="small"><code th:text="${e.username}">login</code></td>
+                    <td><span class="badge" th:text="${e.action}"
+                              th:classappend="${#strings.contains(e.action, 'удал') or e.action == 'Неудачный вход'} ? 'text-bg-danger'
+                                : (${e.action == 'Вход'} ? 'text-bg-light' : (${#strings.contains(e.action, 'пройден')} ? 'text-bg-success' : 'text-bg-primary'))">действие</span></td>
+                    <td class="small" th:text="${e.details}">подробности</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" th:if="${#lists.isEmpty(entries)}"><i class="bi bi-journal"></i>Записей пока нет</div>
+        </div>
+    </div>
+    <p class="text-muted small mt-2">Показаны последние 300 записей.</p>
+</section>
+</body>
+</html>

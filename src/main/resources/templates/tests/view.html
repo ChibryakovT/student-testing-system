@@ -23,12 +23,18 @@
                     <span><i class="bi bi-star"></i><span th:text="'макс. ' + ${test.maxScore} + ' б.'">0</span></span>
                     <span><i class="bi bi-stopwatch"></i><span th:text="${test.timeLimitMinutes} + ' мин'">0</span></span>
                     <span><i class="bi bi-flag"></i><span th:text="'проходной ' + ${test.passingScore} + ' %'">0</span></span>
+                    <span th:if="${test.shuffle}"><i class="bi bi-shuffle"></i>вопросы перемешиваются</span>
+                    <span th:if="${test.maxAttempts != null}"><i class="bi bi-arrow-repeat"></i><span th:text="'попыток: ' + ${test.maxAttempts}">3</span></span>
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <form th:if="${me.student}" th:action="@{/tests/{id}/start(id=${test.id})}" method="post">
+                <form th:if="${me.student and attemptsLeft != 0}" th:action="@{/tests/{id}/start(id=${test.id})}" method="post">
                     <button class="btn btn-light btn-lg fw-bold" type="submit"><i class="bi bi-play-fill me-1"></i>Начать тест</button>
+                    <div class="small mt-1 text-center opacity-75" th:if="${attemptsLeft != null}"
+                         th:text="'Осталось попыток: ' + ${attemptsLeft} + ' из ' + ${test.maxAttempts}">Осталось попыток</div>
                 </form>
+                <div th:if="${me.student and attemptsLeft == 0}" class="badge text-bg-light fs-6 p-2">
+                    <i class="bi bi-lock me-1"></i>Попытки закончились</div>
                 <a th:if="${canEdit}" class="btn btn-glass" th:href="@{/tests/{id}/edit(id=${test.id})}"><i class="bi bi-pencil me-1"></i>Редактировать</a>
                 <form th:if="${canEdit}" th:action="@{/tests/{id}/delete(id=${test.id})}" method="post"
                       data-confirm="Удалить тест вместе с вопросами и результатами?">
@@ -68,6 +74,20 @@
                         <i class="bi" th:classappend="${o.correct} ? 'bi-check-circle-fill' : 'bi-circle'"></i> <span th:text="${o.text}">вариант</span>
                     </li>
                 </ul>
+            </div>
+        </div>
+        <div class="card mb-3 import-card">
+            <div class="card-body d-flex flex-wrap align-items-center gap-3">
+                <span class="stat-icon teal"><i class="bi bi-file-earmark-excel"></i></span>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">Импорт вопросов из Excel</div>
+                    <div class="small text-muted">Скачайте шаблон, заполните вопросы (правильные варианты — со знаком «+» в конце) и загрузите файл</div>
+                </div>
+                <a class="btn btn-outline-success btn-sm" th:href="@{/tests/{id}/questions/template.xlsx(id=${test.id})}"><i class="bi bi-download me-1"></i>Шаблон</a>
+                <form class="d-flex gap-2" method="post" enctype="multipart/form-data" th:action="@{/tests/{id}/questions/import(id=${test.id})}">
+                    <input class="form-control form-control-sm" type="file" name="file" accept=".xlsx" required style="max-width:230px">
+                    <button class="btn btn-success btn-sm" type="submit"><i class="bi bi-upload me-1"></i>Загрузить</button>
+                </form>
             </div>
         </div>
         <div class="alert alert-light border" th:if="${#lists.isEmpty(test.questions)}">

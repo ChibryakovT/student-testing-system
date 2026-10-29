@@ -42,6 +42,33 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 
     long countByStatus(AttemptStatus status);
 
+    @Query("""
+            select new ru.edu.testing.dto.GroupStatRow(g.id, g.name, count(a.id), coalesce(avg(a.percent), 0),
+                sum(case when a.passed = true then 1 else 0 end))
+            from TestAttempt a join a.student u join u.group g join a.test t
+            where a.status = ru.edu.testing.domain.AttemptStatus.FINISHED
+              and (:subjectId is null or t.subject.id = :subjectId)
+            group by g.id, g.name
+            order by avg(a.percent) desc
+            """)
+    List<ru.edu.testing.dto.GroupStatRow> groupStatistics(@Param("subjectId") Long subjectId);
+
+    @Query("""
+            select new ru.edu.testing.dto.StudentRankRow(u.id, u.fullName, g.name, count(a.id), avg(a.percent), max(a.percent))
+            from TestAttempt a join a.student u join u.group g join a.test t
+            where a.status = ru.edu.testing.domain.AttemptStatus.FINISHED
+              and (:subjectId is null or t.subject.id = :subjectId)
+              and (:groupId is null or g.id = :groupId)
+            group by u.id, u.fullName, g.name
+            having count(a.id) >= :minAttempts
+            order by avg(a.percent) desc, count(a.id) desc, u.fullName
+            """)
+    List<ru.edu.testing.dto.StudentRankRow> ranking(@Param("subjectId") Long subjectId, @Param("groupId") Long groupId,
+                                                    @Param("minAttempts") long minAttempts,
+                                                    org.springframework.data.domain.Pageable page);
+
+    long countByTestIdAndStudentIdAndStatus(Long testId, Long studentId, AttemptStatus status);
+
     long countByStatusAndPassedTrue(AttemptStatus status);
 
     @Query("select coalesce(avg(a.percent), 0) from TestAttempt a where a.status = ru.edu.testing.domain.AttemptStatus.FINISHED")

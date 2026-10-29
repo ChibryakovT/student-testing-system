@@ -14,7 +14,14 @@ import ru.edu.testing.domain.Test;
 import ru.edu.testing.dto.QuestionForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.security.AppUserDetails;
+import ru.edu.testing.service.QuestionImportService;
 import ru.edu.testing.service.QuestionService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
 import ru.edu.testing.service.TestService;
 
 @Controller
@@ -23,10 +30,13 @@ public class QuestionController {
 
     private final QuestionService questionService;
     private final TestService testService;
+    private final QuestionImportService importService;
 
-    public QuestionController(QuestionService questionService, TestService testService) {
+    public QuestionController(QuestionService questionService, TestService testService,
+                              QuestionImportService importService) {
         this.questionService = questionService;
         this.testService = testService;
+        this.importService = importService;
     }
 
     @GetMapping("/tests/{testId}/questions/new")
@@ -84,6 +94,35 @@ public class QuestionController {
                          RedirectAttributes redirect) {
         Long testId = questionService.delete(id, me);
         redirect.addFlashAttribute("success", "Вопрос удалён");
+        return "redirect:/tests/" + testId;
+    }
+
+    @GetMapping("/tests/{testId}/questions/template.xlsx")
+    public ResponseEntity<byte[]> template(@PathVariable Long testId, @AuthenticationPrincipal AppUserDetails me) {
+        testService.getForEdit(testId, me);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("Шаблон_вопросов.xlsx", StandardCharsets.UTF_8).build().toString())
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(importService.template());
+    }
+
+    @PostMapping("/tests/{testId}/questions/import")
+    public String importQuestions(@PathVariable Long testId, @RequestParam("file") MultipartFile file,
+                                  @AuthenticationPrincipal AppUserDetails me, RedirectAttributes redirect) {
+        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
+        if (file.isEmpty() || !name.endsWith(".xlsx")) {
+            redirect.addFlashAttribute("errorMessage", "Выберите файл Excel (.xlsx)");
+            return "redirect:/tests/" + testId;
+        }
+        try (var in = file.getInputStream()) {
+            int count = importService.importXlsx(testId, in, me);
+            redirect.addFlashAttribute("success", "Импортировано вопросов: " + count);
+        } catch (BusinessException e) {
+            redirect.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (java.io.IOException e) {
+            redirect.addFlashAttribute("errorMessage", "Не удалось прочитать файл");
+        }
         return "redirect:/tests/" + testId;
     }
 

@@ -1,12 +1,59 @@
 {
   "info": {
     "name": "Электронная система тестирования студентов — API",
-    "description": "Проверка REST API. Перед запуском задайте переменные teacherPassword и adminPassword (пароли преподавателя и администратора). Пароли в коллекции не хранятся.",
+    "description": "Проверка REST API с учётом учебного плана: администратор добавляет дисциплину в план группы, после этого преподаватель создаёт по ней тест, а студент группы его проходит. Перед запуском задайте adminPassword и teacherPassword (пароли из файла .env). Пароли в коллекции не хранятся.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "01 Регистрация студента",
+      "name": "00 Администратор: учебные группы",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "const groups = pm.response.json();",
+              "pm.test(\"Группы есть\", () => pm.expect(groups.length).to.be.above(0));",
+              "pm.collectionVariables.set(\"groupId\", groups[0].id);",
+              "pm.collectionVariables.set(\"groupName\", groups[0].name);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/groups",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "groups"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{adminUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{adminPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "01 Регистрация студента в группу",
       "event": [
         {
           "listen": "prerequest",
@@ -27,6 +74,7 @@
               "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));",
               "const b = pm.response.json();",
               "pm.test(\"Создан студент, роль из запроса проигнорирована\", () => pm.expect(b.role).to.eql(\"STUDENT\"));",
+              "pm.test(\"Студент в выбранной группе\", () => pm.expect(b.groupName).to.eql(pm.collectionVariables.get(\"groupName\")));",
               "pm.test(\"Хеш пароля не возвращается\", () => pm.expect(b).to.not.have.property(\"passwordHash\"));"
             ]
           }
@@ -51,12 +99,12 @@
             "register"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"username\": \"{{newUser}}\",\n  \"password\": \"{{newPassword}}\",\n  \"fullName\": \"Студент Postman\",\n  \"email\": \"{{newUser}}@example.com\",\n  \"groupName\": \"ПИ-21\",\n  \"role\": \"ADMIN\"\n}"
-        },
         "auth": {
           "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{newUser}}\",\n  \"password\": \"{{newPassword}}\",\n  \"fullName\": \"Студент Postman\",\n  \"email\": \"{{newUser}}@example.com\",\n  \"groupId\": {{groupId}},\n  \"role\": \"ADMIN\"\n}"
         }
       }
     },
@@ -93,12 +141,12 @@
             "register"
           ]
         },
+        "auth": {
+          "type": "noauth"
+        },
         "body": {
           "mode": "raw",
           "raw": "{\n  \"username\": \"a\",\n  \"password\": \"123\",\n  \"fullName\": \"\",\n  \"email\": \"bad\"\n}"
-        },
-        "auth": {
-          "type": "noauth"
         }
       }
     },
@@ -187,7 +235,8 @@
             "type": "text/javascript",
             "exec": [
               "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Роль TEACHER\", () => pm.expect(pm.response.json().role).to.eql(\"TEACHER\"));"
+              "pm.test(\"Роль TEACHER\", () => pm.expect(pm.response.json().role).to.eql(\"TEACHER\"));",
+              "pm.collectionVariables.set(\"teacherId\", pm.response.json().id);"
             ]
           }
         }
@@ -255,10 +304,6 @@
             "subjects"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"Postman {{$timestamp}}\",\n  \"description\": \"Дисциплина для проверки API\"\n}"
-        },
         "auth": {
           "type": "basic",
           "basic": [
@@ -273,6 +318,10 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman {{$timestamp}}\",\n  \"description\": \"Дисциплина для проверки API\"\n}"
         }
       }
     },
@@ -359,9 +408,58 @@
             "{{subjectId}}"
           ]
         },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{teacherUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{teacherPassword}}",
+              "type": "string"
+            }
+          ]
+        },
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"Postman {{$timestamp}}\",\n  \"description\": \"Изменённое описание\"\n}"
+        }
+      }
+    },
+    {
+      "name": "09 Преподаватель: тест по дисциплине вне учебного плана запрещён",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 403 Forbidden\", () => pm.response.to.have.status(403));",
+              "pm.test(\"Причина — учебный план\", () => pm.expect(pm.response.json().message).to.include(\"не ведёте\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tests"
+          ]
         },
         "auth": {
           "type": "basic",
@@ -377,11 +475,71 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Тест до учебного плана\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 10,\n  \"passingScore\": 60\n}"
         }
       }
     },
     {
-      "name": "09 Создание теста",
+      "name": "10 Администратор: дисциплина в учебный план группы",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));",
+              "const c = pm.response.json();",
+              "pm.test(\"Преподаватель и форма контроля сохранены\", () => { pm.expect(c.teacherId).to.eql(Number(pm.collectionVariables.get(\"teacherId\"))); pm.expect(c.controlForm).to.eql(\"EXAM\"); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/groups/{{groupId}}/curriculum",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "groups",
+            "{{groupId}}",
+            "curriculum"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{adminUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{adminPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subjectId\": {{subjectId}},\n  \"teacherId\": {{teacherId}},\n  \"semester\": 3,\n  \"controlForm\": \"EXAM\"\n}"
+        }
+      }
+    },
+    {
+      "name": "11 Создание теста",
       "event": [
         {
           "listen": "test",
@@ -413,10 +571,6 @@
             "tests"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"API-тест {{$timestamp}}\",\n  \"description\": \"Создан из Postman\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 10,\n  \"passingScore\": 60,\n  \"published\": false\n}"
-        },
         "auth": {
           "type": "basic",
           "basic": [
@@ -431,11 +585,15 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"API-тест {{$timestamp}}\",\n  \"description\": \"Создан из Postman\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 10,\n  \"passingScore\": 60,\n  \"published\": false\n}"
         }
       }
     },
     {
-      "name": "10 Добавление вопроса",
+      "name": "12 Добавление вопроса",
       "event": [
         {
           "listen": "test",
@@ -470,10 +628,6 @@
             "questions"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"text\": \"Какой оператор выбирает данные в SQL?\",\n  \"type\": \"SINGLE\",\n  \"points\": 2,\n  \"options\": [\n    {\n      \"text\": \"SELECT\",\n      \"correct\": true\n    },\n    {\n      \"text\": \"DELETE\",\n      \"correct\": false\n    },\n    {\n      \"text\": \"UPDATE\",\n      \"correct\": false\n    }\n  ]\n}"
-        },
         "auth": {
           "type": "basic",
           "basic": [
@@ -488,11 +642,15 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Какой оператор выбирает данные в SQL?\",\n  \"type\": \"SINGLE\",\n  \"points\": 2,\n  \"options\": [\n    {\n      \"text\": \"SELECT\",\n      \"correct\": true\n    },\n    {\n      \"text\": \"DELETE\",\n      \"correct\": false\n    },\n    {\n      \"text\": \"UPDATE\",\n      \"correct\": false\n    }\n  ]\n}"
         }
       }
     },
     {
-      "name": "11 Вопрос без правильного ответа (ошибка)",
+      "name": "13 Вопрос без правильного ответа (ошибка)",
       "event": [
         {
           "listen": "test",
@@ -525,10 +683,6 @@
             "questions"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"text\": \"Некорректный вопрос\",\n  \"type\": \"SINGLE\",\n  \"points\": 1,\n  \"options\": [\n    {\n      \"text\": \"A\",\n      \"correct\": false\n    },\n    {\n      \"text\": \"B\",\n      \"correct\": false\n    }\n  ]\n}"
-        },
         "auth": {
           "type": "basic",
           "basic": [
@@ -543,11 +697,15 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Некорректный вопрос\",\n  \"type\": \"SINGLE\",\n  \"points\": 1,\n  \"options\": [\n    {\n      \"text\": \"A\",\n      \"correct\": false\n    },\n    {\n      \"text\": \"B\",\n      \"correct\": false\n    }\n  ]\n}"
         }
       }
     },
     {
-      "name": "12 Публикация теста",
+      "name": "14 Публикация теста",
       "event": [
         {
           "listen": "test",
@@ -579,10 +737,6 @@
             "{{testId}}"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"API-тест опубликованный\",\n  \"description\": \"Создан из Postman\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 10,\n  \"passingScore\": 60,\n  \"published\": true\n}"
-        },
         "auth": {
           "type": "basic",
           "basic": [
@@ -597,11 +751,15 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"API-тест опубликованный\",\n  \"description\": \"Создан из Postman\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 10,\n  \"passingScore\": 60,\n  \"published\": true\n}"
         }
       }
     },
     {
-      "name": "13 Студент: поиск и сортировка тестов",
+      "name": "15 Студент: поиск тестов своей группы",
       "event": [
         {
           "listen": "test",
@@ -610,7 +768,7 @@
             "exec": [
               "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
               "const list = pm.response.json();",
-              "pm.test(\"Опубликованный тест найден\", () => pm.expect(list.map(t => t.id)).to.include(Number(pm.collectionVariables.get(\"testId\"))));",
+              "pm.test(\"Тест по дисциплине группы найден\", () => pm.expect(list.map(t => t.id)).to.include(Number(pm.collectionVariables.get(\"testId\"))));",
               "pm.test(\"Студент видит только опубликованные тесты\", () => list.forEach(t => pm.expect(t.published).to.eql(true)));"
             ]
           }
@@ -661,7 +819,7 @@
       }
     },
     {
-      "name": "14 Студент: начало прохождения",
+      "name": "16 Студент: начало прохождения",
       "event": [
         {
           "listen": "test",
@@ -709,7 +867,7 @@
       }
     },
     {
-      "name": "15 Студент: отправка ответов",
+      "name": "17 Студент: отправка ответов",
       "event": [
         {
           "listen": "test",
@@ -744,10 +902,6 @@
             "submit"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"answers\": [\n    {\n      \"questionId\": {{questionId}},\n      \"optionIds\": [\n        {{correctOptionId}}\n      ]\n    }\n  ]\n}"
-        },
         "auth": {
           "type": "basic",
           "basic": [
@@ -762,11 +916,15 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answers\": [\n    {\n      \"questionId\": {{questionId}},\n      \"optionIds\": [\n        {{correctOptionId}}\n      ]\n    }\n  ]\n}"
         }
       }
     },
     {
-      "name": "16 Студент: мои результаты",
+      "name": "18 Студент: мои результаты",
       "event": [
         {
           "listen": "test",
@@ -816,7 +974,54 @@
       }
     },
     {
-      "name": "17 Администратор: аналитический отчёт",
+      "name": "19 Студент: расписание своей группы",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));",
+              "const s = pm.response.json();",
+              "pm.test(\"Есть занятия и сессия\", () => { pm.expect(s.lessons).to.be.an(\"array\"); pm.expect(s.exams).to.be.an(\"array\"); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/schedule/groups/{{groupId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "schedule",
+            "groups",
+            "{{groupId}}"
+          ]
+        },
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{newUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{newPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "20 Администратор: аналитический отчёт",
       "event": [
         {
           "listen": "test",
@@ -868,7 +1073,7 @@
       }
     },
     {
-      "name": "18 Преподаватель: доступ к отчёту запрещён",
+      "name": "21 Преподаватель: доступ к отчёту запрещён",
       "event": [
         {
           "listen": "test",
@@ -912,7 +1117,7 @@
       }
     },
     {
-      "name": "19 Студент: создание теста запрещено",
+      "name": "22 Студент: создание теста запрещено",
       "event": [
         {
           "listen": "test",
@@ -942,10 +1147,6 @@
             "tests"
           ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"Попытка студента\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 5,\n  \"passingScore\": 50\n}"
-        },
         "auth": {
           "type": "basic",
           "basic": [
@@ -960,11 +1161,15 @@
               "type": "string"
             }
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Попытка студента\",\n  \"subjectId\": {{subjectId}},\n  \"timeLimitMinutes\": 5,\n  \"passingScore\": 50\n}"
         }
       }
     },
     {
-      "name": "20 Удаление теста",
+      "name": "23 Удаление теста",
       "event": [
         {
           "listen": "test",
@@ -1008,7 +1213,7 @@
       }
     },
     {
-      "name": "21 Удаление дисциплины",
+      "name": "24 Удаление дисциплины",
       "event": [
         {
           "listen": "test",
@@ -1058,16 +1263,16 @@
       "value": "http://localhost:8080"
     },
     {
-      "key": "teacherUser",
-      "value": "teacher"
-    },
-    {
       "key": "adminUser",
       "value": "admin"
     },
     {
       "key": "adminPassword",
       "value": ""
+    },
+    {
+      "key": "teacherUser",
+      "value": "kabilov.mm"
     },
     {
       "key": "teacherPassword",
@@ -1079,6 +1284,18 @@
     },
     {
       "key": "newPassword",
+      "value": ""
+    },
+    {
+      "key": "groupId",
+      "value": ""
+    },
+    {
+      "key": "groupName",
+      "value": ""
+    },
+    {
+      "key": "teacherId",
       "value": ""
     },
     {

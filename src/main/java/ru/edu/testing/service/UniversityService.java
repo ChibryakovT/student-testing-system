@@ -16,6 +16,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class UniversityService {
 
+    private final AuditService auditService;
     private final FacultyRepository facultyRepository;
     private final DepartmentRepository departmentRepository;
     private final StudyGroupRepository groupRepository;
@@ -25,7 +26,8 @@ public class UniversityService {
 
     public UniversityService(FacultyRepository facultyRepository, DepartmentRepository departmentRepository,
                              StudyGroupRepository groupRepository, CurriculumRepository curriculumRepository,
-                             SubjectRepository subjectRepository, UserRepository userRepository) {
+                             SubjectRepository subjectRepository, UserRepository userRepository, AuditService auditService) {
+        this.auditService = auditService;
         this.facultyRepository = facultyRepository;
         this.departmentRepository = departmentRepository;
         this.groupRepository = groupRepository;
@@ -94,6 +96,7 @@ public class UniversityService {
         }
         Faculty faculty = facultyId == null ? null : facultyRepository.findById(facultyId)
                 .orElseThrow(() -> new BusinessException("Факультет не найден"));
+        auditService.log("Группа создана", name.trim());
         return groupRepository.save(new StudyGroup(name.trim(), course, blankToNull(specialty), faculty));
     }
 
@@ -119,6 +122,8 @@ public class UniversityService {
         item.setTeacher(teacher);
         item.setSemester(semester);
         item.setControlForm(controlForm == null ? ControlForm.EXAM : controlForm);
+        auditService.log("Учебный план изменён", group.getName() + ": " + subject.getName() + " — "
+                + (teacher == null ? "без преподавателя" : teacher.getFullName()) + ", " + item.getControlForm().getTitle());
         try {
             return curriculumRepository.saveAndFlush(item);
         } catch (DataIntegrityViolationException e) {
@@ -131,6 +136,7 @@ public class UniversityService {
         CurriculumItem item = curriculumRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Строка учебного плана не найдена"));
         Long groupId = item.getGroup().getId();
+        auditService.log("Учебный план изменён", item.getGroup().getName() + ": убрана дисциплина " + item.getSubject().getName());
         curriculumRepository.delete(item);
         return groupId;
     }

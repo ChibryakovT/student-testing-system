@@ -354,3 +354,23 @@ tr[data-href]:hover td { background: #f4f7fe; }
 tr.past td { opacity: .55; }
 .today-list .list-group-item { display: flex; gap: .8rem; align-items: center; border: 0; border-bottom: 1px solid var(--line); }
 .today-list .pair-no { width: 2.2rem; text-align: center; }
+
+/* ---------- Аналитика по группам ---------- */
+.group-chart { display: grid; gap: .85rem; }
+.group-bar { display: grid; grid-template-columns: 64px 1fr 64px auto; align-items: center; gap: .75rem; }
+.group-name { font-weight: 700; }
+.group-track { height: 14px; border-radius: 99px; background: #e9edf5; overflow: hidden; }
+.group-fill { height: 100%; border-radius: 99px; transition: width 1.1s var(--ease); }
+.ranking .list-group-item { display: flex; align-items: center; gap: .75rem; border: 0; border-bottom: 1px solid var(--line); }
+.rank { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .85rem;
+  background: #eef2fb; color: #475569; flex-shrink: 0; }
+.rank.top1 { background: linear-gradient(135deg, #fde68a, #f59e0b); color: #fff; }
+.rank.top2 { background: linear-gradient(135deg, #e5e7eb, #9ca3af); color: #fff; }
+.rank.top3 { background: linear-gradient(135deg, #fcd5b5, #c2773a); color: #fff; }
+.import-card { border-style: dashed; }
+
+.side-user-link { display: flex; align-items: center; gap: .65rem; min-width: 0; flex: 1; color: inherit; text-decoration: none;
+  border-radius: 10px; padding: .2rem; margin: -.2rem; transition: background .2s var(--ease); }
+.side-user-link:hover { background: #eef2fb; }
+.profile-avatar { width: 72px; height: 72px; font-size: 1.8rem; display: grid !important;
+  background: linear-gradient(135deg, #3b6ef0, var(--accent)); color: #fff; }

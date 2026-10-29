@@ -30,6 +30,13 @@ public class TestForm {
 
     private boolean published;
 
+    /** Перемешивать вопросы и варианты ответа. */
+    private boolean shuffle;
+
+    @Min(value = 1, message = "Лимит попыток — от 1 до 20")
+    @Max(value = 20, message = "Лимит попыток — от 1 до 20")
+    private Integer maxAttempts;
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getDescription() { return description; }
@@ -42,4 +49,8 @@ public class TestForm {
     public void setPassingScore(Integer passingScore) { this.passingScore = passingScore; }
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
+    public boolean isShuffle() { return shuffle; }
+    public void setShuffle(boolean shuffle) { this.shuffle = shuffle; }
+    public Integer getMaxAttempts() { return maxAttempts; }
+    public void setMaxAttempts(Integer maxAttempts) { this.maxAttempts = maxAttempts; }
 }

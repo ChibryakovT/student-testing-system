@@ -45,6 +45,51 @@
         <button class="btn btn-primary" type="submit">Показать</button>
     </form>
 
+    <div class="row g-3 mb-4">
+        <div class="col-lg-7 reveal">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-bar-chart-steps me-2 text-primary"></i>Сравнение групп
+                    <span class="text-muted fw-normal small" th:text="${subjectId == null} ? '— все дисциплины' : '— выбранная дисциплина'"></span></div>
+                <div class="card-body group-chart">
+                    <div class="group-bar" th:each="g, st : ${groupRows}">
+                        <span class="group-name" th:text="${g.group}">2 ПИА</span>
+                        <div class="group-track">
+                            <div class="progress-bar group-fill" th:style="'width:' + ${#numbers.formatDecimal(g.averagePercent, 1, 1, 'POINT')} + '%'"
+                                 th:classappend="${g.averagePercent >= 75} ? 'bg-success' : (${g.averagePercent >= 50} ? 'bg-warning' : 'bg-danger')"></div>
+                        </div>
+                        <span class="pct" th:text="${#numbers.formatDecimal(g.averagePercent, 1, 1, 'COMMA')} + ' %'">70 %</span>
+                        <span class="small text-muted text-nowrap" th:text="'сдали ' + ${g.passRate()} + ' % · ' + ${g.attempts} + ' поп.'">сдали</span>
+                    </div>
+                    <div class="empty-state py-3" th:if="${#lists.isEmpty(groupRows)}"><i class="bi bi-bar-chart"></i>Нет данных</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5 reveal" style="--delay:60ms">
+            <div class="card h-100">
+                <div class="card-header fw-semibold d-flex justify-content-between align-items-center gap-2">
+                    <span><i class="bi bi-trophy me-2 text-primary"></i>Рейтинг студентов</span>
+                    <form method="get" th:action="@{/reports}" class="m-0">
+                        <input type="hidden" name="subjectId" th:value="${subjectId}">
+                        <input type="hidden" name="testId" th:value="${testId}">
+                        <select class="form-select form-select-sm" name="rankGroupId" data-autosubmit-simple aria-label="Группа">
+                            <option value="">Все группы</option>
+                            <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}" th:selected="${g.id == rankGroupId}"></option>
+                        </select>
+                    </form>
+                </div>
+                <ol class="list-group list-group-flush ranking">
+                    <li class="list-group-item" th:each="r, st : ${ranking}">
+                        <span class="rank" th:classappend="${st.index < 3} ? 'top' + ${st.count}" th:text="${st.count}">1</span>
+                        <span class="flex-grow-1 text-truncate"><span class="fw-semibold" th:text="${r.fullName}">ФИО</span>
+                            <span class="d-block small text-muted" th:text="${r.group} + ' · тестов: ' + ${r.attempts} + ' · лучший ' + ${r.bestPercent} + ' %'">группа</span></span>
+                        <span class="fw-bold" th:text="${#numbers.formatDecimal(r.averagePercent, 1, 1, 'COMMA')} + ' %'">90 %</span>
+                    </li>
+                </ol>
+                <div class="empty-state py-3" th:if="${#lists.isEmpty(ranking)}"><i class="bi bi-trophy"></i>Нет данных</div>
+            </div>
+        </div>
+    </div>
+
     <div class="card mb-4 reveal">
         <div class="card-header fw-semibold"><i class="bi bi-table me-2 text-primary"></i>Успеваемость по тестам</div>
         <div class="table-responsive">

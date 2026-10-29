@@ -174,6 +174,8 @@ public class UniversitySeeder {
                 questionService.add(test.getId(), question(q), me);
             }
             test.setPublished(true);
+            test.setShuffle(true);
+            test.setMaxAttempts(3);
             testsBySubject.computeIfAbsent(t.subject(), k -> new ArrayList<>()).add(test);
         }
 
