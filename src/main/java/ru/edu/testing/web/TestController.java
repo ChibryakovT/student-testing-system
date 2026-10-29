@@ -39,6 +39,10 @@ public class TestController {
         model.addAttribute("tests", testService.search(q, subjectId, sort, me));
         model.addAttribute("subjects", testService.subjectsFor(me));
         model.addAttribute("forms", testService.controlForms(me));
+        if (me.isStudent()) {
+            model.addAttribute("best", TestStatus.bestPercent(
+                    attemptService.search(null, null, null, null, null, "date", me)));
+        }
         model.addAttribute("q", q);
         model.addAttribute("subjectId", subjectId);
         model.addAttribute("sort", sort);

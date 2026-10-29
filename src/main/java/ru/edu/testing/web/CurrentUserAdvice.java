@@ -18,6 +18,12 @@ public class CurrentUserAdvice {
         return me;
     }
 
+    /** Полный путь страницы (без контекста) — для подсветки подпунктов меню. */
+    @ModelAttribute("path")
+    public String path(HttpServletRequest request) {
+        return request.getRequestURI().substring(request.getContextPath().length());
+    }
+
     /** Текущий раздел сайта — для подсветки пункта меню. */
     @ModelAttribute("section")
     public String section(HttpServletRequest request) {

@@ -10,53 +10,35 @@
     <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark app-navbar" th:if="${me != null}">
-    <div class="container">
-        <a class="navbar-brand" th:href="@{/}">
-            <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
-            <span>ЭСТ <span class="fw-normal opacity-75">· РТСУ</span></span>
-        </a>
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
-                aria-label="Меню">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="nav">
-            <ul class="navbar-nav me-auto ms-lg-3 gap-lg-1">
-                <li class="nav-item"><a class="nav-link" th:classappend="${section == ''} ? 'active'" th:href="@{/}">
-                    <i class="bi bi-house"></i>Главная</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${section == 'tests'} ? 'active'" th:href="@{/tests}">
-                    <i class="bi bi-journal-check"></i>Тесты</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${section == 'attempts'} ? 'active'" th:href="@{/attempts}">
-                    <i class="bi bi-bar-chart-line"></i><span th:text="${me.student} ? 'Мои результаты' : 'Результаты'">Результаты</span></a></li>
-                <li class="nav-item" th:if="${me.staff}"><a class="nav-link" th:classappend="${section == 'subjects'} ? 'active'" th:href="@{/subjects}">
-                    <i class="bi bi-book"></i>Дисциплины</a></li>
-                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'reports'} ? 'active'" th:href="@{/reports}">
-                    <i class="bi bi-graph-up-arrow"></i>Отчёты</a></li>
-                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'structure'} ? 'active'" th:href="@{/structure}">
-                    <i class="bi bi-diagram-3"></i>Структура</a></li>
-                <li class="nav-item" th:if="${me.admin}"><a class="nav-link" th:classappend="${section == 'users'} ? 'active'" th:href="@{/users}">
-                    <i class="bi bi-people"></i>Пользователи</a></li>
-            </ul>
-            <div class="d-flex align-items-center gap-3 mt-2 mt-lg-0">
-                <div class="user-chip">
-                    <span class="user-avatar" th:text="${#strings.substring(me.fullName, 0, 1)}" th:title="${me.fullName}">И</span>
-                    <span class="flex-column lh-sm" th:classappend="${me.admin} ? 'd-flex d-lg-none d-xxl-flex' : 'd-flex d-lg-none d-xl-flex'">
-                        <span class="user-name" th:text="${me.fullName}" th:title="${me.fullName}">Пользователь</span>
-                        <span class="small opacity-75" th:text="${me.role.title}">роль</span>
-                    </span>
-                </div>
-                <form th:action="@{/logout}" method="post">
-                    <button class="btn btn-sm btn-glass" type="submit" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
-                </form>
-            </div>
-        </div>
-    </div>
-</nav>
+<body th:classappend="${me != null} ? 'with-sidebar'">
 
-<main class="container py-4 page-enter">
-    <th:block th:replace="${content}"></th:block>
-</main>
+<th:block th:if="${me != null}">
+    <!-- Компьютер: постоянное меню слева -->
+    <aside class="sidebar d-none d-lg-flex">
+        <div th:replace="~{fragments/nav :: nav}"></div>
+    </aside>
+    <!-- Телефон: верхняя полоса и выезжающее меню -->
+    <header class="topbar d-lg-none">
+        <button class="btn btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-label="Меню">
+            <i class="bi bi-list fs-5"></i></button>
+        <a class="d-flex align-items-center gap-2 text-decoration-none text-reset fw-bold" th:href="@{/}">
+            <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>ЭСТ · РТСУ</a>
+        <span style="width:42px"></span>
+    </header>
+    <div class="offcanvas offcanvas-start sidebar-offcanvas" tabindex="-1" id="mobileNav">
+        <div th:replace="~{fragments/nav :: nav}"></div>
+    </div>
+</th:block>
+
+<div class="app-main">
+    <main class="app-content page-enter" th:classappend="${me == null} ? 'container py-4'">
+        <th:block th:replace="${content}"></th:block>
+    </main>
+    <footer class="app-footer">
+        <span><i class="bi bi-mortarboard me-1"></i>Электронная система тестирования студентов · РТСУ</span>
+        <a th:href="@{/credits}"><i class="bi bi-camera me-1"></i>Фото и лицензии</a>
+    </footer>
+</div>
 
 <div class="toast-stack" aria-live="polite">
     <div class="toast-msg" th:if="${success}" data-autohide>
@@ -66,13 +48,6 @@
         <i class="bi bi-exclamation-triangle-fill"></i><div th:text="${errorMessage}">ошибка</div>
     </div>
 </div>
-
-<footer class="app-footer py-3 mt-4">
-    <div class="container d-flex flex-wrap justify-content-between gap-2 small text-muted">
-        <span><i class="bi bi-mortarboard me-1"></i>Электронная система тестирования студентов · РТСУ</span>
-        <a th:href="@{/credits}"><i class="bi bi-camera me-1"></i>Фото: Wikimedia Commons — авторы и лицензии</a>
-    </div>
-</footer>
 
 <script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/app.js}"></script>

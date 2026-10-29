@@ -4,7 +4,7 @@
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Высота шапки — для закреплённой панели таймера
-    var nav = document.querySelector('.app-navbar');
+    var nav = document.querySelector('.topbar');
     var setNavHeight = function () {
         if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
     };
@@ -36,6 +36,13 @@
         // при возврате кнопкой «Назад» страница не должна остаться прозрачной
         window.addEventListener('pageshow', function () { document.body.classList.remove('page-leaving'); });
     }
+
+    // ---------- Кликабельные строки таблиц: вся строка ведёт на подробную страницу ----------
+    document.addEventListener('click', function (e) {
+        var row = e.target.closest('tr[data-href]');
+        if (!row || e.target.closest('a, button, form, input, select, label')) return;
+        location.href = row.getAttribute('data-href');
+    });
 
     // ---------- Счётчики: число «досчитывает» до значения ----------
     function countUp(el) {

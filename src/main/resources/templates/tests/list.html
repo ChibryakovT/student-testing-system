@@ -4,8 +4,10 @@
 <head><title>Тесты — ЭСТ</title></head>
 <body>
 <section>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0 page-title"><i class="bi bi-journal-check"></i>Каталог тестов</h1>
+    <div class="page-head">
+        <div><h1 class="h3 page-title"><i class="bi bi-journal-check"></i><span th:text="${me.student} ? 'Тесты' : (${me.admin} ? 'Все тесты' : 'Мои тесты')">Тесты</span></h1>
+            <p class="subtitle" th:text="${me.student} ? 'Тесты по дисциплинам вашей группы — нажмите на карточку, чтобы начать'
+                : (${me.admin} ? 'Тесты всех преподавателей' : 'Ваши тесты и тесты по дисциплинам, которые вы ведёте')">подсказка</p></div>
         <a class="btn btn-primary" th:href="@{/tests/new}" th:if="${me.staff}"><i class="bi bi-plus-lg me-1"></i>Создать тест</a>
     </div>
 
@@ -56,6 +58,12 @@
                 <div class="card-body d-flex flex-column">
                     <h2 class="h5 mb-1" th:text="${t.title}">Название</h2>
                     <p class="text-muted small flex-grow-1 mb-3" th:text="${t.description}">описание</p>
+                    <div class="mb-2" th:if="${me.student}">
+                        <span th:if="${best[t.id] == null}" class="status-chip todo"><i class="bi bi-circle"></i>Не проходили</span>
+                        <span th:if="${best[t.id] != null}" class="status-chip" th:classappend="${best[t.id] >= t.passingScore} ? 'done' : 'low'">
+                            <i class="bi" th:classappend="${best[t.id] >= t.passingScore} ? 'bi-check-circle-fill' : 'bi-exclamation-circle'"></i>
+                            <span th:text="'Лучший: ' + ${best[t.id]} + ' %'">83 %</span></span>
+                    </div>
                     <div class="test-meta">
                         <span><i class="bi bi-question-circle"></i><span th:text="${#lists.size(t.questions)} + ' вопр.'">0</span></span>
                         <span><i class="bi bi-stopwatch"></i><span th:text="${t.timeLimitMinutes} + ' мин'">0</span></span>

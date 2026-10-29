@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Боковое меню: у каждой роли только свои пункты, сгруппированные по смыслу -->
+<nav th:fragment="nav" class="side-nav">
+    <a class="side-brand" th:href="@{/}">
+        <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+        <span class="lh-sm"><span class="d-block fw-bold">ЭСТ · РТСУ</span>
+            <span class="d-block small text-muted">Система тестирования</span></span>
+    </a>
+
+    <div class="side-scroll">
+        <a class="side-link" th:classappend="${section == ''} ? 'active'" th:href="@{/}">
+            <i class="bi bi-house-door"></i><span>Главная</span></a>
+
+        <!-- Студент -->
+        <th:block th:if="${me.student}">
+            <div class="side-section">Учёба</div>
+            <a class="side-link" th:classappend="${section == 'tests'} ? 'active'" th:href="@{/tests}">
+                <i class="bi bi-journal-check"></i><span>Тесты</span></a>
+            <a class="side-link" th:classappend="${section == 'attempts'} ? 'active'" th:href="@{/attempts}">
+                <i class="bi bi-bar-chart-line"></i><span>Мои результаты</span></a>
+        </th:block>
+
+        <!-- Преподаватель и администратор -->
+        <th:block th:if="${me.staff}">
+            <div class="side-section">Учебный процесс</div>
+            <a class="side-link" th:classappend="${section == 'tests' or section == 'questions'} ? 'active'" th:href="@{/tests}">
+                <i class="bi bi-journal-check"></i><span th:text="${me.admin} ? 'Тесты' : 'Мои тесты'">Тесты</span></a>
+            <a class="side-link" th:classappend="${section == 'attempts'} ? 'active'" th:href="@{/attempts}">
+                <i class="bi bi-bar-chart-line"></i><span>Результаты</span></a>
+            <a class="side-link" th:if="${!me.admin}" th:classappend="${section == 'subjects'} ? 'active'" th:href="@{/subjects}">
+                <i class="bi bi-book"></i><span>Дисциплины</span></a>
+        </th:block>
+
+        <th:block th:if="${me.admin}">
+            <div class="side-section">Аналитика</div>
+            <a class="side-link" th:classappend="${section == 'reports' and !#strings.startsWith(path, '/reports/sheet')} ? 'active'" th:href="@{/reports}">
+                <i class="bi bi-graph-up-arrow"></i><span>Отчёт</span></a>
+            <a class="side-link" th:classappend="${#strings.startsWith(path, '/reports/sheet')} ? 'active'" th:href="@{/reports/sheet}">
+                <i class="bi bi-file-earmark-spreadsheet"></i><span>Ведомость</span></a>
+
+            <div class="side-section">Управление</div>
+            <a class="side-link" th:classappend="${section == 'structure'} ? 'active'" th:href="@{/structure}">
+                <i class="bi bi-diagram-3"></i><span>Группы и учебный план</span></a>
+            <a class="side-link" th:classappend="${section == 'subjects'} ? 'active'" th:href="@{/subjects}">
+                <i class="bi bi-book"></i><span>Дисциплины</span></a>
+            <a class="side-link" th:classappend="${section == 'users'} ? 'active'" th:href="@{/users}">
+                <i class="bi bi-people"></i><span>Пользователи</span></a>
+        </th:block>
+    </div>
+
+    <div class="side-user">
+        <span class="user-avatar" th:text="${#strings.substring(me.fullName, 0, 1)}">И</span>
+        <span class="side-user-text">
+            <span class="d-block fw-semibold text-truncate" th:text="${me.fullName}" th:title="${me.fullName}">Пользователь</span>
+            <span class="d-block small text-muted" th:text="${me.role.title}">роль</span>
+        </span>
+        <form th:action="@{/logout}" method="post">
+            <button class="btn btn-sm btn-light" type="submit" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
+        </form>
+    </div>
+</nav>
+</body>
+</html>
