@@ -8,9 +8,9 @@
         <h1 class="h3 mb-0 page-title"><i class="bi bi-book"></i>Справочник дисциплин</h1>
         <a class="btn btn-primary" th:href="@{/subjects/new}"><i class="bi bi-plus-lg me-1"></i>Добавить</a>
     </div>
-    <form class="d-flex gap-2 mb-3" method="get" th:action="@{/subjects}">
+    <form class="d-flex flex-wrap gap-2 mb-3 search-row" method="get" th:action="@{/subjects}">
         <input class="form-control" name="q" th:value="${q}" placeholder="Поиск по названию">
-        <select class="form-select w-auto" name="departmentId" aria-label="Кафедра">
+        <select class="form-select" name="departmentId" aria-label="Кафедра">
             <option value="">Все кафедры</option>
             <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}" th:selected="${d.id == departmentId}"></option>
         </select>
@@ -18,13 +18,19 @@
     </form>
     <div class="table-responsive card reveal">
         <table class="table table-hover mb-0 align-middle">
-            <thead><tr><th>ID</th><th>Название</th><th>Кафедра</th><th>Описание</th><th></th></tr></thead>
+            <thead><tr><th>ID</th><th>Название</th><th>Кафедра</th><th>Преподаватели по группам</th><th></th></tr></thead>
             <tbody>
             <tr th:each="s : ${subjects}">
                 <td th:text="${s.id}">1</td>
                 <td class="fw-semibold" th:text="${s.name}">название</td>
                 <td class="small text-muted" th:text="${s.department != null} ? ${s.department.name} : '—'">кафедра</td>
-                <td class="text-muted" th:text="${s.description}">описание</td>
+                <td class="subject-teachers" th:with="tm=${teachersBySubject[s.id]}">
+                    <div th:if="${tm != null}" th:each="e : ${tm}" class="mb-1">
+                        <span class="fw-semibold" th:classappend="${e.key == 'не назначен'} ? 'text-danger'" th:text="${e.key}">преподаватель</span>
+                        <span class="badge text-bg-light" th:each="g : ${e.value}" th:text="${g}">группа</span>
+                    </div>
+                    <span th:if="${tm == null}" class="small text-muted">не входит в учебный план</span>
+                </td>
                 <td class="text-nowrap">
                     <a class="btn btn-sm btn-outline-secondary" th:href="@{/subjects/{id}/edit(id=${s.id})}"><i class="bi bi-pencil"></i> Изменить</a>
                     <form class="d-inline" th:action="@{/subjects/{id}/delete(id=${s.id})}" method="post" data-confirm="Удалить дисциплину?">

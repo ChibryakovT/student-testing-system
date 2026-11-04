@@ -35,6 +35,19 @@ public interface CurriculumRepository extends JpaRepository<CurriculumItem, Long
     @Query("select distinct c.subject from CurriculumItem c where c.teacher.id = :teacherId order by c.subject.name")
     List<Subject> findSubjectsTaughtBy(@Param("teacherId") Long teacherId);
 
+    /** Весь учебный план с группами и преподавателями — для справочника дисциплин. */
+    @Query("""
+            select c from CurriculumItem c join fetch c.group g join fetch c.subject s left join fetch c.teacher
+            order by s.name, g.course, g.name
+            """)
+    List<CurriculumItem> findAllWithDetails();
+
+    @Query("""
+            select c from CurriculumItem c join fetch c.group g left join fetch c.teacher
+            where c.subject.id = :subjectId order by g.course, g.name
+            """)
+    List<CurriculumItem> findBySubject(@Param("subjectId") Long subjectId);
+
     boolean existsByTeacherIdAndSubjectId(Long teacherId, Long subjectId);
 
     boolean existsByTeacherIdAndGroupIdAndSubjectId(Long teacherId, Long groupId, Long subjectId);

@@ -43,6 +43,12 @@ public class ScheduleController {
                            @RequestParam(required = false) Long editLesson,
                            @AuthenticationPrincipal AppUserDetails me, Model model) {
         List<StudyGroup> groups = universityService.groups();
+        // Преподаватель видит только свои занятия и экзамены — выбор других групп и преподавателей ему недоступен
+        boolean teacherOnly = me.isStaff() && !me.isAdmin();
+        if (teacherOnly) {
+            groupId = null;
+            teacherId = me.getId();
+        }
         // По умолчанию: студент — своя группа, преподаватель — свои занятия, администратор — первая группа
         if (groupId == null && teacherId == null) {
             if (me.isStudent()) {
@@ -89,6 +95,7 @@ public class ScheduleController {
         model.addAttribute("exams", exams);
         model.addAttribute("today", today);
         model.addAttribute("byTeacher", teacherId != null);
+        model.addAttribute("teacherOnly", teacherOnly);
         if (me.isAdmin()) {
             model.addAttribute("subjects", universityService.subjects());
             model.addAttribute("weekTypes", WeekType.values());

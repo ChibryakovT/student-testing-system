@@ -374,3 +374,19 @@ tr.past td { opacity: .55; }
 .side-user-link:hover { background: #eef2fb; }
 .profile-avatar { width: 72px; height: 72px; font-size: 1.8rem; display: grid !important;
   background: linear-gradient(135deg, #3b6ef0, var(--accent)); color: #fff; }
+
+.subject-teachers { font-size: .85rem; min-width: 260px; }
+.subject-teachers .badge { font-weight: 600; margin-right: .15rem; }
+.search-row > .form-control { flex: 1 1 220px; }
+.search-row > .form-select { flex: 1 1 200px; width: auto; }
+@media (max-width: 575.98px) {
+  .page-head { flex-direction: column; align-items: stretch; }
+  .page-head > form, .page-head > .btn, .page-head > a.btn { width: 100%; }
+}
+/* Телефон: выпадающие списки и ряды кнопок не выходят за экран */
+.form-select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+@media (max-width: 575.98px) {
+  .form-select.w-auto { width: 100% !important; }
+  .app-content .d-flex.gap-2, .app-content .d-flex.gap-3 { flex-wrap: wrap; }
+  .app-content .d-flex.justify-content-between { flex-wrap: wrap; gap: .75rem; }
+}

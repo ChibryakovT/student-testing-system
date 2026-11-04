@@ -6,7 +6,7 @@
 <section>
     <div class="page-head">
         <div>
-            <h1 class="h3 page-title"><i class="bi bi-calendar-week"></i><span th:text="${heading}">Расписание</span></h1>
+            <h1 class="h3 page-title"><i class="bi bi-calendar-week"></i><span th:text="${teacherOnly} ? 'Моё расписание' : ${heading}">Расписание</span></h1>
             <p class="subtitle">
                 Сейчас <span class="badge week-badge" th:classappend="${numerator} ? 'num' : 'den'"
                              th:text="${numerator} ? 'числитель' : 'знаменатель'">числитель</span>
@@ -14,7 +14,7 @@
             </p>
         </div>
         <!-- Выбор: любая группа или преподаватель -->
-        <form class="d-flex flex-wrap gap-2" method="get" th:action="@{/schedule}">
+        <form class="d-flex flex-wrap gap-2" method="get" th:action="@{/schedule}" th:if="${!teacherOnly}">
             <input type="hidden" name="tab" th:value="${tab}">
             <select class="form-select w-auto" name="groupId" data-autosubmit-simple aria-label="Группа">
                 <option value="">Группа…</option>

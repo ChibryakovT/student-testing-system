@@ -23,6 +23,11 @@ rectangle "Электронная система тестирования" {
   usecase "Просмотр результатов студентов\n(фильтрация, сортировка)" as UC9
   usecase "Аналитический отчёт\nи выгрузка CSV" as UC10
   usecase "Управление пользователями" as UC11
+  usecase "Просмотр расписания\nзанятий и сессии" as UC13
+  usecase "Изменение расписания\nи учебного плана" as UC14
+  usecase "Ведомость группы\n(печать, CSV, Excel)" as UC15
+  usecase "Импорт вопросов\nиз Excel" as UC16
+  usecase "Журнал действий" as UC17
   usecase "Подсчёт баллов" as UC12
 }
 G --> UC1
@@ -37,6 +42,12 @@ T --> UC8
 T --> UC9
 A --> UC10
 A --> UC11
+S --> UC13
+T --> UC13
+A --> UC14
+A --> UC15
+A --> UC17
+T --> UC16
 UC4 ..> UC12 : <<include>>
 UC7 ..> UC6 : <<extend>>
 @enduml

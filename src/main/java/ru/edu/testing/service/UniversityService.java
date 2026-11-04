@@ -9,7 +9,7 @@ import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.exception.NotFoundException;
 import ru.edu.testing.repository.*;
 
-import java.util.List;
+import java.util.*;
 
 /** Структура вуза и учебный план: факультеты, кафедры, группы, дисциплины групп и их преподаватели. */
 @Service
@@ -72,6 +72,40 @@ public class UniversityService {
     /** Нагрузка преподавателя: какие дисциплины в каких группах он ведёт. */
     public List<CurriculumItem> teacherLoad(Long teacherId) {
         return curriculumRepository.findByTeacher(teacherId);
+    }
+
+    /**
+     * Преподаватели каждой дисциплины по учебному плану: дисциплина → (преподаватель → группы).
+     * Для колонки «Преподаватели» в справочнике дисциплин.
+     */
+    public Map<Long, Map<String, List<String>>> teachersBySubject() {
+        Map<Long, Map<String, List<String>>> result = new HashMap<>();
+        for (CurriculumItem c : curriculumRepository.findAllWithDetails()) {
+            String teacher = c.getTeacher() == null ? "не назначен" : c.getTeacher().getFullName();
+            result.computeIfAbsent(c.getSubject().getId(), k -> new LinkedHashMap<>())
+                    .computeIfAbsent(teacher, k -> new ArrayList<>()).add(c.getGroup().getName());
+        }
+        return result;
+    }
+
+    public List<CurriculumItem> planOfSubject(Long subjectId) {
+        return curriculumRepository.findBySubject(subjectId);
+    }
+
+    /** Сменить преподавателя дисциплины у одной группы (строка плана) или у всех групп сразу (planId = null). */
+    @Transactional
+    public int assignTeacher(Long subjectId, Long planId, Long teacherId) {
+        int changed = 0;
+        for (CurriculumItem c : curriculumRepository.findBySubject(subjectId)) {
+            if (planId == null || c.getId().equals(planId)) {
+                savePlanItem(c.getGroup().getId(), subjectId, teacherId, c.getSemester(), c.getControlForm());
+                changed++;
+            }
+        }
+        if (changed == 0) {
+            throw new BusinessException("Дисциплина не входит в учебный план ни одной группы");
+        }
+        return changed;
     }
 
     public List<StudyGroup> groupsOfTeacher(Long teacherId) {

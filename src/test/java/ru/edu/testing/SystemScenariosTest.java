@@ -533,6 +533,35 @@ class SystemScenariosTest {
                 .andExpect(content().string(containsString("Пользователь " + student)));
     }
 
+    @Test
+    @DisplayName("33. Дисциплины: администратор меняет преподавателя группы, преподаватель — нет; расписание преподавателя только своё")
+    void assignTeacherAndOwnSchedule() throws Exception {
+        long subjectId = createSubject();   // в плане группы groupId, ведёт teacher
+        String other = createUser("TEACHER");
+        String plan = api(get("/api/groups/" + groupId + "/curriculum"), ADMIN, null).andReturn().getResponse().getContentAsString();
+        long planId = -1;
+        for (JsonNode c : json.readTree(plan)) {
+            if (c.get("subjectId").asLong() == subjectId) {
+                planId = c.get("id").asLong();
+            }
+        }
+        // Преподаватель не может переназначить дисциплину
+        mvc.perform(post("/subjects/" + subjectId + "/teachers").session(login(teacher, PASS)).with(csrf())
+                        .param("planId", String.valueOf(planId)).param("teacherId", String.valueOf(userIds.get(other))))
+                .andExpect(status().isForbidden());
+        // Администратор назначает другого преподавателя — меняется учебный план
+        mvc.perform(post("/subjects/" + subjectId + "/teachers").session(login(ADMIN, ADMIN_PASS)).with(csrf())
+                        .param("planId", String.valueOf(planId)).param("teacherId", String.valueOf(userIds.get(other))))
+                .andExpect(redirectedUrl("/subjects/" + subjectId + "/edit#teachers"));
+        api(get("/api/groups/" + groupId + "/curriculum"), ADMIN, null)
+                .andExpect(jsonPath("$[?(@.subjectId == " + subjectId + ")].teacherId").value(contains(userIds.get(other).intValue())));
+        // Расписание преподавателя: параметр чужой группы игнорируется, показывается «Моё расписание»
+        mvc.perform(get("/schedule").param("groupId", String.valueOf(groupId)).session(login(other, PASS)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Моё расписание")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("name=\"groupId\""))));
+    }
+
     // ---------- Вспомогательные методы ----------
 
     private ResultActions api(MockHttpServletRequestBuilder request, String user, Object body) throws Exception {

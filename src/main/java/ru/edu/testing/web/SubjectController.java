@@ -29,6 +29,7 @@ public class SubjectController {
     public String list(@RequestParam(required = false) String q,
                        @RequestParam(required = false) Long departmentId, Model model) {
         model.addAttribute("subjects", subjectService.findAll(q, departmentId));
+        model.addAttribute("teachersBySubject", universityService.teachersBySubject());
         model.addAttribute("q", q);
         model.addAttribute("departmentId", departmentId);
         model.addAttribute("departments", universityService.departments());
@@ -70,6 +71,8 @@ public class SubjectController {
         form.setDepartmentId(subject.getDepartment() == null ? null : subject.getDepartment().getId());
         model.addAttribute("form", form);
         model.addAttribute("subjectId", id);
+        model.addAttribute("plan", universityService.planOfSubject(id));
+        model.addAttribute("teachers", universityService.teachers());
         model.addAttribute("departments", universityService.departments());
         return "subjects/form";
     }
@@ -101,5 +104,19 @@ public class SubjectController {
             redirect.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/subjects";
+    }
+
+    /** Назначить преподавателя дисциплины группе (planId) или всем группам. Доступ: администратор. */
+    @PostMapping("/{id}/teachers")
+    public String assignTeacher(@PathVariable Long id, @RequestParam(required = false) Long planId,
+                                @RequestParam(required = false) Long teacherId, RedirectAttributes redirect) {
+        try {
+            int changed = universityService.assignTeacher(id, planId, teacherId);
+            redirect.addFlashAttribute("success", changed == 1 ? "Преподаватель назначен"
+                    : "Преподаватель назначен всем группам: " + changed);
+        } catch (BusinessException e) {
+            redirect.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/subjects/" + id + "/edit#teachers";
     }
 }

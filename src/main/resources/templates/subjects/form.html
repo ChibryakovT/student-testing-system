@@ -33,6 +33,47 @@
             <a class="btn btn-outline-secondary" th:href="@{/subjects}">Отмена</a>
         </div>
     </form>
+
+    <!-- Кто ведёт дисциплину по группам (учебный план). Менять может только администратор. -->
+    <div class="card mt-4 reveal" id="teachers" th:if="${subjectId != null}">
+        <div class="card-header"><i class="bi bi-person-badge me-2 text-primary"></i>Кто ведёт дисциплину по группам</div>
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead><tr><th>Группа</th><th>Семестр</th><th>Форма контроля</th><th>Преподаватель</th></tr></thead>
+                <tbody>
+                <tr th:each="c : ${plan}">
+                    <td><span class="badge text-bg-light" th:text="${c.group.name}">2 ПИА</span></td>
+                    <td th:text="${c.semester}">3</td>
+                    <td class="small" th:text="${c.controlForm.title}">экзамен</td>
+                    <td>
+                        <span th:if="${!me.admin}" th:text="${c.teacher != null} ? ${c.teacher.fullName} : 'не назначен'">преподаватель</span>
+                        <form th:if="${me.admin}" class="d-flex gap-2" method="post" th:action="@{/subjects/{id}/teachers(id=${subjectId})}">
+                            <input type="hidden" name="planId" th:value="${c.id}">
+                            <select class="form-select form-select-sm" name="teacherId" aria-label="Преподаватель">
+                                <option value="">не назначен</option>
+                                <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"
+                                        th:selected="${c.teacher != null and c.teacher.id == t.id}"></option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" type="submit" title="Сохранить"><i class="bi bi-check2"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" th:if="${#lists.isEmpty(plan)}"><i class="bi bi-journal-x"></i>Дисциплина пока не входит в учебный план ни одной группы.
+                Добавить её группе можно в разделе «Группы и учебный план».</div>
+        </div>
+        <form class="card-body border-top d-flex flex-wrap gap-2 align-items-center" method="post"
+              th:if="${me.admin and !#lists.isEmpty(plan)}" th:action="@{/subjects/{id}/teachers(id=${subjectId})}">
+            <span class="small fw-semibold me-1">Назначить одного преподавателя всем группам:</span>
+            <select class="form-select form-select-sm w-auto" name="teacherId" required aria-label="Преподаватель">
+                <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"></option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary" type="submit" data-confirm="Назначить выбранного преподавателя всем группам?">
+                <i class="bi bi-people me-1"></i>Всем группам</button>
+        </form>
+        <div class="card-body pt-0 small text-muted">Изменение сразу попадает в учебный план: ведомость, сессия и доступ преподавателя к тестам и результатам обновятся автоматически.</div>
+    </div>
 </section>
 </body>
 </html>

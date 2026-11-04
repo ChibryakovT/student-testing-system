@@ -5,85 +5,125 @@ hide circle
 skinparam linetype ortho
 title ER-диаграмма базы данных testing_system
 
+entity faculties {
+  * id : BIGINT <<PK>>
+  --
+  * name : VARCHAR(150) <<UQ>>
+}
+entity departments {
+  * id : BIGINT <<PK>>
+  --
+  * name : VARCHAR(200) <<UQ>>
+  * faculty_id : BIGINT <<FK>>
+}
+entity study_groups {
+  * id : BIGINT <<PK>>
+  --
+  * name : VARCHAR(30) <<UQ>>
+  course : INTEGER
+  specialty : VARCHAR(150)
+  faculty_id : BIGINT <<FK>>
+}
 entity users {
   * id : BIGINT <<PK>>
   --
-  * username : VARCHAR(50) <<UQ>>
-  * password_hash : VARCHAR(100)
-  * full_name : VARCHAR(150)
-  * email : VARCHAR(150) <<UQ>>
-  * role : VARCHAR(20)
-  group_name : VARCHAR(30)
+  * username, password_hash, full_name, email, role
+  group_id : BIGINT <<FK>>
+  department_id : BIGINT <<FK>>
   record_book : VARCHAR(20)
   * enabled : BOOLEAN
-  * created_at : TIMESTAMP
 }
 entity subjects {
   * id : BIGINT <<PK>>
   --
   * name : VARCHAR(100) <<UQ>>
-  description : VARCHAR(500)
+  department_id : BIGINT <<FK>>
+}
+entity curriculum {
+  * id : BIGINT <<PK>>
+  --
+  * group_id, subject_id <<FK, UQ>>
+  teacher_id : BIGINT <<FK>>
+  semester : INTEGER
   * control_form : VARCHAR(20)
+}
+entity lessons {
+  * id : BIGINT <<PK>>
+  --
+  * group_id <<FK>>
+  * day_of_week, pair_no, week_type
+  subject_id <<FK>> / title
+  teacher_id, co_teacher_id <<FK>>
+  room : VARCHAR(30)
+}
+entity exams {
+  * id : BIGINT <<PK>>
+  --
+  * curriculum_id <<FK, UQ>>
+  * exam_date : DATE
+  start_time : TIME
+  room : VARCHAR(30)
 }
 entity tests {
   * id : BIGINT <<PK>>
   --
-  * subject_id : BIGINT <<FK>>
-  * author_id : BIGINT <<FK>>
-  * title : VARCHAR(200)
-  description : VARCHAR(1000)
-  * time_limit_minutes : INTEGER
-  * passing_score : INTEGER
-  * published : BOOLEAN
-  * created_at, updated_at : TIMESTAMP
+  * subject_id, author_id <<FK>>
+  * title, time_limit_minutes, passing_score
+  * published, shuffle : BOOLEAN
+  max_attempts : INTEGER
 }
 entity questions {
   * id : BIGINT <<PK>>
   --
-  * test_id : BIGINT <<FK>>
-  * text : VARCHAR(1000)
-  * type : VARCHAR(20)
-  * points : INTEGER
-  * position : INTEGER
+  * test_id <<FK>>
+  * text, type, points, position
 }
 entity answer_options {
   * id : BIGINT <<PK>>
   --
-  * question_id : BIGINT <<FK>>
-  * text : VARCHAR(500)
-  * correct : BOOLEAN
-  * position : INTEGER
+  * question_id <<FK>>
+  * text, correct, position
 }
 entity test_attempts {
   * id : BIGINT <<PK>>
   --
-  * test_id : BIGINT <<FK>>
-  * student_id : BIGINT <<FK>>
-  * status : VARCHAR(20)
-  * started_at : TIMESTAMP
-  finished_at : TIMESTAMP
-  * score, max_score, percent : INTEGER
-  * passed : BOOLEAN
+  * test_id, student_id <<FK>>
+  * status, started_at, score, percent, passed
 }
 entity attempt_answers {
   * id : BIGINT <<PK>>
   --
-  * attempt_id : BIGINT <<FK>>
-  * question_id : BIGINT <<FK>>
-  * correct : BOOLEAN
-  * points_earned : INTEGER
+  * attempt_id, question_id <<FK>>
+  * correct, points_earned
 }
 entity attempt_answer_options {
-  * attempt_answer_id : BIGINT <<PK, FK>>
-  * option_id : BIGINT <<PK, FK>>
+  * attempt_answer_id <<PK, FK>>
+  * option_id <<PK, FK>>
+}
+entity audit_log {
+  * id : BIGINT <<PK>>
+  --
+  * created_at, username, action
+  details : VARCHAR(500)
 }
 
+faculties ||--o{ departments
+faculties ||--o{ study_groups
+departments ||--o{ users
+departments ||--o{ subjects
+study_groups ||--o{ users
+study_groups ||--o{ curriculum
+subjects ||--o{ curriculum
+users ||--o{ curriculum
+curriculum ||--o| exams
+study_groups ||--o{ lessons
+subjects ||--o{ lessons
 subjects ||--o{ tests
 users ||--o{ tests
 tests ||--|{ questions
 questions ||--|{ answer_options
-users ||--o{ test_attempts
 tests ||--o{ test_attempts
+users ||--o{ test_attempts
 test_attempts ||--o{ attempt_answers
 questions ||--o{ attempt_answers
 attempt_answers ||--o{ attempt_answer_options
