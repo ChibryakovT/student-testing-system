@@ -562,6 +562,30 @@ class SystemScenariosTest {
                 .andExpect(content().string(org.hamcrest.Matchers.not(containsString("name=\"groupId\""))));
     }
 
+    @Test
+    @DisplayName("34. Расписание: студент видит только свою группу, преподаватель — только своё (страница и API)")
+    void scheduleOnlyOwn() throws Exception {
+        JsonNode other = createGroup();
+        long otherGroup = other.get("id").asLong();
+        String ownGroupName = json.readTree(api(get("/api/auth/me"), student, null).andReturn().getResponse()
+                .getContentAsString()).get("groupName").asText();
+        // Страница: подставленная в адрес чужая группа игнорируется
+        mvc.perform(get("/schedule").param("groupId", String.valueOf(otherGroup)).session(login(student, PASS)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Группа " + ownGroupName)))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("Группа " + other.get("name").asText()))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("name=\"groupId\""))));
+        // API: своя группа — да, чужая — 404
+        api(get("/api/schedule/groups/" + groupId), student, null).andExpect(status().isOk());
+        api(get("/api/schedule/groups/" + otherGroup), student, null).andExpect(status().isNotFound());
+        // Преподаватель: своё расписание — да, чужое — 404; администратор — любое
+        String colleague = createUser("TEACHER");
+        api(get("/api/schedule/teachers/" + userIds.get(teacher)), teacher, null).andExpect(status().isOk());
+        api(get("/api/schedule/teachers/" + userIds.get(colleague)), teacher, null).andExpect(status().isNotFound());
+        api(get("/api/schedule/groups/" + otherGroup), teacher, null).andExpect(status().isNotFound());
+        api(get("/api/schedule/groups/" + otherGroup), ADMIN, null).andExpect(status().isOk());
+    }
+
     // ---------- Вспомогательные методы ----------
 
     private ResultActions api(MockHttpServletRequestBuilder request, String user, Object body) throws Exception {

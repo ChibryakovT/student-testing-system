@@ -14,7 +14,7 @@
             </p>
         </div>
         <!-- Выбор: любая группа или преподаватель -->
-        <form class="d-flex flex-wrap gap-2" method="get" th:action="@{/schedule}" th:if="${!teacherOnly}">
+        <form class="d-flex flex-wrap gap-2" method="get" th:action="@{/schedule}" th:if="${!ownOnly}">
             <input type="hidden" name="tab" th:value="${tab}">
             <select class="form-select w-auto" name="groupId" data-autosubmit-simple aria-label="Группа">
                 <option value="">Группа…</option>
@@ -27,6 +27,8 @@
         </form>
     </div>
 
+    <div class="alert alert-warning" th:if="${noGroup}"><i class="bi bi-exclamation-triangle me-1"></i>
+        Вы не прикреплены к учебной группе — обратитесь к администратору.</div>
     <ul class="nav nav-pills schedule-tabs mb-3">
         <li class="nav-item"><a class="nav-link" th:classappend="${tab == 'week'} ? 'active'"
                th:href="@{/schedule(tab='week',groupId=${groupId},teacherId=${teacherId})}"><i class="bi bi-calendar3-week me-1"></i>Занятия</a></li>

@@ -43,11 +43,18 @@ public class ScheduleController {
                            @RequestParam(required = false) Long editLesson,
                            @AuthenticationPrincipal AppUserDetails me, Model model) {
         List<StudyGroup> groups = universityService.groups();
-        // Преподаватель видит только свои занятия и экзамены — выбор других групп и преподавателей ему недоступен
+        // Студент видит только расписание своей группы, преподаватель — только свои занятия и экзамены.
+        // Выбор других групп и преподавателей доступен только администратору; параметры из адреса игнорируются.
         boolean teacherOnly = me.isStaff() && !me.isAdmin();
         if (teacherOnly) {
             groupId = null;
             teacherId = me.getId();
+        } else if (me.isStudent()) {
+            teacherId = null;
+            groupId = userRepository.findById(me.getId()).map(User::getGroup).map(StudyGroup::getId).orElse(null);
+            if (groupId == null) {
+                model.addAttribute("noGroup", true);
+            }
         }
         // По умолчанию: студент — своя группа, преподаватель — свои занятия, администратор — первая группа
         if (groupId == null && teacherId == null) {
@@ -57,7 +64,7 @@ public class ScheduleController {
             } else if (!me.isAdmin()) {
                 teacherId = me.getId();
             }
-            if (groupId == null && teacherId == null && !groups.isEmpty()) {
+            if (groupId == null && teacherId == null && me.isAdmin() && !groups.isEmpty()) {
                 groupId = groups.get(0).getId();
             }
         }
@@ -96,6 +103,7 @@ public class ScheduleController {
         model.addAttribute("today", today);
         model.addAttribute("byTeacher", teacherId != null);
         model.addAttribute("teacherOnly", teacherOnly);
+        model.addAttribute("ownOnly", !me.isAdmin());
         if (me.isAdmin()) {
             model.addAttribute("subjects", universityService.subjects());
             model.addAttribute("weekTypes", WeekType.values());
