@@ -18,7 +18,7 @@ spring:
   flyway:
     enabled: true
   thymeleaf:
-    cache: false
+    cache: ${THYMELEAF_CACHE:false}
   mvc:
     problemdetails:
       enabled: false
@@ -32,6 +32,9 @@ spring:
 
 server:
   port: ${PORT:8080}
+  address: ${SERVER_ADDRESS:0.0.0.0}
+  # За nginx: схема и адрес клиента берутся из X-Forwarded-*
+  forward-headers-strategy: native
   error:
     include-stacktrace: never
     include-message: never

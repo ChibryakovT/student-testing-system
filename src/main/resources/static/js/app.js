@@ -44,6 +44,12 @@
         location.href = row.getAttribute('data-href');
     });
 
+    // с клавиатуры: Tab до строки, Enter — открыть
+    document.querySelectorAll('tr[data-href]').forEach(function (row) { row.tabIndex = 0; });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target.matches('tr[data-href]')) location.href = e.target.getAttribute('data-href');
+    });
+
     // ---------- Счётчики: число «досчитывает» до значения ----------
     function countUp(el) {
         var target = parseFloat(el.getAttribute('data-count'));

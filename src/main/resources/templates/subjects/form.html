@@ -54,7 +54,7 @@
                                 <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"
                                         th:selected="${c.teacher != null and c.teacher.id == t.id}"></option>
                             </select>
-                            <button class="btn btn-sm btn-primary" type="submit" title="Сохранить"><i class="bi bi-check2"></i></button>
+                            <button aria-label="Сохранить" class="btn btn-sm btn-primary" type="submit" title="Сохранить"><i class="bi bi-check2"></i></button>
                         </form>
                     </td>
                 </tr>

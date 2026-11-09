@@ -2,7 +2,7 @@
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <body>
 <!-- Боковое меню: у каждой роли только свои пункты, сгруппированные по смыслу -->
-<nav th:fragment="nav" class="side-nav">
+<nav th:fragment="nav(label)" class="side-nav" th:aria-label="${label}">
     <a class="side-brand" th:href="@{/}">
         <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
         <span class="lh-sm"><span class="d-block fw-bold">ЭСТ · РТСУ</span>
@@ -65,7 +65,7 @@
         </span>
         </a>
         <form th:action="@{/logout}" method="post">
-            <button class="btn btn-sm btn-light" type="submit" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
+            <button aria-label="Выйти" class="btn btn-sm btn-light" type="submit" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
         </form>
     </div>
 </nav>

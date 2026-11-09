@@ -54,14 +54,14 @@
                     <option value="test" th:selected="${sort == 'test'}">По тесту</option>
                 </select>
             </div>
-            <div class="col-md-1"><button class="btn btn-primary w-100" type="submit" title="Применить"><i class="bi bi-funnel"></i></button></div>
+            <div class="col-md-1"><button aria-label="Применить" class="btn btn-primary w-100" type="submit" title="Применить"><i class="bi bi-funnel"></i></button></div>
         </div>
     </form>
     <div class="table-responsive card reveal">
         <table class="table table-hover mb-0 align-middle clickable-rows">
             <thead>
             <tr><th>Тест</th><th>Дисциплина</th><th th:if="${me.staff}">Студент</th><th th:if="${me.staff}">Группа</th>
-                <th>Дата</th><th>Баллы</th><th>%</th><th>Итог</th><th></th></tr>
+                <th>Дата</th><th>Баллы</th><th>%</th><th>Итог</th><th><span class="visually-hidden">Действия</span></th></tr>
             </thead>
             <tbody>
             <tr th:each="a : ${attempts}" th:attr="data-href=@{/attempts/{id}/result(id=${a.id})}">
@@ -78,7 +78,7 @@
                     
                     <form class="d-inline" th:if="${me.staff}" th:action="@{/attempts/{id}/delete(id=${a.id})}" method="post"
                           data-confirm="Удалить результат?">
-                        <button class="btn btn-sm btn-outline-danger" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
+                        <button aria-label="Удалить" class="btn btn-sm btn-outline-danger" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
                     </form>
                 </td>
             </tr>

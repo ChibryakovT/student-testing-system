@@ -5,7 +5,7 @@
 <div class="auth-page">
     <div th:replace="~{fragments/auth :: visual('/img/library.jpg', 'Присоединяйтесь к системе тестирования', 'Регистрация занимает минуту — после неё станут доступны тесты по вашим дисциплинам.')}"></div>
 
-    <div class="auth-form-side">
+    <main class="auth-form-side">
         <div class="auth-box">
             <span class="brand-mark"><i class="bi bi-person-plus-fill"></i></span>
             <h1 class="h3 mb-1">Регистрация студента</h1>
@@ -50,11 +50,21 @@
                     <div class="form-text">Минимум 8 символов, буквы и цифры</div>
                     <div class="invalid-feedback" th:errors="*{password}"></div>
                 </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="consent" th:field="*{consent}">
+                    <label class="form-check-label small" for="consent">
+                        Согласен(на) на обработку персональных данных по
+                        <a th:href="@{/privacy}" target="_blank" rel="noopener">политике конфиденциальности</a>
+                        и принимаю <a th:href="@{/terms}" target="_blank" rel="noopener">условия использования</a>
+                    </label>
+                    <div class="form-text">Это демонстрационная версия: настоящие данные вводить не нужно, подойдут вымышленные</div>
+                </div>
                 <button class="btn btn-primary w-100 py-2" type="submit">Зарегистрироваться <i class="bi bi-arrow-right ms-1"></i></button>
             </form>
             <p class="mt-4 mb-0 text-center text-muted">Уже есть учётная запись? <a th:href="@{/login}" class="fw-semibold">Войти</a></p>
+            <p th:replace="~{fragments/auth :: legal}"></p>
         </div>
-    </div>
+    </main>
 </div>
 <script th:src="@{/js/app.js}"></script>
 </body>

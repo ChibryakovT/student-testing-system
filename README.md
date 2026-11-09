@@ -10,7 +10,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)
 ![Flyway](https://img.shields.io/badge/Flyway-миграции-CC0200?logo=flyway&logoColor=white)
 ![Postman](https://img.shields.io/badge/Postman-25_запросов-FF6C37?logo=postman&logoColor=white)
-![Tests](https://img.shields.io/badge/автотесты-37%2F37-2ea44f)
+![Tests](https://img.shields.io/badge/автотесты-41%2F41-2ea44f)
 
 <img src="docs/screenshots/login.png" alt="Вход в систему" width="880">
 
@@ -32,7 +32,7 @@ REST API и автотестами.
 <td align="center"><b>3</b><br>роли</td>
 <td align="center"><b>6</b><br>групп · 99 студентов</td>
 <td align="center"><b>154</b><br>пары в расписании</td>
-<td align="center"><b>37</b><br>автотестов</td>
+<td align="center"><b>41</b><br>автотест</td>
 <td align="center"><b>47</b><br>проверок в Postman</td>
 </tr>
 </table>
@@ -90,7 +90,7 @@ REST API и автотестами.
 | Слой | Технологии |
 |---|---|
 | Backend | Java 17 · Spring Boot 3.5 (Web, Security, Data JPA, Validation) · Hibernate 6.6 |
-| База данных | PostgreSQL 18 · Flyway (6 миграций) |
+| База данных | PostgreSQL 18 · Flyway (7 миграций) |
 | Frontend | Thymeleaf 3.1 · Bootstrap 5.3 · Bootstrap Icons · шрифт Inter (всё подключено локально — работает без интернета) |
 | Документы | Apache POI — ведомость и импорт вопросов в Excel |
 | Тестирование | JUnit 5 · MockMvc · H2 · Postman / Newman |
@@ -118,6 +118,8 @@ cp .env.example .env          # задайте пароли: DB_PASSWORD, ADMIN_
 
 > Своё расписание вуза можно загрузить из `data/university.json` — папка `data/` в Git не попадает.
 > Без неё загружается демо-набор `src/main/resources/seed/demo-university.json` с вымышленными преподавателями.
+
+Запуск на своём сервере с доменом, HTTPS и резервными копиями: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## 05 — Архитектура
 
@@ -173,7 +175,7 @@ postman/          коллекция Postman
 ## 07 — Тестирование
 
 ```bash
-mvn test        # 37 тестов: 34 интеграционных сценария + 3 модульных
+mvn test        # 41 тест: 38 интеграционных сценариев + 3 модульных
 ```
 
 Интеграционные тесты проходят весь стек — Spring Security, контроллеры, сервисы, БД (H2 в режиме PostgreSQL):
@@ -190,6 +192,7 @@ mvn test        # 37 тестов: 34 интеграционных сценар�
 - **Content-Security-Policy** только для собственного домена, `X-Frame-Options: DENY`
 - параметризованные SQL-запросы, сортировка по белому списку, экранирование вывода (XSS), защита от CSV-инъекции
 - ограничение размера загружаемых файлов; все изменения данных пишутся в журнал действий
+- согласие на обработку данных при регистрации, [политика конфиденциальности](src/main/resources/templates/legal/privacy.html) и обезличивание журнала при удалении пользователя
 
 ## 09 — Фото и лицензии
 

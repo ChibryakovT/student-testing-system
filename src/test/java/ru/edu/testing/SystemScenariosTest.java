@@ -98,7 +98,7 @@ class SystemScenariosTest {
         mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(Map.of("username", login, "password", PASS,
                                 "fullName", "Новый Студент", "email", login + "@example.com",
-                                "groupId", groupId, "role", "ADMIN"))))
+                                "groupId", groupId, "role", "ADMIN", "consent", true))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.role").value("STUDENT"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
@@ -109,7 +109,8 @@ class SystemScenariosTest {
     void registerDuplicate() throws Exception {
         mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(Map.of("username", student, "password", PASS,
-                                "fullName", "Дубликат", "email", "dup" + SEQ.incrementAndGet() + "@example.com"))))
+                                "fullName", "Дубликат", "email", "dup" + SEQ.incrementAndGet() + "@example.com",
+                                "consent", true))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("уже занят")));
     }
@@ -719,6 +720,61 @@ class SystemScenariosTest {
             answers.add(Map.of("questionId", q.get("id").asLong(), "optionIds", ids));
         }
         return answers;
+    }
+
+    @Test
+    @DisplayName("35. Регистрация через API без согласия — 400, учётная запись не создаётся")
+    void registerWithoutConsent() throws Exception {
+        String login = "noconsent" + SEQ.incrementAndGet();
+        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("username", login, "password", PASS,
+                                "fullName", "Без Согласия", "email", login + "@example.com", "groupId", groupId))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("согласие")));
+        mvc.perform(post("/login").with(csrf()).param("username", login).param("password", PASS))
+                .andExpect(redirectedUrl("/login?error"));
+    }
+
+    @Test
+    @DisplayName("36. Форма регистрации: без галочки — ошибка, с галочкой — учётная запись создана")
+    void registerFormConsent() throws Exception {
+        String login = "webconsent" + SEQ.incrementAndGet();
+        var form = post("/register").with(csrf()).param("username", login).param("password", PASS)
+                .param("fullName", "Студент Формы").param("email", login + "@example.com")
+                .param("groupId", String.valueOf(groupId));
+        mvc.perform(form).andExpect(status().isOk())
+                .andExpect(content().string(containsString("нужно согласие")));
+        mvc.perform(form.param("consent", "true")).andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    @DisplayName("37. Удаление пользователя: логин и ФИО не остаются в журнале действий")
+    void deleteForgetsUser() throws Exception {
+        String login = "forgetme" + SEQ.incrementAndGet();
+        long userId = id(mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(Map.of("username", login, "password", PASS, "fullName", "Забытый Студент",
+                        "email", login + "@example.com", "groupId", groupId, "consent", true)))));
+        login(login, PASS);
+        mvc.perform(get("/audit").param("q", login).session(login(ADMIN, ADMIN_PASS)))
+                .andExpect(content().string(containsString(login)));
+        mvc.perform(delete("/api/users/" + userId).with(httpBasic(ADMIN, ADMIN_PASS)))
+                .andExpect(status().is2xxSuccessful());
+        mvc.perform(get("/audit").session(login(ADMIN, ADMIN_PASS)))
+                .andExpect(content().string(containsString("Пользователь удалён")))
+                .andExpect(content().string(not(containsString(login))))
+                .andExpect(content().string(not(containsString("Забытый Студент"))));
+    }
+
+    @Test
+    @DisplayName("38. Политика и условия открыты без входа, в подвале пометка об учебном проекте")
+    void legalPagesArePublic() throws Exception {
+        mvc.perform(get("/privacy")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Как удалить свои данные")))
+                .andExpect(content().string(containsString("не официальный сайт РТСУ")));
+        mvc.perform(get("/terms")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Что запрещено")));
+        mvc.perform(get("/register")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("политике конфиденциальности")));
     }
 
     private long id(ResultActions actions) throws Exception {

@@ -38,7 +38,7 @@
                 <a th:if="${canEdit}" class="btn btn-glass" th:href="@{/tests/{id}/edit(id=${test.id})}"><i class="bi bi-pencil me-1"></i>Редактировать</a>
                 <form th:if="${canEdit}" th:action="@{/tests/{id}/delete(id=${test.id})}" method="post"
                       data-confirm="Удалить тест вместе с вопросами и результатами?">
-                    <button class="btn btn-glass" type="submit"><i class="bi bi-trash"></i></button>
+                    <button aria-label="Удалить" class="btn btn-glass" type="submit"><i class="bi bi-trash"></i></button>
                 </form>
             </div>
         </div>
@@ -85,7 +85,7 @@
                 </div>
                 <a class="btn btn-outline-success btn-sm" th:href="@{/tests/{id}/questions/template.xlsx(id=${test.id})}"><i class="bi bi-download me-1"></i>Шаблон</a>
                 <form class="d-flex gap-2" method="post" enctype="multipart/form-data" th:action="@{/tests/{id}/questions/import(id=${test.id})}">
-                    <input class="form-control form-control-sm" type="file" name="file" accept=".xlsx" required style="max-width:230px">
+                    <input class="form-control form-control-sm" type="file" name="file" aria-label="Файл Excel с вопросами" accept=".xlsx" required style="max-width:230px">
                     <button class="btn btn-success btn-sm" type="submit"><i class="bi bi-upload me-1"></i>Загрузить</button>
                 </form>
             </div>

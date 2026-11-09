@@ -56,6 +56,14 @@ public class AuditService {
                 event.getException().getClass().getSimpleName().replace("Exception", "")));
     }
 
+    /** Обезличить записи удаляемого пользователя: после удаления его логин не должен оставаться в журнале. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void forget(String username, String fullName, String replacement) {
+        auditRepository.replaceUsername(username, replacement);
+        auditRepository.replaceInDetails(username, replacement);
+        auditRepository.replaceInDetails(fullName, replacement);
+    }
+
     @Transactional(readOnly = true)
     public List<AuditEntry> search(String query, String action, int limit) {
         return auditRepository.search(Patterns.like(query), action == null || action.isBlank() ? null : action,

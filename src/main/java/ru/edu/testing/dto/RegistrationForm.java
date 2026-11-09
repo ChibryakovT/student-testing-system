@@ -33,6 +33,9 @@ public class RegistrationForm {
     @Pattern(regexp = "^[0-9A-Za-zА-Яа-я/-]*$", message = "Номер зачётки: цифры, буквы, «-» и «/»")
     private String recordBook;
 
+    /** Согласие на обработку персональных данных (проверяется при самостоятельной регистрации). */
+    private boolean consent;
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; }
@@ -45,4 +48,6 @@ public class RegistrationForm {
     public void setGroupId(Long groupId) { this.groupId = groupId; }
     public String getRecordBook() { return recordBook; }
     public void setRecordBook(String recordBook) { this.recordBook = recordBook; }
+    public boolean isConsent() { return consent; }
+    public void setConsent(boolean consent) { this.consent = consent; }
 }

@@ -66,7 +66,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain webChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register", "/credits", "/css/**", "/js/**", "/img/**", "/vendor/**", "/favicon.ico", "/favicon.svg", "/error").permitAll()
+                        .requestMatchers("/login", "/register", "/credits", "/privacy", "/terms", "/css/**", "/js/**", "/img/**", "/vendor/**", "/favicon.ico", "/favicon.svg", "/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/schedule/**", "/subjects/*/teachers").hasRole("ADMIN")
                         .requestMatchers("/users/**", "/reports/**", "/structure/**", "/audit/**").hasRole("ADMIN")
                         .requestMatchers("/subjects/**").hasAnyRole("TEACHER", "ADMIN")

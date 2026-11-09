@@ -34,11 +34,11 @@
     </div>
 
     <form class="d-flex flex-wrap gap-2 mb-3" method="get" th:action="@{/reports}">
-        <select class="form-select w-auto" name="subjectId">
+        <select class="form-select w-auto" name="subjectId" aria-label="Дисциплина">
             <option value="">Все дисциплины</option>
             <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}" th:selected="${s.id == subjectId}"></option>
         </select>
-        <select class="form-select w-auto" name="testId">
+        <select class="form-select w-auto" name="testId" aria-label="Тест">
             <option value="">Разбор по вопросам: выберите тест</option>
             <option th:each="t : ${tests}" th:value="${t.id}" th:text="${t.title}" th:selected="${t.id == testId}"></option>
         </select>
@@ -102,7 +102,7 @@
                     <td class="num" th:text="${r.attempts}">0</td>
                     <td>
                         <div class="d-flex align-items-center gap-2" th:if="${r.attempts > 0}">
-                            <div class="progress flex-grow-1" role="progressbar">
+                            <div class="progress flex-grow-1" role="progressbar" aria-label="Средний результат">
                                 <div class="progress-bar" th:style="'width:' + ${#numbers.formatDecimal(r.averagePercent, 1, 1, 'POINT')} + '%'"
                                      th:classappend="${r.averagePercent >= 75} ? 'bg-success' : (${r.averagePercent >= 50} ? 'bg-warning' : 'bg-danger')"></div>
                             </div>
@@ -130,7 +130,7 @@
                     <td th:text="${r.answers}">0</td>
                     <td>
                         <div class="d-flex align-items-center gap-2">
-                            <div class="progress flex-grow-1" role="progressbar">
+                            <div class="progress flex-grow-1" role="progressbar" aria-label="Средний результат">
                                 <div class="progress-bar" th:style="'width:' + ${r.correctRate()} + '%'"
                                      th:classappend="${r.correctRate() >= 50} ? 'bg-success' : 'bg-danger'"></div>
                             </div>

@@ -11,11 +11,12 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body th:classappend="${me != null} ? 'with-sidebar'">
+<a class="skip-link" href="#main">Перейти к содержимому</a>
 
 <th:block th:if="${me != null}">
     <!-- Компьютер: постоянное меню слева -->
     <aside class="sidebar d-none d-lg-flex">
-        <div th:replace="~{fragments/nav :: nav}"></div>
+        <div th:replace="~{fragments/nav :: nav('Главное меню')}"></div>
     </aside>
     <!-- Телефон: верхняя полоса и выезжающее меню -->
     <header class="topbar d-lg-none">
@@ -25,18 +26,22 @@
             <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>ЭСТ · РТСУ</a>
         <span style="width:42px"></span>
     </header>
-    <div class="offcanvas offcanvas-start sidebar-offcanvas" tabindex="-1" id="mobileNav">
-        <div th:replace="~{fragments/nav :: nav}"></div>
+    <div class="offcanvas offcanvas-start sidebar-offcanvas" tabindex="-1" id="mobileNav" aria-label="Меню">
+        <div th:replace="~{fragments/nav :: nav('Мобильное меню')}"></div>
     </div>
 </th:block>
 
 <div class="app-main">
-    <main class="app-content page-enter" th:classappend="${me == null} ? 'container py-4'">
+    <main id="main" tabindex="-1" class="app-content page-enter" th:classappend="${me == null} ? 'container py-4'">
         <th:block th:replace="${content}"></th:block>
     </main>
     <footer class="app-footer">
-        <span><i class="bi bi-mortarboard me-1"></i>Электронная система тестирования студентов · РТСУ</span>
-        <a th:href="@{/credits}"><i class="bi bi-camera me-1"></i>Фото и лицензии</a>
+        <span><i class="bi bi-mortarboard me-1"></i>ЭСТ · учебный проект, не официальный сайт РТСУ</span>
+        <span class="d-flex flex-wrap gap-3">
+            <a th:href="@{/privacy}">Конфиденциальность</a>
+            <a th:href="@{/terms}">Условия</a>
+            <a th:href="@{/credits}">Фото и лицензии</a>
+        </span>
     </footer>
 </div>
 

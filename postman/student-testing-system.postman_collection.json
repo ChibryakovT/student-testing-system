@@ -104,7 +104,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"username\": \"{{newUser}}\",\n  \"password\": \"{{newPassword}}\",\n  \"fullName\": \"Студент Postman\",\n  \"email\": \"{{newUser}}@example.com\",\n  \"groupId\": {{groupId}},\n  \"role\": \"ADMIN\"\n}"
+          "raw": "{\n  \"username\": \"{{newUser}}\",\n  \"password\": \"{{newPassword}}\",\n  \"fullName\": \"Студент Postman\",\n  \"email\": \"{{newUser}}@example.com\",\n  \"groupId\": {{groupId}},\n  \"role\": \"ADMIN\",\n  \"consent\": true\n}"
         }
       }
     },

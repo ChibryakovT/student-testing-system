@@ -11,11 +11,11 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<div th:fragment="visual(image, heading, text)" class="auth-visual">
+<aside th:fragment="visual(image, heading, text)" class="auth-visual">
     <div class="hero-bg" th:style="'background-image:url(' + @{${image}} + ')'"></div>
     <a class="photo-credit" th:href="@{/credits}"><i class="bi bi-camera"></i> Фото: Wikimedia Commons</a>
     <div class="visual-text">
-        <div class="small text-uppercase opacity-75 fw-semibold mb-2" style="letter-spacing:.12em">Российско-Таджикский (Славянский) университет</div>
+        <div class="small text-uppercase opacity-75 fw-semibold mb-2" style="letter-spacing:.12em">Учебный проект студента РТСУ</div>
         <h2 class="fw-bold" th:text="${heading}">Заголовок</h2>
         <p class="opacity-75 mb-0" th:text="${text}">Текст</p>
         <ul class="features">
@@ -24,6 +24,10 @@
             <li><i class="bi bi-check2-circle"></i>Ведомости и аналитика по группам</li>
         </ul>
     </div>
-</div>
+</aside>
+<p th:fragment="legal" class="auth-legal">
+    Учебный проект, не официальный сайт РТСУ<br>
+    <a th:href="@{/privacy}">Конфиденциальность</a> · <a th:href="@{/terms}">Условия</a> · <a th:href="@{/credits}">Лицензии</a>
+</p>
 </body>
 </html>

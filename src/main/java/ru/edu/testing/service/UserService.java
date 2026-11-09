@@ -15,6 +15,7 @@ import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.exception.NotFoundException;
 import ru.edu.testing.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +47,12 @@ public class UserService {
     /** Самостоятельная регистрация всегда создаёт студента: роль из запроса не принимается. */
     @Transactional
     public User register(RegistrationForm form) {
-        return create(form, Role.STUDENT);
+        if (!form.isConsent()) {
+            throw new BusinessException("Для регистрации нужно согласие на обработку персональных данных");
+        }
+        User user = create(form, Role.STUDENT);
+        user.setConsentAt(LocalDateTime.now());
+        return user;
     }
 
     @Transactional
@@ -141,7 +147,8 @@ public class UserService {
         if (user.getId().equals(currentUserId)) {
             throw new BusinessException("Нельзя удалить собственную учётную запись");
         }
-        auditService.log("Пользователь удалён", user.getUsername() + " — " + user.getFullName());
+        auditService.forget(user.getUsername(), user.getFullName(), "[удалён #" + id + "]");
+        auditService.log("Пользователь удалён", "#" + id);
         try {
             userRepository.delete(user);
             userRepository.flush();

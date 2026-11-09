@@ -64,7 +64,7 @@
                                 <div class="lesson-admin" th:if="${me.admin and !byTeacher}">
                                     <a th:href="@{/schedule(groupId=${groupId},editLesson=${l.id})} + '#lesson-form'" title="Изменить"><i class="bi bi-pencil"></i></a>
                                     <form th:action="@{/schedule/lessons/{id}/delete(id=${l.id})}" method="post" data-confirm="Удалить занятие из расписания?">
-                                        <button type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
+                                        <button aria-label="Удалить" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
                                     </form>
                                 </div>
                             </div>
@@ -135,7 +135,7 @@
             <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
                     <thead><tr><th>Дата</th><th>Время</th><th>Дисциплина</th><th>Форма</th>
-                        <th th:text="${byTeacher} ? 'Группа' : 'Преподаватель'">Преподаватель</th><th>Ауд.</th><th></th></tr></thead>
+                        <th th:text="${byTeacher} ? 'Группа' : 'Преподаватель'">Преподаватель</th><th>Ауд.</th><th><span class="visually-hidden">Действия</span></th></tr></thead>
                     <tbody>
                     <tr th:each="e : ${exams}" th:classappend="${e.date.isBefore(today)} ? 'text-muted past'"
                         th:with="days=${@scheduleService.daysUntil(e.date)}">
@@ -152,7 +152,7 @@
                                   th:text="${days == 0} ? 'сегодня' : (${days == 1} ? 'завтра' : 'через ' + ${days} + ' дн.')">через 5 дн.</span>
                             <form class="d-inline" th:if="${me.admin and !byTeacher}" th:action="@{/schedule/exams/{id}/delete(id=${e.id})}"
                                   method="post" data-confirm="Удалить из расписания сессии?">
-                                <button class="btn btn-sm btn-outline-danger ms-1" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
+                                <button aria-label="Удалить" class="btn btn-sm btn-outline-danger ms-1" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
                             </form>
                         </td>
                     </tr>

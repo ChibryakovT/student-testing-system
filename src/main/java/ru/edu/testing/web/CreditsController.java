@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 
-/** Страница с авторами и лицензиями фотографий (требование лицензий CC BY / CC BY-SA). */
+/** Открытые страницы: авторы и лицензии фотографий (требование CC BY / CC BY-SA), политика и условия. */
 @Controller
 public class CreditsController {
 
@@ -38,6 +38,16 @@ public class CreditsController {
             new Credit("/img/cover-default.jpg", "Обложка по умолчанию", "Typing on a laptop",
                     "Simon Hattinga Verschure", "CC0",
                     "https://commons.wikimedia.org/wiki/File:Typing_on_a_laptop_(Unsplash).jpg"));
+
+    @GetMapping("/privacy")
+    public String privacy() {
+        return "legal/privacy";
+    }
+
+    @GetMapping("/terms")
+    public String terms() {
+        return "legal/terms";
+    }
 
     @GetMapping("/credits")
     public String credits(Model model) {

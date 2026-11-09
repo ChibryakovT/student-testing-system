@@ -33,7 +33,7 @@
         <div class="input-group mb-2" th:each="o, st : *{options}">
             <div class="input-group-text">
                 <input class="form-check-input mt-0" type="checkbox" th:field="*{options[__${st.index}__].correct}"
-                       title="Правильный ответ">
+                       title="Правильный ответ" aria-label="Правильный ответ">
             </div>
             <input class="form-control" th:field="*{options[__${st.index}__].text}" maxlength="500"
                    th:placeholder="'Вариант ' + ${st.count}">

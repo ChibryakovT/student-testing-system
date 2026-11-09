@@ -47,6 +47,9 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "consent_at")
+    private LocalDateTime consentAt;
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();
@@ -74,4 +77,6 @@ public class User {
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getConsentAt() { return consentAt; }
+    public void setConsentAt(LocalDateTime consentAt) { this.consentAt = consentAt; }
 }
