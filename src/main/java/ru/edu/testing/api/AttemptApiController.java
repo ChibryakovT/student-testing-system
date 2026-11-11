@@ -50,12 +50,14 @@ public class AttemptApiController {
                 AnswerRequest::questionId,
                 a -> a.optionIds() == null ? Set.of() : new HashSet<>(a.optionIds()),
                 (a, b) -> a));
-        return AttemptDto.of(attemptService.submit(id, answers, me));
+        TestAttempt done = attemptService.submit(id, answers, me);
+        return AttemptDto.of(done, AttemptService.scoreVisible(done, me));
     }
 
     @GetMapping("/attempts/{id}")
     public AttemptDto get(@PathVariable Long id, @AuthenticationPrincipal AppUserDetails me) {
-        return AttemptDto.of(attemptService.getResult(id, me));
+        TestAttempt found = attemptService.getResult(id, me);
+        return AttemptDto.of(found, AttemptService.scoreVisible(found, me));
     }
 
     /** Студент получает только свои результаты; фильтры: q, testId, subjectId, passed, groupId (администратор); sort = date|score|score_asc|student|test. */
@@ -67,7 +69,7 @@ public class AttemptApiController {
                                  @RequestParam(required = false) Long groupId,
                                  @RequestParam(defaultValue = "date") String sort,
                                  @AuthenticationPrincipal AppUserDetails me) {
-        return attemptService.search(q, testId, subjectId, passed, me.isAdmin() ? groupId : null, sort, me).stream().map(AttemptDto::of).toList();
+        return attemptService.search(q, testId, subjectId, passed, me.isAdmin() ? groupId : null, sort, me).stream().map(a -> AttemptDto.of(a, AttemptService.scoreVisible(a, me))).toList();
     }
 
     @DeleteMapping("/attempts/{id}")

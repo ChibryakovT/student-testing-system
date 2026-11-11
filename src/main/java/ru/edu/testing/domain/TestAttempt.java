@@ -45,6 +45,14 @@ public class TestAttempt {
     @Column(nullable = false)
     private boolean passed;
 
+    /** Оценка опубликована и видна студенту. */
+    @Column(nullable = false)
+    private boolean released = true;
+
+    /** Автосохранённые ответы незавершённой попытки: «вопрос:вариант,вариант;…». */
+    @Column(length = 8000)
+    private String draft;
+
     @OneToMany(mappedBy = "attempt", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AttemptAnswer> answers = new ArrayList<>();
 
@@ -75,6 +83,10 @@ public class TestAttempt {
     public void setScore(int score) { this.score = score; }
     public int getMaxScore() { return maxScore; }
     public void setMaxScore(int maxScore) { this.maxScore = maxScore; }
+    public boolean isReleased() { return released; }
+    public void setReleased(boolean released) { this.released = released; }
+    public String getDraft() { return draft; }
+    public void setDraft(String draft) { this.draft = draft; }
     public int getPercent() { return percent; }
     public void setPercent(int percent) { this.percent = percent; }
     public boolean isPassed() { return passed; }

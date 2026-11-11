@@ -37,6 +37,16 @@ public class TestForm {
     @Max(value = 20, message = "Лимит попыток — от 1 до 20")
     private Integer maxAttempts;
 
+    @NotNull(message = "Выберите, когда показывать ответы")
+    private ru.edu.testing.domain.ShowAnswers showAnswers = ru.edu.testing.domain.ShowAnswers.NEVER;
+
+    /** Оценки публикует преподаватель вручную. */
+    private boolean manualRelease;
+
+    @Min(value = 1, message = "Пауза между попытками — от 1 минуты до 7 дней")
+    @Max(value = 10080, message = "Пауза между попытками — от 1 минуты до 7 дней")
+    private Integer retakeDelayMinutes;
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getDescription() { return description; }
@@ -53,4 +63,10 @@ public class TestForm {
     public void setShuffle(boolean shuffle) { this.shuffle = shuffle; }
     public Integer getMaxAttempts() { return maxAttempts; }
     public void setMaxAttempts(Integer maxAttempts) { this.maxAttempts = maxAttempts; }
+    public ru.edu.testing.domain.ShowAnswers getShowAnswers() { return showAnswers; }
+    public void setShowAnswers(ru.edu.testing.domain.ShowAnswers showAnswers) { this.showAnswers = showAnswers; }
+    public boolean isManualRelease() { return manualRelease; }
+    public void setManualRelease(boolean manualRelease) { this.manualRelease = manualRelease; }
+    public Integer getRetakeDelayMinutes() { return retakeDelayMinutes; }
+    public void setRetakeDelayMinutes(Integer retakeDelayMinutes) { this.retakeDelayMinutes = retakeDelayMinutes; }
 }

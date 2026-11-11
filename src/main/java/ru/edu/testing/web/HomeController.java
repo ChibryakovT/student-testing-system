@@ -68,8 +68,11 @@ public class HomeController {
             model.addAttribute("tests", tests);
             model.addAttribute("best", best);
             model.addAttribute("forms", testService.controlForms(me));
-            model.addAttribute("pending", tests.stream().filter(t -> !best.containsKey(t.getId())).count());
-            model.addAttribute("summary", stats(attempts));
+            java.util.Set<Long> checking = TestStatus.checking(attempts);
+            model.addAttribute("checking", checking);
+            model.addAttribute("pending", tests.stream()
+                    .filter(t -> !best.containsKey(t.getId()) && !checking.contains(t.getId())).count());
+            model.addAttribute("summary", stats(attempts.stream().filter(TestAttempt::isReleased).toList()));
         } else if (me.isAdmin()) {
             model.addAttribute("summary", reportService.summary());
             model.addAttribute("groupCount", universityService.groups().size());

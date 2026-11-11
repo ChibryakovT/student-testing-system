@@ -1,8 +1,39 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- Боковое меню: у каждой роли только свои пункты, сгруппированные по смыслу -->
-<nav th:fragment="nav(label)" class="side-nav" th:aria-label="${label}">
+<!-- Верхнее меню (стиль «Академия»): у каждой роли свои пункты, у администратора разделы в выпадающих списках -->
+<nav th:fragment="topnav" class="main-nav" aria-label="Главное меню">
+    <a class="main-link" th:classappend="${section == ''} ? 'active'" th:href="@{/}">Главная</a>
+    <a class="main-link" th:classappend="${section == 'tests' or section == 'questions'} ? 'active'" th:href="@{/tests}"
+       th:text="${me.staff and !me.admin} ? 'Мои тесты' : 'Тесты'">Тесты</a>
+    <a class="main-link" th:classappend="${section == 'attempts'} ? 'active'" th:href="@{/attempts}"
+       th:text="${me.student} ? 'Мои результаты' : 'Результаты'">Результаты</a>
+    <a class="main-link" th:classappend="${section == 'schedule'} ? 'active'" th:href="@{/schedule}">Расписание</a>
+    <a class="main-link" th:if="${me.staff and !me.admin}" th:classappend="${section == 'subjects'} ? 'active'" th:href="@{/subjects}">Дисциплины</a>
+    <th:block th:if="${me.admin}">
+        <div class="dropdown">
+            <button class="main-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                    th:classappend="${section == 'reports'} ? 'active'">Аналитика</button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:classappend="${section == 'reports' and !#strings.startsWith(path, '/reports/sheet')} ? 'active'" th:href="@{/reports}"><i class="bi bi-graph-up-arrow"></i>Аналитический отчёт</a></li>
+                <li><a class="dropdown-item" th:classappend="${#strings.startsWith(path, '/reports/sheet')} ? 'active'" th:href="@{/reports/sheet}"><i class="bi bi-file-earmark-spreadsheet"></i>Ведомость</a></li>
+            </ul>
+        </div>
+        <div class="dropdown">
+            <button class="main-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                    th:classappend="${section == 'structure' or section == 'subjects' or section == 'users' or section == 'audit'} ? 'active'">Управление</button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:classappend="${section == 'structure'} ? 'active'" th:href="@{/structure}"><i class="bi bi-diagram-3"></i>Группы и учебный план</a></li>
+                <li><a class="dropdown-item" th:classappend="${section == 'subjects'} ? 'active'" th:href="@{/subjects}"><i class="bi bi-book"></i>Дисциплины</a></li>
+                <li><a class="dropdown-item" th:classappend="${section == 'users'} ? 'active'" th:href="@{/users}"><i class="bi bi-people"></i>Пользователи</a></li>
+                <li><a class="dropdown-item" th:classappend="${section == 'audit'} ? 'active'" th:href="@{/audit}"><i class="bi bi-clock-history"></i>Журнал действий</a></li>
+            </ul>
+        </div>
+    </th:block>
+</nav>
+
+<!-- Боковое меню: у каждой роли только свои пункты, сгруппированные по смыслу (на телефоне — выезжающая панель) -->
+<nav th:fragment="sidenav(label)" class="side-nav" th:aria-label="${label}">
     <a class="side-brand" th:href="@{/}">
         <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
         <span class="lh-sm"><span class="d-block fw-bold">ЭСТ · РТСУ</span>

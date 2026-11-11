@@ -14,6 +14,7 @@ import ru.edu.testing.repository.UserRepository;
 import ru.edu.testing.security.AppUserDetails;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,7 @@ public class AttemptService {
 
     /** Запас времени на отправку формы после истечения лимита. */
     private static final int GRACE_MINUTES = 1;
+    private static final DateTimeFormatter NEXT_ATTEMPT = DateTimeFormatter.ofPattern("dd.MM в HH:mm");
 
     private static final Map<String, Sort> SORTS = Map.of(
             "date", Sort.by(Sort.Direction.DESC, "finishedAt"),
@@ -63,6 +65,11 @@ public class AttemptService {
                         throw new BusinessException(HttpStatus.CONFLICT,
                                 "Исчерпан лимит попыток: " + test.getMaxAttempts() + " из " + test.getMaxAttempts());
                     }
+                    LocalDateTime next = nextAttemptAt(test, user.getId());
+                    if (next != null) {
+                        throw new BusinessException(HttpStatus.CONFLICT,
+                                "Следующая попытка будет доступна " + next.format(NEXT_ATTEMPT));
+                    }
                     TestAttempt attempt = new TestAttempt();
                     attempt.setTest(test);
                     attempt.setStudent(userRepository.getReferenceById(user.getId()));
@@ -79,6 +86,110 @@ public class AttemptService {
         }
         long used = attemptRepository.countByTestIdAndStudentIdAndStatus(test.getId(), studentId, AttemptStatus.FINISHED);
         return (int) Math.max(0, test.getMaxAttempts() - used);
+    }
+
+    /** Когда откроется следующая попытка, если действует пауза между попытками (null — уже можно). */
+    public LocalDateTime nextAttemptAt(Test test, Long studentId) {
+        if (test.getRetakeDelayMinutes() == null) {
+            return null;
+        }
+        return attemptRepository.findFirstByTestIdAndStudentIdAndStatusOrderByFinishedAtDesc(
+                        test.getId(), studentId, AttemptStatus.FINISHED)
+                .map(a -> a.getFinishedAt().plusMinutes(test.getRetakeDelayMinutes()))
+                .filter(next -> next.isAfter(LocalDateTime.now()))
+                .orElse(null);
+    }
+
+    /** Студент видит оценку, если она опубликована; преподаватель и администратор — всегда. */
+    public static boolean scoreVisible(TestAttempt attempt, AppUserDetails user) {
+        return user.isStaff() || attempt.isReleased();
+    }
+
+    /** Правильные ответы и пояснения: по настройке теста и только вместе с оценкой. */
+    public boolean answersVisible(TestAttempt attempt, AppUserDetails user) {
+        if (user.isStaff()) {
+            return true;
+        }
+        if (!attempt.isReleased()) {
+            return false;
+        }
+        return switch (attempt.getTest().getShowAnswers()) {
+            case AFTER_SUBMIT -> true;
+            case AFTER_LAST_ATTEMPT -> {
+                Integer left = attemptsLeft(attempt.getTest(), attempt.getStudent().getId());
+                yield left != null && left == 0;
+            }
+            case NEVER -> false;
+        };
+    }
+
+    /** Автосохранение ответов незавершённой попытки (принимается только до окончания времени). */
+    @Transactional
+    public LocalDateTime saveDraft(Long attemptId, Map<Long, Set<Long>> answers, AppUserDetails user) {
+        TestAttempt attempt = getForTaking(attemptId, user);
+        if (isOverdue(attempt, LocalDateTime.now())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "Время на тест вышло");
+        }
+        validate(attempt.getTest(), answers);
+        attempt.setDraft(answers.entrySet().stream()
+                .filter(e -> !e.getValue().isEmpty())
+                .map(e -> e.getKey() + ":" + e.getValue().stream().map(String::valueOf).collect(Collectors.joining(",")))
+                .collect(Collectors.joining(";")));
+        return LocalDateTime.now();
+    }
+
+    /** Автосохранённые ответы: вопрос → выбранные варианты. */
+    public static Map<Long, Set<Long>> draftOf(TestAttempt attempt) {
+        Map<Long, Set<Long>> answers = new HashMap<>();
+        if (attempt.getDraft() == null || attempt.getDraft().isBlank()) {
+            return answers;
+        }
+        for (String part : attempt.getDraft().split(";")) {
+            String[] kv = part.split(":");
+            if (kv.length == 2) {
+                answers.put(Long.parseLong(kv[0]), Arrays.stream(kv[1].split(","))
+                        .map(Long::parseLong).collect(Collectors.toSet()));
+            }
+        }
+        return answers;
+    }
+
+    /** Опубликовать оценки по тесту, если они выдаются после проверки. */
+    @Transactional
+    public int release(Long testId, AppUserDetails user) {
+        Test test = testService.get(testId, user);
+        if (!testService.canEdit(test, user)) {
+            throw new AccessDeniedException("Публиковать оценки может автор теста или администратор");
+        }
+        int count = attemptRepository.releaseAll(testId);
+        auditService.log("Оценки опубликованы", "«" + test.getTitle() + "»: " + count);
+        return count;
+    }
+
+    public long pendingRelease(Long testId) {
+        return attemptRepository.countByTestIdAndStatusAndReleasedFalse(testId, AttemptStatus.FINISHED);
+    }
+
+    private boolean isOverdue(TestAttempt attempt, LocalDateTime now) {
+        return now.isAfter(attempt.getStartedAt().plusMinutes(attempt.getTest().getTimeLimitMinutes() + GRACE_MINUTES));
+    }
+
+    /** Вопросы и варианты должны относиться к тесту, в вопросе с одним ответом — не больше одного варианта. */
+    private static void validate(Test test, Map<Long, Set<Long>> answers) {
+        Map<Long, Question> questions = test.getQuestions().stream().collect(Collectors.toMap(Question::getId, q -> q));
+        answers.forEach((questionId, selected) -> {
+            Question question = questions.get(questionId);
+            if (question == null) {
+                throw new BusinessException("Вопрос " + questionId + " не относится к этому тесту");
+            }
+            Set<Long> known = question.getOptions().stream().map(AnswerOption::getId).collect(Collectors.toSet());
+            if (!known.containsAll(selected)) {
+                throw new BusinessException("Выбран вариант, не относящийся к вопросу " + questionId);
+            }
+            if (question.getType() == QuestionType.SINGLE && selected.size() > 1) {
+                throw new BusinessException("В вопросе с одним ответом можно выбрать только один вариант");
+            }
+        });
     }
 
     /**
@@ -124,13 +235,13 @@ public class AttemptService {
         TestAttempt attempt = getForTaking(attemptId, user);
         Test test = attempt.getTest();
         LocalDateTime now = LocalDateTime.now();
-
-        Set<Long> knownQuestions = test.getQuestions().stream().map(Question::getId).collect(Collectors.toSet());
-        for (Long questionId : answers.keySet()) {
-            if (!knownQuestions.contains(questionId)) {
-                throw new BusinessException("Вопрос " + questionId + " не относится к этому тесту");
-            }
+        boolean overdue = isOverdue(attempt, now);
+        if (overdue) {
+            // Время вышло: засчитываются только ответы, автосохранённые до окончания времени
+            answers = draftOf(attempt);
+            answers.keySet().retainAll(test.getQuestions().stream().map(Question::getId).collect(Collectors.toSet()));
         }
+        validate(test, answers);
 
         int score = 0;
         int maxScore = 0;
@@ -139,12 +250,6 @@ public class AttemptService {
             Set<Long> selected = answers.getOrDefault(question.getId(), Set.of());
             Map<Long, AnswerOption> options = question.getOptions().stream()
                     .collect(Collectors.toMap(AnswerOption::getId, o -> o));
-            if (!options.keySet().containsAll(selected)) {
-                throw new BusinessException("Выбран вариант, не относящийся к вопросу " + question.getId());
-            }
-            if (question.getType() == QuestionType.SINGLE && selected.size() > 1) {
-                throw new BusinessException("В вопросе с одним ответом можно выбрать только один вариант");
-            }
             Set<Long> correct = question.getOptions().stream().filter(AnswerOption::isCorrect)
                     .map(AnswerOption::getId).collect(Collectors.toSet());
             boolean isCorrect = !selected.isEmpty() && selected.equals(correct);
@@ -159,21 +264,17 @@ public class AttemptService {
             score += answer.getPointsEarned();
         }
 
-        boolean overdue = now.isAfter(attempt.getStartedAt().plusMinutes(test.getTimeLimitMinutes() + GRACE_MINUTES));
-        if (overdue) {
-            // Время вышло: ответы сохраняются для истории, но баллы не начисляются.
-            attempt.getAnswers().forEach(a -> a.setPointsEarned(0));
-            score = 0;
-        }
-
         attempt.setStatus(AttemptStatus.FINISHED);
         attempt.setFinishedAt(now);
         attempt.setScore(score);
         attempt.setMaxScore(maxScore);
         attempt.setPercent(maxScore == 0 ? 0 : Math.round(score * 100f / maxScore));
         attempt.setPassed(attempt.getPercent() >= test.getPassingScore());
+        attempt.setReleased(!test.isManualRelease());
+        attempt.setDraft(null);
         auditService.log("Тест пройден", "«" + test.getTitle() + "»: " + attempt.getPercent() + " %"
-                + (attempt.isPassed() ? ", сдан" : ", не сдан") + (overdue ? " (время вышло)" : ""));
+                + (attempt.isPassed() ? ", сдан" : ", не сдан")
+                + (overdue ? " (время вышло, засчитаны автосохранённые ответы)" : ""));
         return attempt;
     }
 
@@ -194,8 +295,13 @@ public class AttemptService {
                                     String sort, AppUserDetails user) {
         Long studentId = user.isStudent() ? user.getId() : null;
         Long teacherId = user.isStaff() && !user.isAdmin() ? user.getId() : null;
-        return attemptRepository.search(studentId, teacherId, testId, subjectId, passed, groupId, Patterns.like(query),
-                SORTS.getOrDefault(sort, SORTS.get("date")));
+        List<TestAttempt> found = attemptRepository.search(studentId, teacherId, testId, subjectId, passed, groupId,
+                Patterns.like(query), SORTS.getOrDefault(sort, SORTS.get("date")));
+        // Фильтр и сортировка по оценке не должны выдавать студенту неопубликованные результаты
+        if (user.isStudent() && (passed != null || String.valueOf(sort).startsWith("score"))) {
+            return found.stream().filter(TestAttempt::isReleased).toList();
+        }
+        return found;
     }
 
     /** Право видеть попытку: своя (студент), своей группы по своей дисциплине или свой тест (преподаватель). */

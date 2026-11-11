@@ -404,3 +404,61 @@ main:focus { outline: none; }
 .auth-legal { margin: 1.25rem 0 0; text-align: center; font-size: .78rem; color: var(--muted); }
 .legal-page { max-width: 780px; }
 .legal-page h2 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 .5rem; }
+
+/* ---------- Пояснения, качество вопросов, автосохранение ---------- */
+.explain { display: flex; gap: .5rem; align-items: flex-start; font-size: .88rem; padding: .55rem .75rem; border-radius: 10px;
+  background: #fff8e6; color: #5c4306; }
+.explain .bi { color: #b7791f; margin-top: .1rem; }
+tr.has-explain td { border-bottom: 0; }
+tr.explain-row td { padding-top: 0; }
+.quality { display: inline-flex; flex-wrap: wrap; gap: .4rem; align-items: center; font-size: .82rem; font-weight: 600;
+  padding: .3rem .65rem; border-radius: 999px; }
+.quality .q-num { font-weight: 400; opacity: .9; }
+.quality.q-good { background: #e3f6ee; color: #11624a; }
+.quality.q-warn { background: #fff1d6; color: #85560a; }
+.quality.q-bad { background: #fde4e4; color: #9b1c1c; }
+.quality.q-na { background: #eef1f6; color: var(--muted); }
+.save-state { display: inline-flex; gap: .35rem; align-items: center; transition: color .2s; }
+.save-state.saving { color: var(--muted); }
+.save-state.saved { color: #11624a; }
+.save-state.error { color: #9b1c1c; font-weight: 600; }
+
+/* ---------- Прохождение теста: панель вопросов, флажки, таймер ---------- */
+.timer.timer-normal { background: var(--brand-soft); color: var(--brand-dark); }
+.qnav { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .7rem; }
+.qnav-item { min-width: 2.1rem; height: 2.1rem; padding: 0 .4rem; display: inline-grid; place-items: center; position: relative;
+  border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: .85rem;
+  font-weight: 600; text-decoration: none; transition: background .15s, border-color .15s, transform .15s; }
+.qnav-item:hover { border-color: var(--brand); transform: translateY(-1px); color: var(--brand-dark); }
+.qnav-item.answered { background: var(--brand); border-color: var(--brand); color: #fff; }
+.qnav-item.flagged::after { content: ""; position: absolute; top: -4px; right: -4px; width: 11px; height: 11px; border-radius: 50%;
+  background: #f59e0b; border: 2px solid var(--surface); }
+.kbd-hint { font-size: .75rem; color: var(--muted); margin-top: .45rem; }
+.kbd-hint kbd { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 1px 0 var(--line);
+  padding: .05rem .35rem; font-size: .72rem; }
+.btn-flag { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 8px;
+  font-size: .75rem; padding: .15rem .5rem; display: inline-flex; gap: .3rem; align-items: center; white-space: nowrap; }
+.btn-flag:hover { color: #85560a; border-color: #f2c94c; }
+.question-take.flagged { border-left-color: #f59e0b; }
+.question-take.flagged .btn-flag { background: #fff1d6; border-color: #f2c94c; color: #85560a; }
+.question-take.flagged .btn-flag .bi::before { content: "\f3cb"; }
+.btn-clear { margin-top: .4rem; border: 0; background: none; padding: .15rem 0; font-size: .8rem; color: var(--muted); }
+.btn-clear:hover { color: #9b1c1c; text-decoration: underline; }
+@keyframes pulseFocus { 0% { box-shadow: 0 0 0 0 rgba(47, 91, 211, .45); } 100% { box-shadow: 0 0 0 14px rgba(47, 91, 211, 0); } }
+.pulse-focus { animation: pulseFocus .9s ease-out; }
+@media (max-width: 575.98px) { .btn-flag span { display: none; } }
+
+/* ---------- Результат, уведомления, списки ---------- */
+.result-actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: 1.25rem; }
+.toast-action { border: 0; background: none; color: var(--brand); font-weight: 700; padding: 0 .2rem; white-space: nowrap; }
+.toast-action:hover { text-decoration: underline; }
+.removing { opacity: 0; transform: translateX(12px); transition: opacity .2s, transform .2s; }
+.pager-bar { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; align-items: center; margin-top: 1rem; }
+.pagination .page-link { border-radius: 8px !important; margin: 0 2px; border-color: var(--line); color: var(--ink); }
+.pagination .active .page-link { background: var(--brand); border-color: var(--brand); color: #fff; }
+.is-sending { cursor: progress; }
+/* шапка таблицы остаётся видна при прокрутке длинных списков (на компьютере) */
+@media (min-width: 992px) {
+  .table-responsive { overflow-x: visible; }
+  .table > thead th { position: sticky; top: 0; z-index: 3; background: var(--surface); box-shadow: inset 0 -1px 0 var(--line); }
+}

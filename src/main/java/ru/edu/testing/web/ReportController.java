@@ -67,6 +67,7 @@ public class ReportController {
         if (testId != null) {
             model.addAttribute("selectedTest", testService.get(testId, me));
             model.addAttribute("questionRows", reportService.questionStatistics(testId));
+            model.addAttribute("quality", reportService.questionQuality(testId));
         }
         return "reports/index";
     }

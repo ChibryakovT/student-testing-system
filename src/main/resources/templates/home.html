@@ -93,7 +93,8 @@
                             <span><i class="bi bi-stopwatch"></i><span th:text="${t.timeLimitMinutes} + ' мин'">0</span></span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-auto">
-                            <span th:if="${best[t.id] == null}" class="status-chip todo"><i class="bi bi-circle"></i>Не проходили</span>
+                            <span th:if="${best[t.id] == null and checking.contains(t.id)}" class="status-chip low"><i class="bi bi-clipboard-check"></i>На проверке</span>
+                        <span th:if="${best[t.id] == null and !checking.contains(t.id)}" class="status-chip todo"><i class="bi bi-circle"></i>Не проходили</span>
                             <span th:if="${best[t.id] != null}" class="status-chip"
                                   th:classappend="${best[t.id] >= t.passingScore} ? 'done' : 'low'">
                                 <i class="bi" th:classappend="${best[t.id] >= t.passingScore} ? 'bi-check-circle-fill' : 'bi-exclamation-circle'"></i>
@@ -186,8 +187,9 @@
                     <td class="fw-medium" th:text="${a.student.fullName}">студент</td>
                     <td><span class="badge text-bg-light" th:text="${a.student.groupName}">группа</span></td>
                     <td th:text="${a.test.title}">тест</td>
-                    <td class="text-muted small" th:text="${#temporals.format(a.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</td>
-                    <td><span class="badge" th:classappend="${a.passed} ? 'text-bg-success' : 'text-bg-danger'" th:text="${a.percent} + ' %'">0 %</span></td>
+                    <td class="text-muted small text-nowrap" th:text="${@time.ago(a.finishedAt)}" th:title="${@time.full(a.finishedAt)}">дата</td>
+                    <td><span th:if="${me.staff or a.released}" class="badge" th:classappend="${a.passed} ? 'text-bg-success' : 'text-bg-danger'" th:text="${a.percent} + ' %'">0 %</span>
+                        <span th:unless="${me.staff or a.released}" class="badge text-bg-warning">на проверке</span></td>
                 </tr>
                 </tbody>
             </table>

@@ -10,34 +10,62 @@
                 <div class="small text-muted" th:text="${attempt.test.subject.name}">дисциплина</div>
                 <h1 class="h5 mb-0" th:text="${attempt.test.title}">тест</h1>
             </div>
-            <div class="timer badge text-bg-warning fs-6" id="timer" th:attr="data-seconds=${secondsLeft}">
+            <div class="timer badge timer-normal fs-6" id="timer" role="timer" aria-label="Осталось времени" th:attr="data-seconds=${secondsLeft}">
                 <i class="bi bi-stopwatch me-1"></i><span>--:--</span></div>
         </div>
         <div class="d-flex align-items-center gap-2 small text-muted mt-2">
             <span id="answered-label" th:text="'Отвечено 0 из ' + ${#lists.size(attempt.test.questions)}">Отвечено</span>
+            <span id="save-state" class="save-state ms-auto" aria-live="polite"><i class="bi bi-cloud-check"></i>Ответы сохраняются автоматически</span>
         </div>
         <div class="progress answer-progress"><div class="progress-bar bg-success" id="answered-bar" style="width:0"></div></div>
+        <nav class="qnav" aria-label="Переход к вопросу">
+            <a th:each="q, st : ${questions}" class="qnav-item" th:href="'#q' + ${q.id}" th:attr="data-q=${q.id}"
+               th:text="${st.count}" th:title="'Вопрос ' + ${st.count}">1</a>
+        </nav>
+        <div class="kbd-hint d-none d-lg-block">Клавиши <kbd>1</kbd>–<kbd>9</kbd> выбирают вариант в текущем вопросе</div>
     </div>
 
-    <form id="attempt-form" th:action="@{/attempts/{id}/submit(id=${attempt.id})}" method="post">
-        <div class="card mb-3 question-take reveal" th:each="q, st : ${questions}" th:attr="data-question=${q.id}">
+    <form id="attempt-form" th:action="@{/attempts/{id}/submit(id=${attempt.id})}" method="post"
+          th:attr="data-draft-url=@{/attempts/{id}/draft(id=${attempt.id})}">
+        <div class="card mb-3 question-take reveal" th:each="q, st : ${questions}" th:attr="data-question=${q.id},data-num=${st.count}" th:id="'q' + ${q.id}">
             <div class="card-body">
                 <div class="d-flex justify-content-between gap-2 mb-1">
                     <div class="fw-semibold"><span class="text-primary" th:text="${st.count} + '.'"></span> <span th:text="${q.text}">вопрос</span></div>
-                    <span class="badge text-bg-light text-nowrap" th:text="${q.points} + ' б.'">1 б.</span>
+                    <span class="d-flex gap-2 align-items-start">
+                        <button type="button" class="btn-flag" data-flag aria-pressed="false" title="Отметить, чтобы вернуться позже">
+                            <i class="bi bi-flag"></i><span>Вернуться позже</span></button>
+                        <span class="badge text-bg-light text-nowrap" th:text="${q.points} + ' б.'">1 б.</span></span>
                 </div>
                 <div class="small text-muted mb-2"
                      th:text="${q.type.name() == 'MULTIPLE'} ? 'Выберите все правильные варианты' : 'Выберите один вариант'">подсказка</div>
                 <div class="form-check" th:each="o : ${options[q.id]}">
                     <input class="form-check-input" th:type="${q.type.name() == 'MULTIPLE'} ? 'checkbox' : 'radio'"
-                           th:name="'q' + ${q.id}" th:value="${o.id}" th:id="'o' + ${o.id}">
+                           th:name="'q' + ${q.id}" th:value="${o.id}" th:id="'o' + ${o.id}"
+                           th:checked="${draft[q.id] != null and draft[q.id].contains(o.id)}">
                     <label class="form-check-label" th:for="'o' + ${o.id}" th:text="${o.text}">вариант</label>
+                </div>
+                <button type="button" class="btn-clear" data-clear th:if="${q.type.name() == 'SINGLE'}" hidden>
+                    <i class="bi bi-x-circle me-1"></i>Очистить выбор</button>
+            </div>
+        </div>
+        <button class="btn btn-success btn-lg px-4" type="submit" id="finish-btn">
+            <i class="bi bi-send-check me-1"></i>Завершить тест</button>
+    </form>
+    <div class="modal fade" id="finish-modal" tabindex="-1" aria-labelledby="finish-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="finish-title">Завершить тест?</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body" id="finish-summary"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Вернуться к вопросам</button>
+                    <button type="button" class="btn btn-success" id="finish-confirm"><i class="bi bi-send-check me-1"></i>Отправить ответы</button>
                 </div>
             </div>
         </div>
-        <button class="btn btn-success btn-lg px-4" type="submit" data-confirm="Завершить тест и отправить ответы?">
-            <i class="bi bi-send-check me-1"></i>Завершить тест</button>
-    </form>
+    </div>
 </section>
 </body>
 </html>

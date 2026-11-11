@@ -25,16 +25,22 @@
                     <span><i class="bi bi-flag"></i><span th:text="'проходной ' + ${test.passingScore} + ' %'">0</span></span>
                     <span th:if="${test.shuffle}"><i class="bi bi-shuffle"></i>вопросы перемешиваются</span>
                     <span th:if="${test.maxAttempts != null}"><i class="bi bi-arrow-repeat"></i><span th:text="'попыток: ' + ${test.maxAttempts}">3</span></span>
+                    <span th:if="${test.retakeDelayMinutes != null}"><i class="bi bi-hourglass-split"></i><span th:text="'пауза ' + ${test.retakeDelayMinutes} + ' мин'">60</span></span>
+                    <span th:if="${test.manualRelease}"><i class="bi bi-clipboard-check"></i>оценки после проверки</span>
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <form th:if="${me.student and attemptsLeft != 0}" th:action="@{/tests/{id}/start(id=${test.id})}" method="post">
+                <div th:if="${me.student and attemptsLeft != 0 and nextAttemptAt != null}" class="badge text-bg-light fs-6 p-2 text-wrap">
+                    <i class="bi bi-hourglass-split me-1"></i><span th:text="'Следующая попытка ' + ${#temporals.format(nextAttemptAt, 'dd.MM в HH:mm')}">позже</span></div>
+                <form th:if="${me.student and attemptsLeft != 0 and nextAttemptAt == null}" th:action="@{/tests/{id}/start(id=${test.id})}" method="post">
                     <button class="btn btn-light btn-lg fw-bold" type="submit"><i class="bi bi-play-fill me-1"></i>Начать тест</button>
                     <div class="small mt-1 text-center opacity-75" th:if="${attemptsLeft != null}"
-                         th:text="'Осталось попыток: ' + ${attemptsLeft} + ' из ' + ${test.maxAttempts}">Осталось попыток</div>
+                         th:text="'Использовано ' + ${test.maxAttempts - attemptsLeft} + ' из ' + ${test.maxAttempts} + ' попыток'">Использовано</div>
                 </form>
                 <div th:if="${me.student and attemptsLeft == 0}" class="badge text-bg-light fs-6 p-2">
                     <i class="bi bi-lock me-1"></i>Попытки закончились</div>
+                <button th:if="${me.staff}" type="button" class="btn btn-glass" th:attr="data-copy-path=@{/tests/{id}(id=${test.id})}"
+                        title="Ссылку можно отправить группе"><i class="bi bi-link-45deg me-1"></i>Скопировать ссылку</button>
                 <a th:if="${canEdit}" class="btn btn-glass" th:href="@{/tests/{id}/edit(id=${test.id})}"><i class="bi bi-pencil me-1"></i>Редактировать</a>
                 <form th:if="${canEdit}" th:action="@{/tests/{id}/delete(id=${test.id})}" method="post"
                       data-confirm="Удалить тест вместе с вопросами и результатами?">
@@ -45,10 +51,19 @@
     </div>
 
     <div th:if="${me.student}" class="alert alert-info"><i class="bi bi-info-circle me-1"></i>
-        После нажатия «Начать тест» запустится таймер. Неотправленные ответы по истечении времени не засчитываются.
+        После нажатия «Начать тест» запустится таймер. Ответы сохраняются автоматически: если время выйдет или пропадёт интернет, засчитаются сохранённые ответы.
     </div>
 
     <div th:if="${canEdit}">
+        <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2"
+             th:if="${test.manualRelease or pendingRelease > 0}">
+            <span th:if="${pendingRelease > 0}"><i class="bi bi-clipboard-check me-1"></i>На проверке результатов: <b th:text="${pendingRelease}">0</b>. Студенты пока не видят оценки.</span>
+            <span th:if="${pendingRelease == 0}"><i class="bi bi-clipboard-check me-1"></i>Оценки выдаются после проверки. Сейчас всё опубликовано.</span>
+            <form th:if="${pendingRelease > 0}" th:action="@{/tests/{id}/release(id=${test.id})}" method="post"
+                  data-confirm="Опубликовать оценки? Студенты сразу увидят свои результаты.">
+                <button class="btn btn-warning btn-sm fw-semibold" type="submit"><i class="bi bi-send-check me-1"></i>Опубликовать оценки</button>
+            </form>
+        </div>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h5 mb-0">Вопросы</h2>
             <a class="btn btn-primary btn-sm" th:href="@{/tests/{id}/questions/new(id=${test.id})}"><i class="bi bi-plus-lg me-1"></i>Добавить вопрос</a>
@@ -64,7 +79,7 @@
                     </div>
                     <div class="d-flex gap-2 align-items-start">
                         <a class="btn btn-sm btn-outline-secondary" th:href="@{/questions/{id}/edit(id=${q.id})}">Изменить</a>
-                        <form th:action="@{/questions/{id}/delete(id=${q.id})}" method="post" data-confirm="Удалить вопрос?">
+                        <form th:action="@{/questions/{id}/delete(id=${q.id})}" method="post" data-undo="Вопрос удалён" data-undo-target=".question-card">
                             <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
                         </form>
                     </div>
@@ -74,6 +89,13 @@
                         <i class="bi" th:classappend="${o.correct} ? 'bi-check-circle-fill' : 'bi-circle'"></i> <span th:text="${o.text}">вариант</span>
                     </li>
                 </ul>
+                <div class="explain mt-2" th:if="${q.explanation != null}"><i class="bi bi-lightbulb"></i><span th:text="${q.explanation}">пояснение</span></div>
+                <div class="quality mt-2" th:with="qq=${quality[q.id]}" th:if="${quality[q.id] != null}"
+                     th:classappend="'q-' + ${qq.level}">
+                    <i class="bi" th:classappend="${qq.level == 'good'} ? 'bi-check-circle' : (${qq.level == 'na'} ? 'bi-hourglass' : 'bi-exclamation-triangle')"></i>
+                    <span th:text="${qq.verdict}">вердикт</span>
+                    <span class="q-num" th:text="'верно ' + ${qq.facility} + ' %' + (${qq.discrimination != null} ? ' · различает ' + ${#numbers.formatDecimal(qq.discrimination, 1, 2, 'COMMA')} : '') + ' · студентов ' + ${qq.students}">цифры</span>
+                </div>
             </div>
         </div>
         <div class="card mb-3 import-card">

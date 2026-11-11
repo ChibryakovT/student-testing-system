@@ -7,7 +7,7 @@
     <nav class="small mb-2"><a th:href="@{/tests/{id}(id=${test.id})}" th:text="'← ' + ${test.title}">тест</a></nav>
     <h1 class="h3 mb-3 page-title"><i class="bi bi-patch-question"></i><span th:text="${questionId == null} ? 'Новый вопрос' : 'Редактирование вопроса'">Вопрос</span></h1>
     <form class="card card-body reveal" th:object="${form}" method="post"
-          th:action="${questionId == null} ? @{/tests/{id}/questions(id=${test.id})} : @{/questions/{id}(id=${questionId})}" novalidate>
+          th:action="${questionId == null} ? @{/tests/{id}/questions(id=${test.id})} : @{/questions/{id}(id=${questionId})}" novalidate data-guard>
         <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
             <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
         </div>
@@ -37,6 +37,12 @@
             </div>
             <input class="form-control" th:field="*{options[__${st.index}__].text}" maxlength="500"
                    th:placeholder="'Вариант ' + ${st.count}">
+        </div>
+        <div class="mt-3 mb-3">
+            <label class="form-label" for="explanation">Пояснение к ответу <span class="text-muted small">(необязательно)</span></label>
+            <textarea class="form-control" rows="2" th:field="*{explanation}" th:errorclass="is-invalid" maxlength="1000"
+                      placeholder="Почему правильный ответ именно такой. Студент увидит пояснение по настройке теста"></textarea>
+            <div class="invalid-feedback" th:errors="*{explanation}"></div>
         </div>
         <div class="d-flex gap-2 mt-2">
             <button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-1"></i>Сохранить</button>

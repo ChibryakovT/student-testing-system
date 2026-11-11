@@ -69,15 +69,19 @@
                 <td th:text="${a.test.subject.name}">дисциплина</td>
                 <td th:if="${me.staff}" th:text="${a.student.fullName}">студент</td>
                 <td th:if="${me.staff}" th:text="${a.student.groupName}">группа</td>
-                <td th:text="${#temporals.format(a.finishedAt, 'dd.MM.yyyy HH:mm')}">дата</td>
+                <td class="text-nowrap" th:text="${@time.ago(a.finishedAt)}" th:title="${@time.full(a.finishedAt)}">дата</td>
+                <th:block th:if="${me.staff or a.released}">
                 <td th:text="${a.score} + ' / ' + ${a.maxScore}">0</td>
                 <td th:text="${a.percent}">0</td>
                 <td><span class="badge" th:classappend="${a.passed} ? 'text-bg-success' : 'text-bg-danger'"
-                          th:text="${a.passed} ? 'сдан' : 'не сдан'">итог</span></td>
+                          th:text="${a.passed} ? 'сдан' : 'не сдан'">итог</span>
+                    <span class="badge text-bg-warning" th:if="${!a.released}" title="Студент пока не видит оценку">не опубликован</span></td>
+                </th:block>
+                <td th:unless="${me.staff or a.released}" colspan="3"><span class="badge text-bg-warning">на проверке</span></td>
                 <td class="text-nowrap">
                     
                     <form class="d-inline" th:if="${me.staff}" th:action="@{/attempts/{id}/delete(id=${a.id})}" method="post"
-                          data-confirm="Удалить результат?">
+                          data-undo="Результат удалён" data-undo-target="tr">
                         <button aria-label="Удалить" class="btn btn-sm btn-outline-danger" type="submit" title="Удалить"><i class="bi bi-trash"></i></button>
                     </form>
                 </td>
@@ -86,6 +90,7 @@
             </tbody>
         </table>
     </div>
+    <nav th:replace="~{fragments/pager :: pager(${pager})}"></nav>
     <p class="text-muted small mt-2" th:text="'Записей: ' + ${#lists.size(attempts)}"></p>
 </section>
 </body>

@@ -6,6 +6,15 @@
 <section class="form-narrow mx-auto">
     <h1 class="visually-hidden">Результат теста</h1>
     <nav class="small mb-2"><a th:href="@{/attempts}">← Результаты</a></nav>
+    <div class="card mb-4 text-center reveal" th:unless="${scoreVisible}">
+        <div class="card-body py-5">
+            <div class="text-muted" th:text="${attempt.test.title}">тест</div>
+            <div class="display-6 my-3 text-warning"><i class="bi bi-clipboard-check"></i></div>
+            <div class="fs-4 fw-bold mb-2">Ответы отправлены</div>
+            <p class="text-muted mb-0">Оценка появится здесь, когда преподаватель проверит результаты и опубликует их</p>
+        </div>
+    </div>
+    <th:block th:if="${scoreVisible}">
     <div class="card mb-4 text-center reveal">
         <div class="card-body py-4">
             <div class="text-muted" th:text="${attempt.test.title}">тест</div>
@@ -35,23 +44,45 @@
     <h2 class="h5 mb-3"><i class="bi bi-list-check me-2 text-primary"></i>Разбор по вопросам</h2>
     <div class="table-responsive card reveal">
         <table class="table mb-0 align-middle">
-            <thead><tr><th>№</th><th>Вопрос</th><th>Ваш ответ</th><th>Итог</th><th>Баллы</th></tr></thead>
+            <thead><tr><th>№</th><th>Вопрос</th><th>Ваш ответ</th><th th:if="${answersVisible}">Правильный ответ</th><th>Итог</th><th>Баллы</th></tr></thead>
             <tbody>
-            <tr th:each="ans, st : ${attempt.answers}">
+            <th:block th:each="ans, st : ${attempt.answers}">
+            <tr th:classappend="${answersVisible and ans.question.explanation != null} ? 'has-explain'">
                 <td th:text="${st.count}">1</td>
                 <td th:text="${ans.question.text}">вопрос</td>
                 <td>
                     <span th:each="o, os : ${ans.selectedOptions}" th:text="${o.text} + (${os.last} ? '' : '; ')">ответ</span>
                     <span class="text-muted" th:if="${#sets.isEmpty(ans.selectedOptions)}">нет ответа</span>
                 </td>
+                <td th:if="${answersVisible}" class="text-success">
+                    <span th:each="o, os : ${ans.question.options.?[correct]}" th:text="${o.text} + (${os.last} ? '' : '; ')">ответ</span>
+                </td>
                 <td><span class="badge" th:classappend="${ans.correct} ? 'text-bg-success' : 'text-bg-danger'"
                           th:text="${ans.correct} ? 'верно' : 'неверно'">итог</span></td>
                 <td th:text="${ans.pointsEarned} + ' / ' + ${ans.question.points}">0</td>
             </tr>
+            <tr class="explain-row" th:if="${answersVisible and ans.question.explanation != null}">
+                <td></td>
+                <td colspan="5"><div class="explain"><i class="bi bi-lightbulb"></i><span th:text="${ans.question.explanation}">пояснение</span></div></td>
+            </tr>
+            </th:block>
             </tbody>
         </table>
     </div>
-    <p class="text-muted small mt-2">Правильные варианты не раскрываются, чтобы тест можно было использовать повторно.</p>
+    <p class="text-muted small mt-2" th:unless="${answersVisible}"
+       th:text="${attempt.test.showAnswers.name() == 'AFTER_LAST_ATTEMPT'} ? 'Правильные ответы и пояснения откроются после последней попытки.' : 'Правильные варианты не раскрываются, чтобы тест можно было использовать повторно.'">подсказка</p>
+    </th:block>
+    <div class="result-actions" th:if="${me.student}">
+        <form th:if="${attemptsLeft != 0 and nextAttemptAt == null}" th:action="@{/tests/{id}/start(id=${attempt.test.id})}" method="post">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-repeat me-1"></i>Пройти ещё раз<span th:if="${attemptsLeft != null}"
+                    th:text="' (осталось ' + ${attemptsLeft} + ')'"></span></button>
+        </form>
+        <span th:if="${attemptsLeft != 0 and nextAttemptAt != null}" class="text-muted small"><i class="bi bi-hourglass-split me-1"></i><span
+                th:text="'Следующая попытка ' + ${#temporals.format(nextAttemptAt, 'dd.MM в HH:mm')}">позже</span></span>
+        <a th:if="${nextTest != null}" class="btn btn-outline-primary" th:href="@{/tests/{id}(id=${nextTest.id})}">
+            Следующий тест: <span th:text="${nextTest.title}">тест</span> <i class="bi bi-arrow-right ms-1"></i></a>
+        <a th:if="${nextTest == null}" class="btn btn-outline-secondary" th:href="@{/tests}">Все тесты</a>
+    </div>
 </section>
 </body>
 </html>

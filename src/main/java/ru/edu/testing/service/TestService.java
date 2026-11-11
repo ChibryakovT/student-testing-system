@@ -12,6 +12,7 @@ import ru.edu.testing.domain.Subject;
 import ru.edu.testing.domain.Test;
 import ru.edu.testing.domain.User;
 import ru.edu.testing.repository.CurriculumRepository;
+import ru.edu.testing.domain.ShowAnswers;
 import ru.edu.testing.dto.TestForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.exception.NotFoundException;
@@ -196,5 +197,8 @@ public class TestService {
         test.setPublished(form.isPublished());
         test.setShuffle(form.isShuffle());
         test.setMaxAttempts(form.getMaxAttempts());
+        test.setShowAnswers(form.getShowAnswers() == null ? ShowAnswers.NEVER : form.getShowAnswers());
+        test.setManualRelease(form.isManualRelease());
+        test.setRetakeDelayMinutes(form.getRetakeDelayMinutes());
     }
 }

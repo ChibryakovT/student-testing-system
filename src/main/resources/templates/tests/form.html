@@ -6,7 +6,7 @@
 <section class="form-narrow">
     <h1 class="h3 mb-3 page-title"><i class="bi bi-journal-plus"></i><span th:text="${testId == null} ? 'Новый тест' : 'Редактирование теста'">Тест</span></h1>
     <form class="card card-body reveal" th:object="${form}" method="post"
-          th:action="${testId == null} ? @{/tests} : @{/tests/{id}(id=${testId})}" novalidate>
+          th:action="${testId == null} ? @{/tests} : @{/tests/{id}(id=${testId})}" novalidate data-guard>
         <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
             <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
         </div>
@@ -53,6 +53,26 @@
                 <input class="form-control" type="number" min="1" max="20" th:field="*{maxAttempts}" th:errorclass="is-invalid" placeholder="без ограничений">
                 <div class="invalid-feedback" th:errors="*{maxAttempts}"></div>
             </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <label class="form-label" for="showAnswers"><i class="bi bi-eye me-1"></i>Правильные ответы и пояснения</label>
+                <select class="form-select" th:field="*{showAnswers}">
+                    <option th:each="v : ${showAnswersValues}" th:value="${v}" th:text="${v.title}">никогда</option>
+                </select>
+                <div class="form-text">«После последней попытки» работает, когда задан лимит попыток</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="retakeDelayMinutes"><i class="bi bi-hourglass-split me-1"></i>Пауза между попытками, мин</label>
+                <input class="form-control" type="number" min="1" max="10080" th:field="*{retakeDelayMinutes}" th:errorclass="is-invalid" placeholder="без паузы">
+                <div class="invalid-feedback" th:errors="*{retakeDelayMinutes}"></div>
+                <div class="form-text">Например, 60 — пересдать можно через час</div>
+            </div>
+        </div>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" th:field="*{manualRelease}">
+            <label class="form-check-label" th:for="${#ids.prev('manualRelease')}"><i class="bi bi-clipboard-check me-1"></i>Выдавать оценки после проверки
+                <span class="d-block small text-muted">студент увидит результат, когда вы нажмёте «Опубликовать оценки» на странице теста</span></label>
         </div>
         <div class="form-check mb-3" th:if="${testId != null}">
             <input class="form-check-input" type="checkbox" th:field="*{published}">

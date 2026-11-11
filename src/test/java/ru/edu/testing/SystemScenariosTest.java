@@ -42,6 +42,8 @@ class SystemScenariosTest {
     private MockMvc mvc;
     @Autowired
     private ObjectMapper json;
+    @Autowired
+    private ru.edu.testing.repository.TestAttemptRepository attemptRepository;
 
     private String teacher;
     private String student;
@@ -775,6 +777,109 @@ class SystemScenariosTest {
                 .andExpect(content().string(containsString("Что запрещено")));
         mvc.perform(get("/register")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("политике конфиденциальности")));
+    }
+
+    @Test
+    @DisplayName("39. Автосохранение: сохранённые ответы подставляются в форму и засчитываются, если время вышло")
+    void autosaveSurvivesTimeout() throws Exception {
+        long testId = createPublishedTest();
+        long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+        var draft = post("/attempts/" + attemptId + "/draft").session(login(student, PASS)).with(csrf());
+        for (Map<String, Object> a : correctAnswers(testId)) {
+            for (Object option : (List<?>) a.get("optionIds")) {
+                draft.param("q" + a.get("questionId"), String.valueOf(option));
+            }
+        }
+        mvc.perform(draft).andExpect(status().isOk()).andExpect(jsonPath("$.saved").exists());
+        mvc.perform(get("/attempts/" + attemptId).session(login(student, PASS)))
+                .andExpect(content().string(containsString("checked")));
+        // студент закрыл вкладку, время вышло — засчитываются автосохранённые ответы
+        var attempt = attemptRepository.findById(attemptId).orElseThrow();
+        attempt.setStartedAt(attempt.getStartedAt().minusMinutes(30));
+        attemptRepository.save(attempt);
+        api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", List.of()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.percent").value(100));
+    }
+
+    @Test
+    @DisplayName("40. Правильные ответы и пояснения: «сразу» показывает, «никогда» скрывает")
+    void showAnswersPolicy() throws Exception {
+        for (String policy : List.of("AFTER_SUBMIT", "NEVER")) {
+            long subjectId = createSubject();
+            long testId = createTest(subjectId, "Пояснения " + policy);
+            api(post("/api/tests/" + testId + "/questions"), teacher, Map.of("text", "Столица Таджикистана?", "type", "SINGLE",
+                    "points", 1, "explanation", "Душанбе — столица с 1924 года", "options",
+                    List.of(Map.of("text", "Душанбе", "correct", true), Map.of("text", "Худжанд", "correct", false))))
+                    .andExpect(status().isCreated());
+            Map<String, Object> body = new java.util.HashMap<>(testBody(subjectId, "Пояснения " + policy, true));
+            body.put("showAnswers", policy);
+            api(put("/api/tests/" + testId), teacher, body).andExpect(status().isOk());
+            long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+            api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", List.of())).andExpect(status().isOk());
+            String page = mvc.perform(get("/attempts/" + attemptId + "/result").session(login(student, PASS)))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+            org.junit.jupiter.api.Assertions.assertEquals(policy.equals("AFTER_SUBMIT"), page.contains("Душанбе — столица с 1924 года"), policy);
+        }
+    }
+
+    @Test
+    @DisplayName("41. Оценки после проверки: студент не видит балл, пока преподаватель не опубликует")
+    void manualRelease() throws Exception {
+        long testId = createPublishedTest();
+        Map<String, Object> body = new java.util.HashMap<>(testBody(subjectOf(testId), "Проверка вручную", true));
+        body.put("manualRelease", true);
+        api(put("/api/tests/" + testId), teacher, body).andExpect(status().isOk());
+        long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", correctAnswers(testId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.released").value(false))
+                .andExpect(jsonPath("$.percent").doesNotExist());
+        api(get("/api/attempts").param("passed", "true"), student, null)
+                .andExpect(jsonPath("$[?(@.id == " + attemptId + ")]").isEmpty());
+        mvc.perform(get("/attempts/" + attemptId + "/result").session(login(student, PASS)))
+                .andExpect(content().string(containsString("Оценка появится")));
+        api(get("/api/attempts/" + attemptId), teacher, null).andExpect(jsonPath("$.percent").value(100));
+        mvc.perform(post("/tests/" + testId + "/release").session(login(teacher, PASS)).with(csrf()))
+                .andExpect(redirectedUrl("/tests/" + testId));
+        api(get("/api/attempts/" + attemptId), student, null)
+                .andExpect(jsonPath("$.released").value(true))
+                .andExpect(jsonPath("$.percent").value(100));
+    }
+
+    @Test
+    @DisplayName("42. Пауза между попытками: новая попытка раньше срока — 409 с временем следующей")
+    void retakeDelay() throws Exception {
+        long testId = createPublishedTest();
+        Map<String, Object> body = new java.util.HashMap<>(testBody(subjectOf(testId), "С паузой", true));
+        body.put("retakeDelayMinutes", 60);
+        api(put("/api/tests/" + testId), teacher, body).andExpect(status().isOk());
+        long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", List.of())).andExpect(status().isOk());
+        api(post("/api/tests/" + testId + "/attempts"), student, null)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("Следующая попытка")));
+        mvc.perform(get("/tests/" + testId).session(login(student, PASS)))
+                .andExpect(content().string(containsString("Следующая попытка")));
+    }
+
+    @Test
+    @DisplayName("43. Результат: кнопка «Пройти ещё раз» с остатком попыток; список результатов разбит на страницы")
+    void resultNextStepsAndPaging() throws Exception {
+        long testId = createPublishedTest();
+        Map<String, Object> body = new java.util.HashMap<>(testBody(subjectOf(testId), "С попытками", true));
+        body.put("maxAttempts", 3);
+        api(put("/api/tests/" + testId), teacher, body).andExpect(status().isOk());
+        long attemptId = startAttempt(testId, student).get("attemptId").asLong();
+        api(post("/api/attempts/" + attemptId + "/submit"), student, Map.of("answers", List.of())).andExpect(status().isOk());
+        mvc.perform(get("/attempts/" + attemptId + "/result").session(login(student, PASS)))
+                .andExpect(content().string(containsString("Пройти ещё раз")))
+                .andExpect(content().string(containsString("(осталось 2)")));
+        mvc.perform(get("/tests/" + testId).session(login(student, PASS)))
+                .andExpect(content().string(containsString("Использовано 1 из 3 попыток")));
+        mvc.perform(get("/attempts").param("page", "1").session(login(ADMIN, ADMIN_PASS)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Показано 1–")));
     }
 
     private long id(ResultActions actions) throws Exception {

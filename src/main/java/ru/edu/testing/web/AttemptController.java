@@ -48,10 +48,13 @@ public class AttemptController {
                        @RequestParam(required = false) Boolean passed,
                        @RequestParam(required = false) Long groupId,
                        @RequestParam(defaultValue = "date") String sort,
+                       @RequestParam(defaultValue = "1") int page,
                        @AuthenticationPrincipal AppUserDetails me, Model model) {
         // Фильтр по группе доступен администратору
         Long groupFilter = me.isAdmin() ? groupId : null;
-        model.addAttribute("attempts", attemptService.search(q, testId, subjectId, passed, groupFilter, sort, me));
+        Pager<TestAttempt> pager = Pager.of(attemptService.search(q, testId, subjectId, passed, groupFilter, sort, me), page);
+        model.addAttribute("pager", pager);
+        model.addAttribute("attempts", pager.items());
         if (me.isAdmin()) {
             model.addAttribute("groups", userService.groups());
         }
@@ -78,7 +81,17 @@ public class AttemptController {
         model.addAttribute("questions", questions);
         model.addAttribute("options", options);
         model.addAttribute("secondsLeft", Math.max(0, Duration.between(LocalDateTime.now(), deadline).getSeconds()));
+        model.addAttribute("draft", AttemptService.draftOf(attempt));
         return "attempts/take";
+    }
+
+    /** Автосохранение: страница отправляет форму целиком при каждом изменении ответа. */
+    @PostMapping("/{id}/draft")
+    @ResponseBody
+    public Map<String, String> draft(@PathVariable Long id, @RequestParam MultiValueMap<String, String> params,
+                                     @AuthenticationPrincipal AppUserDetails me) {
+        LocalDateTime saved = attemptService.saveDraft(id, parseAnswers(params), me);
+        return Map.of("saved", saved.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")));
     }
 
     @PostMapping("/{id}/submit")
@@ -90,7 +103,19 @@ public class AttemptController {
 
     @GetMapping("/{id}/result")
     public String result(@PathVariable Long id, @AuthenticationPrincipal AppUserDetails me, Model model) {
-        model.addAttribute("attempt", attemptService.getResult(id, me));
+        TestAttempt attempt = attemptService.getResult(id, me);
+        model.addAttribute("attempt", attempt);
+        model.addAttribute("scoreVisible", AttemptService.scoreVisible(attempt, me));
+        model.addAttribute("answersVisible", attemptService.answersVisible(attempt, me));
+        if (me.isStudent()) {
+            // «Пройти ещё раз» и «Следующий тест»
+            model.addAttribute("attemptsLeft", attemptService.attemptsLeft(attempt.getTest(), me.getId()));
+            model.addAttribute("nextAttemptAt", attemptService.nextAttemptAt(attempt.getTest(), me.getId()));
+            Set<Long> done = new HashSet<>();
+            attemptService.search(null, null, null, null, null, "date", me).forEach(a -> done.add(a.getTest().getId()));
+            model.addAttribute("nextTest", testService.search(null, null, "new", me).stream()
+                    .filter(t -> t.isPublished() && !done.contains(t.getId())).findFirst().orElse(null));
+        }
         return "attempts/result";
     }
 

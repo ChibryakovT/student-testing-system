@@ -9,25 +9,36 @@
     <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/academy.css}">
 </head>
-<body th:classappend="${me != null} ? 'with-sidebar'">
+<body class="theme-academy" th:classappend="${me != null} ? 'signed-in'">
 <a class="skip-link" href="#main">Перейти к содержимому</a>
 
 <th:block th:if="${me != null}">
-    <!-- Компьютер: постоянное меню слева -->
-    <aside class="sidebar d-none d-lg-flex">
-        <div th:replace="~{fragments/nav :: nav('Главное меню')}"></div>
-    </aside>
-    <!-- Телефон: верхняя полоса и выезжающее меню -->
-    <header class="topbar d-lg-none">
-        <button class="btn btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-label="Меню">
-            <i class="bi bi-list fs-5"></i></button>
-        <a class="d-flex align-items-center gap-2 text-decoration-none text-reset fw-bold" th:href="@{/}">
-            <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>ЭСТ · РТСУ</a>
-        <span style="width:42px"></span>
+    <header class="masthead">
+        <div class="masthead-inner">
+            <a class="crest-link" th:href="@{/}">
+                <span class="crest" aria-hidden="true">Э</span>
+                <span class="crest-text"><span class="crest-name">ЭСТ</span>
+                    <span class="crest-sub">Российско-Таджикский (Славянский) университет</span></span>
+            </a>
+            <div th:replace="~{fragments/nav :: topnav}"></div>
+            <div class="mast-user">
+                <a class="mast-profile" th:href="@{/profile}" title="Профиль и смена пароля">
+                    <span class="user-avatar" th:text="${#strings.substring(me.fullName, 0, 1)}">И</span>
+                    <span class="mast-user-text"><span class="d-block text-truncate" th:text="${me.fullName}">Пользователь</span>
+                        <span class="d-block mast-role" th:text="${me.role.title}">роль</span></span>
+                </a>
+                <form th:action="@{/logout}" method="post">
+                    <button class="mast-logout" type="submit" title="Выйти" aria-label="Выйти"><i class="bi bi-box-arrow-right"></i></button>
+                </form>
+            </div>
+            <button class="mast-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-label="Меню">
+                <i class="bi bi-list"></i></button>
+        </div>
     </header>
-    <div class="offcanvas offcanvas-start sidebar-offcanvas" tabindex="-1" id="mobileNav" aria-label="Меню">
-        <div th:replace="~{fragments/nav :: nav('Мобильное меню')}"></div>
+    <div class="offcanvas offcanvas-end sidebar-offcanvas" tabindex="-1" id="mobileNav" aria-label="Меню">
+        <div th:replace="~{fragments/nav :: sidenav('Мобильное меню')}"></div>
     </div>
 </th:block>
 

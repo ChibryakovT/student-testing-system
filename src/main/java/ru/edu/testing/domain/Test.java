@@ -45,6 +45,19 @@ public class Test {
     @Column(name = "max_attempts")
     private Integer maxAttempts;
 
+    /** Когда студенту показывать правильные ответы и пояснения. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "show_answers", nullable = false, length = 20)
+    private ShowAnswers showAnswers = ShowAnswers.NEVER;
+
+    /** Оценки видны студентам только после того, как преподаватель их опубликует. */
+    @Column(name = "manual_release", nullable = false)
+    private boolean manualRelease;
+
+    /** Пауза между попытками в минутах (null — без паузы). */
+    @Column(name = "retake_delay_minutes")
+    private Integer retakeDelayMinutes;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -89,6 +102,12 @@ public class Test {
     public void setShuffle(boolean shuffle) { this.shuffle = shuffle; }
     public Integer getMaxAttempts() { return maxAttempts; }
     public void setMaxAttempts(Integer maxAttempts) { this.maxAttempts = maxAttempts; }
+    public ShowAnswers getShowAnswers() { return showAnswers; }
+    public void setShowAnswers(ShowAnswers showAnswers) { this.showAnswers = showAnswers; }
+    public boolean isManualRelease() { return manualRelease; }
+    public void setManualRelease(boolean manualRelease) { this.manualRelease = manualRelease; }
+    public Integer getRetakeDelayMinutes() { return retakeDelayMinutes; }
+    public void setRetakeDelayMinutes(Integer retakeDelayMinutes) { this.retakeDelayMinutes = retakeDelayMinutes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public List<Question> getQuestions() { return questions; }

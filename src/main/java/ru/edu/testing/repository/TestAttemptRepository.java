@@ -69,6 +69,17 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 
     long countByTestIdAndStudentIdAndStatus(Long testId, Long studentId, AttemptStatus status);
 
+    Optional<TestAttempt> findFirstByTestIdAndStudentIdAndStatusOrderByFinishedAtDesc(Long testId, Long studentId,
+                                                                                    AttemptStatus status);
+
+    List<TestAttempt> findByTestIdAndStatus(Long testId, AttemptStatus status);
+
+    long countByTestIdAndStatusAndReleasedFalse(Long testId, AttemptStatus status);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update TestAttempt a set a.released = true where a.test.id = :testId and a.released = false")
+    int releaseAll(@Param("testId") Long testId);
+
     long countByStatusAndPassedTrue(AttemptStatus status);
 
     @Query("select coalesce(avg(a.percent), 0) from TestAttempt a where a.status = ru.edu.testing.domain.AttemptStatus.FINISHED")

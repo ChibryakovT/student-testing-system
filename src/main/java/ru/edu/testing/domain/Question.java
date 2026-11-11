@@ -27,6 +27,10 @@ public class Question {
     @Column(nullable = false)
     private int points = 1;
 
+    /** Пояснение к правильному ответу (показывается студенту по настройке теста). */
+    @Column(length = 1000)
+    private String explanation;
+
     @Column(nullable = false)
     private int position;
 
@@ -49,6 +53,8 @@ public class Question {
     public void setType(QuestionType type) { this.type = type; }
     public int getPoints() { return points; }
     public void setPoints(int points) { this.points = points; }
+    public String getExplanation() { return explanation; }
+    public void setExplanation(String explanation) { this.explanation = explanation; }
     public int getPosition() { return position; }
     public void setPosition(int position) { this.position = position; }
     public List<AnswerOption> getOptions() { return options; }

@@ -34,4 +34,19 @@ class ReportServiceTest {
         assertEquals(2, GradeSheetService.grade(49, f));
         assertEquals("не явился", GradeSheetService.gradeWord(null));
     }
+
+    @Test
+    @DisplayName("Качество вопроса: решают сильные — хорошо, решают слабые — нужно исправить, мало данных — без вывода")
+    void questionQuality() {
+        // {балл за вопрос, балл за остальные вопросы}
+        var good = java.util.List.of(new double[]{1, 9}, new double[]{1, 8}, new double[]{1, 7}, new double[]{0, 3},
+                new double[]{0, 2}, new double[]{1, 6}, new double[]{0, 4});
+        var bad = java.util.List.of(new double[]{0, 9}, new double[]{0, 8}, new double[]{1, 2}, new double[]{1, 3},
+                new double[]{0, 7}, new double[]{1, 1});
+        assertEquals("good", ReportService.quality(1L, good).level());
+        assertEquals("bad", ReportService.quality(2L, bad).level());
+        assertEquals("na", ReportService.quality(3L, good.subList(0, 3)).level());
+        assertEquals("warn", ReportService.quality(4L, java.util.List.of(new double[]{1, 1}, new double[]{1, 5},
+                new double[]{1, 3}, new double[]{1, 2}, new double[]{1, 4})).level());
+    }
 }

@@ -27,6 +27,9 @@ public class QuestionForm {
     @Max(value = 100, message = "Баллы — от 1 до 100")
     private Integer points = 1;
 
+    @Size(max = 1000, message = "Пояснение не длиннее 1000 символов")
+    private String explanation;
+
     @Valid
     @Size(max = MAX_OPTIONS, message = "Не более 6 вариантов ответа")
     private List<OptionForm> options = new ArrayList<>();
@@ -45,6 +48,8 @@ public class QuestionForm {
     public void setType(QuestionType type) { this.type = type; }
     public Integer getPoints() { return points; }
     public void setPoints(Integer points) { this.points = points; }
+    public String getExplanation() { return explanation; }
+    public void setExplanation(String explanation) { this.explanation = explanation; }
     public List<OptionForm> getOptions() { return options; }
     public void setOptions(List<OptionForm> options) { this.options = options; }
 }

@@ -26,7 +26,7 @@
                 <thead><tr><th>Когда</th><th>Пользователь</th><th>Действие</th><th>Подробности</th></tr></thead>
                 <tbody>
                 <tr th:each="e : ${entries}">
-                    <td class="text-nowrap small text-muted" th:text="${#temporals.format(e.createdAt, 'dd.MM.yyyy HH:mm:ss')}">дата</td>
+                    <td class="text-nowrap small text-muted" th:text="${@time.ago(e.createdAt)}" th:title="${#temporals.format(e.createdAt, 'dd.MM.yyyy HH:mm:ss')}">дата</td>
                     <td class="small"><code th:text="${e.username}">login</code></td>
                     <td><span class="badge" th:text="${e.action}"
                               th:classappend="${#strings.contains(e.action, 'удал') or e.action == 'Неудачный вход'} ? 'text-bg-danger'

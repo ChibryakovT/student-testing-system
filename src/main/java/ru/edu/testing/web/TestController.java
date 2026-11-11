@@ -14,8 +14,11 @@ import ru.edu.testing.dto.TestForm;
 import ru.edu.testing.exception.BusinessException;
 import ru.edu.testing.security.AppUserDetails;
 import ru.edu.testing.service.AttemptService;
+import ru.edu.testing.service.ReportService;
 import ru.edu.testing.service.SubjectService;
 import ru.edu.testing.service.TestService;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/tests")
@@ -24,8 +27,11 @@ public class TestController {
     private final TestService testService;
     private final SubjectService subjectService;
     private final AttemptService attemptService;
+    private final ReportService reportService;
 
-    public TestController(TestService testService, SubjectService subjectService, AttemptService attemptService) {
+    public TestController(TestService testService, SubjectService subjectService, AttemptService attemptService,
+                          ReportService reportService) {
+        this.reportService = reportService;
         this.testService = testService;
         this.subjectService = subjectService;
         this.attemptService = attemptService;
@@ -40,8 +46,9 @@ public class TestController {
         model.addAttribute("subjects", testService.subjectsFor(me));
         model.addAttribute("forms", testService.controlForms(me));
         if (me.isStudent()) {
-            model.addAttribute("best", TestStatus.bestPercent(
-                    attemptService.search(null, null, null, null, null, "date", me)));
+            List<TestAttempt> mine = attemptService.search(null, null, null, null, null, "date", me);
+            model.addAttribute("best", TestStatus.bestPercent(mine));
+            model.addAttribute("checking", TestStatus.checking(mine));
         }
         model.addAttribute("q", q);
         model.addAttribute("subjectId", subjectId);
@@ -56,6 +63,11 @@ public class TestController {
         model.addAttribute("canEdit", testService.canEdit(test, me));
         if (me.isStudent()) {
             model.addAttribute("attemptsLeft", attemptService.attemptsLeft(test, me.getId()));
+            model.addAttribute("nextAttemptAt", attemptService.nextAttemptAt(test, me.getId()));
+        }
+        if (testService.canEdit(test, me)) {
+            model.addAttribute("quality", reportService.questionQuality(id));
+            model.addAttribute("pendingRelease", attemptService.pendingRelease(id));
         }
         model.addAttribute("forms", testService.controlForms(me));
         return "tests/view";
@@ -98,6 +110,9 @@ public class TestController {
         form.setPublished(test.isPublished());
         form.setShuffle(test.isShuffle());
         form.setMaxAttempts(test.getMaxAttempts());
+        form.setShowAnswers(test.getShowAnswers());
+        form.setManualRelease(test.isManualRelease());
+        form.setRetakeDelayMinutes(test.getRetakeDelayMinutes());
         model.addAttribute("form", form);
         return formView(model, id, me);
     }
@@ -128,6 +143,14 @@ public class TestController {
         return "redirect:/tests";
     }
 
+    @PostMapping("/{id}/release")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    public String release(@PathVariable Long id, @AuthenticationPrincipal AppUserDetails me, RedirectAttributes redirect) {
+        int count = attemptService.release(id, me);
+        redirect.addFlashAttribute("success", "Оценки опубликованы: " + count);
+        return "redirect:/tests/" + id;
+    }
+
     @PostMapping("/{id}/start")
     @PreAuthorize("hasRole('STUDENT')")
     public String start(@PathVariable Long id, @AuthenticationPrincipal AppUserDetails me) {
@@ -138,6 +161,7 @@ public class TestController {
     private String formView(Model model, Long id, AppUserDetails me) {
         model.addAttribute("testId", id);
         model.addAttribute("subjects", testService.subjectsFor(me));
+        model.addAttribute("showAnswersValues", ru.edu.testing.domain.ShowAnswers.values());
         return "tests/form";
     }
 }

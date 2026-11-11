@@ -59,7 +59,8 @@
                     <h2 class="h5 mb-1" th:text="${t.title}">Название</h2>
                     <p class="text-muted small flex-grow-1 mb-3" th:text="${t.description}">описание</p>
                     <div class="mb-2" th:if="${me.student}">
-                        <span th:if="${best[t.id] == null}" class="status-chip todo"><i class="bi bi-circle"></i>Не проходили</span>
+                        <span th:if="${best[t.id] == null and checking.contains(t.id)}" class="status-chip low"><i class="bi bi-clipboard-check"></i>На проверке</span>
+                        <span th:if="${best[t.id] == null and !checking.contains(t.id)}" class="status-chip todo"><i class="bi bi-circle"></i>Не проходили</span>
                         <span th:if="${best[t.id] != null}" class="status-chip" th:classappend="${best[t.id] >= t.passingScore} ? 'done' : 'low'">
                             <i class="bi" th:classappend="${best[t.id] >= t.passingScore} ? 'bi-check-circle-fill' : 'bi-exclamation-circle'"></i>
                             <span th:text="'Лучший: ' + ${best[t.id]} + ' %'">83 %</span></span>

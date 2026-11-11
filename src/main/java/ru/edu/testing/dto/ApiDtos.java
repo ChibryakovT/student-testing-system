@@ -30,12 +30,13 @@ public final class ApiDtos {
 
     public record TestDto(Long id, String title, String description, Long subjectId, String subject,
                           String author, int timeLimitMinutes, int passingScore, boolean published,
-                          int questionCount, int maxScore, LocalDateTime createdAt) {
+                          int questionCount, int maxScore, LocalDateTime createdAt, String showAnswers,
+                          boolean manualRelease, Integer retakeDelayMinutes) {
         public static TestDto of(Test t) {
             return new TestDto(t.getId(), t.getTitle(), t.getDescription(), t.getSubject().getId(),
                     t.getSubject().getName(), t.getAuthor().getFullName(), t.getTimeLimitMinutes(),
                     t.getPassingScore(), t.isPublished(), t.getQuestions().size(), t.getMaxScore(),
-                    t.getCreatedAt());
+                    t.getCreatedAt(), t.getShowAnswers().name(), t.isManualRelease(), t.getRetakeDelayMinutes());
         }
     }
 
@@ -57,14 +58,15 @@ public final class ApiDtos {
         }
     }
 
+    /** Результат попытки. Пока оценка не опубликована, студент получает score, percent и passed = null. */
     public record AttemptDto(Long id, Long testId, String testTitle, String student, String groupName,
                              String status, LocalDateTime startedAt, LocalDateTime finishedAt,
-                             int score, int maxScore, int percent, boolean passed) {
-        public static AttemptDto of(TestAttempt a) {
+                             Integer score, int maxScore, Integer percent, Boolean passed, boolean released) {
+        public static AttemptDto of(TestAttempt a, boolean showScore) {
             return new AttemptDto(a.getId(), a.getTest().getId(), a.getTest().getTitle(),
                     a.getStudent().getFullName(), a.getStudent().getGroupName(), a.getStatus().name(),
-                    a.getStartedAt(), a.getFinishedAt(), a.getScore(), a.getMaxScore(), a.getPercent(),
-                    a.isPassed());
+                    a.getStartedAt(), a.getFinishedAt(), showScore ? a.getScore() : null, a.getMaxScore(),
+                    showScore ? a.getPercent() : null, showScore ? a.isPassed() : null, a.isReleased());
         }
     }
 

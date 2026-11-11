@@ -6,7 +6,7 @@
 <section class="text-center py-5">
     <i class="bi error-icon" th:classappend="${status == 403} ? 'bi-shield-lock' : (${status == 404} ? 'bi-compass' : 'bi-exclamation-octagon')"></i>
     <div class="display-4 fw-bold text-primary mt-2" th:text="${status} ?: 500">404</div>
-    <p class="lead" th:text="${status == 404} ? 'Страница не найдена' : (${status == 403} ? 'Доступ запрещён' : 'Произошла ошибка')">Ошибка</p>
+    <h1 class="lead mb-3" th:text="${status == 404} ? 'Страница не найдена' : (${status == 403} ? 'Доступ запрещён' : 'Произошла ошибка')">Ошибка</h1>
     <a class="btn btn-primary" th:href="@{/}"><i class="bi bi-house me-1"></i>На главную</a>
 </section>
 </body>

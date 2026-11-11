@@ -31,8 +31,11 @@ public class UserController {
     public String list(@RequestParam(required = false) String q,
                        @RequestParam(required = false) Role role,
                        @RequestParam(required = false) Long groupId,
-                       @RequestParam(defaultValue = "name") String sort, Model model) {
-        model.addAttribute("users", userService.search(q, role, groupId, sort));
+                       @RequestParam(defaultValue = "name") String sort,
+                       @RequestParam(defaultValue = "1") int page, Model model) {
+        Pager<ru.edu.testing.domain.User> pager = Pager.of(userService.search(q, role, groupId, sort), page);
+        model.addAttribute("pager", pager);
+        model.addAttribute("users", pager.items());
         model.addAttribute("groups", userService.groups());
         model.addAttribute("groupId", groupId);
         model.addAttribute("roles", Role.values());

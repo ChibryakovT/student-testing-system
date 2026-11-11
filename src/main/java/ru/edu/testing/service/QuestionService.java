@@ -74,6 +74,7 @@ public class QuestionService {
         form.setText(question.getText());
         form.setType(question.getType());
         form.setPoints(question.getPoints());
+        form.setExplanation(question.getExplanation());
         form.setOptions(new java.util.ArrayList<>(question.getOptions().stream()
                 .map(o -> new OptionForm(o.getText(), o.isCorrect())).toList()));
         return form.padOptions();
@@ -97,6 +98,8 @@ public class QuestionService {
         question.setText(form.getText().trim());
         question.setType(form.getType());
         question.setPoints(form.getPoints());
+        question.setExplanation(form.getExplanation() == null || form.getExplanation().isBlank()
+                ? null : form.getExplanation().trim());
         question.getOptions().clear();
         filled.forEach(o -> question.addOption(new AnswerOption(o.getText().trim(), o.isCorrect())));
     }

@@ -123,7 +123,7 @@
         <div class="card-header fw-semibold" th:text="'Сложность вопросов: ' + ${selectedTest.title}">вопросы</div>
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
-                <thead><tr><th>Вопрос</th><th>Ответов</th><th class="w-25">Доля верных</th></tr></thead>
+                <thead><tr><th>Вопрос</th><th>Ответов</th><th class="w-25">Доля верных</th><th>Качество вопроса</th></tr></thead>
                 <tbody>
                 <tr th:each="r : ${questionRows}">
                     <td th:text="${r.text}">вопрос</td>
@@ -137,8 +137,12 @@
                             <span class="pct" th:text="${r.correctRate()} + ' %'">0 %</span>
                         </div>
                     </td>
+                    <td th:with="qq=${quality[r.questionId]}">
+                        <span th:if="${qq != null}" class="quality" th:classappend="'q-' + ${qq.level}" th:title="${qq.discrimination != null} ? 'Различающая способность ' + ${qq.discrimination} : ''"
+                              th:text="${qq.verdict}">вердикт</span>
+                    </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(questionRows)}"><td colspan="3" class="text-muted">По этому тесту ещё нет ответов</td></tr>
+                <tr th:if="${#lists.isEmpty(questionRows)}"><td colspan="4" class="text-muted">По этому тесту ещё нет ответов</td></tr>
                 </tbody>
             </table>
         </div>
