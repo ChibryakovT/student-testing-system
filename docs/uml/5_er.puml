@@ -32,6 +32,7 @@ entity users {
   department_id : BIGINT <<FK>>
   record_book : VARCHAR(20)
   * enabled : BOOLEAN
+  consent_at : TIMESTAMP
 }
 entity subjects {
   * id : BIGINT <<PK>>
@@ -69,14 +70,16 @@ entity tests {
   --
   * subject_id, author_id <<FK>>
   * title, time_limit_minutes, passing_score
-  * published, shuffle : BOOLEAN
-  max_attempts : INTEGER
+  * published, shuffle, manual_release : BOOLEAN
+  * show_answers : VARCHAR(20)
+  max_attempts, retake_delay_minutes : INTEGER
 }
 entity questions {
   * id : BIGINT <<PK>>
   --
   * test_id <<FK>>
   * text, type, points, position
+  explanation : VARCHAR(1000)
 }
 entity answer_options {
   * id : BIGINT <<PK>>
@@ -89,6 +92,8 @@ entity test_attempts {
   --
   * test_id, student_id <<FK>>
   * status, started_at, score, percent, passed
+  * released : BOOLEAN
+  draft : VARCHAR(8000)
 }
 entity attempt_answers {
   * id : BIGINT <<PK>>

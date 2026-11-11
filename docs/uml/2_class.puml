@@ -22,6 +22,11 @@ enum AttemptStatus {
   IN_PROGRESS
   FINISHED
 }
+enum ShowAnswers {
+  NEVER
+  AFTER_SUBMIT
+  AFTER_LAST_ATTEMPT
+}
 
 class User {
   -id: Long
@@ -77,6 +82,9 @@ class Test {
   -published: boolean
   -shuffle: boolean
   -maxAttempts: Integer
+  -showAnswers: ShowAnswers
+  -manualRelease: boolean
+  -retakeDelayMinutes: Integer
   +getMaxScore(): int
 }
 class Question {
@@ -84,6 +92,7 @@ class Question {
   -text: String
   -type: QuestionType
   -points: int
+  -explanation: String
   +addOption(o: AnswerOption)
 }
 class AnswerOption {
@@ -99,6 +108,8 @@ class TestAttempt {
   -score: int
   -percent: int
   -passed: boolean
+  -released: boolean
+  -draft: String
 }
 class AttemptAnswer {
   -id: Long
@@ -115,6 +126,10 @@ class TestService {
 class AttemptService {
   +start(testId, user): TestAttempt
   +submit(attemptId, answers, user): TestAttempt
+  +saveDraft(attemptId, answers, user)
+  +release(testId, user): int
+  +answersVisible(attempt, user): boolean
+  +nextAttemptAt(test, studentId): LocalDateTime
   +getResult(attemptId, user): TestAttempt
 }
 class ScheduleService {
@@ -127,6 +142,7 @@ class ReportService {
   +summary(): DashboardSummary
   +testStatistics(subjectId): List<TestStatRow>
   +testStatisticsCsv(subjectId): String
+  +questionQuality(testId): Map<Long, QuestionQuality>
 }
 
 Subject "1" -- "0..*" Test
@@ -154,6 +170,7 @@ ScheduleService ..> Lesson
 ScheduleService ..> Exam
 Question ..> QuestionType
 TestAttempt ..> AttemptStatus
+Test ..> ShowAnswers
 TestService ..> Test
 AttemptService ..> TestAttempt
 ReportService ..> TestAttempt

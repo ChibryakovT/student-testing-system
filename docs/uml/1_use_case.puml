@@ -29,6 +29,8 @@ rectangle "Электронная система тестирования" {
   usecase "Импорт вопросов\nиз Excel" as UC16
   usecase "Журнал действий" as UC17
   usecase "Подсчёт баллов" as UC12
+  usecase "Публикация оценок\nпосле проверки" as UC18
+  usecase "Анализ качества\nвопросов" as UC19
 }
 G --> UC1
 G --> UC2
@@ -48,6 +50,8 @@ A --> UC14
 A --> UC15
 A --> UC17
 T --> UC16
+T --> UC18
+T --> UC19
 UC4 ..> UC12 : <<include>>
 UC7 ..> UC6 : <<extend>>
 @enduml
